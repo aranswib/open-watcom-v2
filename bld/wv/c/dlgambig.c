@@ -44,15 +44,15 @@
 #include "dbglkup.h"
 
 
-OVL_EXTERN int SymPick( const char *text, GUIPICKCALLBACK *PickInit )
+OVL_EXTERN int SymPick( const char *text, GUIPICKCALLBACK *pick_call_back )
 {
     dlg_pick    dlg;
 
     /* unused parameters */ (void)text;
 
-    dlg.func = PickInit;
+    dlg.func = pick_call_back;
     dlg.chosen = -1;
-    ResDlgOpen( &GUIPickEvent, &dlg, DIALOG_AMBIG );
+    ResDlgOpen( GUIPickGUIEventProc, &dlg, DIALOG_AMBIG );
     return( dlg.chosen );
 }
 

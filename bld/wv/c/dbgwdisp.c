@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -46,15 +47,11 @@
 #include "dbgwtool.h"
 
 
-extern a_window         *WndMain;
 extern gui_coord        WndScreen;
 extern gui_coord        WndMax;
 extern gui_coord        WndScale;
-extern const char       WndNameTab[];
 extern gui_colour_set   WndColours[];
 extern gui_colour_set   WndStatusColour;
-
-extern WNDOPEN            *WndOpenTab[];
 
 wnd_posn        WndPosition[WND_NUM_CLASSES];
 static char     *WndFontInfo[WND_NUM_CLASSES];
@@ -124,7 +121,7 @@ static disp_optn GetOption( void )
 }
 
 
-extern  char    *GetWndFont( a_window *wnd )
+char    *GetWndFont( a_window wnd )
 {
     if( WndHasClass( wnd ) ) {
         if( WndFontInfo[WndClass( wnd )] != NULL ) {
@@ -142,7 +139,7 @@ static void SetFont( wnd_class_wv wndclass, char *font )
 }
 
 
-extern  void    WndFontHook( a_window *wnd )
+void    WndFontHook( a_window wnd )
 {
     char        *font;
 
@@ -162,7 +159,7 @@ gui_coord *WndMainClientSize( void )
 
 void WndMainResized( void )
 {
-    a_window    *wnd;
+    a_window    wnd;
     gui_rect    rect;
 
     if( _IsOff( SW_DETACHABLE_WINDOWS ) ) {
@@ -177,7 +174,7 @@ void WndMainResized( void )
 }
 
 
-extern  void    WndResizeHook( a_window *wnd )
+void    WndResizeHook( a_window wnd )
 {
     gui_rect    rect;
 
@@ -289,8 +286,8 @@ static void ProcSize( wnd_class_wv wndclass )
 {
     gui_rect    size;
     disp_optn   optn;
-    a_window    *wnd;
-    a_window    *next;
+    a_window    wnd;
+    a_window    next;
     gui_coord   min;
     bool        coord_specified;
     gui_rect    def_rect;
@@ -488,10 +485,12 @@ static  void    PrintPosition( disp_optn optn, wnd_class_wv wndclass,
 void ConfigDisp( void )
 {
 
-    a_window        *wnd, *scan;
+    a_window        wnd;
+    a_window        scan;
     char            buff[20];
     char            buff2[20];
-    a_window        *head, *next;
+    a_window        head;
+    a_window        next;
     int             h;
     wnd_class_wv    wndclass;
     gui_rect        rect;

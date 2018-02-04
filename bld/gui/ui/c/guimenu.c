@@ -41,13 +41,13 @@
 #include "guitool.h"
 
 
-extern  MENUITEM        *GUIPopupMenu;
+extern UIMENUITEM       *GUIPopupMenu;
 
 static gui_menu_struct GUISeparator = {
     NULL,       0,      GUI_SEPARATOR
 };
 
-static void SetChecked( MENUITEM *menu, bool check )
+static void SetChecked( UIMENUITEM *menu, bool check )
 {
     if( menu != NULL ) {
         if( check ) {
@@ -58,7 +58,7 @@ static void SetChecked( MENUITEM *menu, bool check )
     }
 }
 
-static bool IsChecked( MENUITEM *menu )
+static bool IsChecked( UIMENUITEM *menu )
 {
     if( menu != NULL ) {
         return( (menu->flags & ITEM_CHECKED) != 0 );
@@ -72,8 +72,7 @@ static bool IsChecked( MENUITEM *menu )
  *                and if checked or not
  */
 
-static bool MenuConvert( const char *text, unsigned short *flags, char **new,
-                         bool checked )
+static bool MenuConvert( const char *text, unsigned short *flags, char **new, bool checked )
 {
     char        *end;
     int         length;
@@ -100,10 +99,10 @@ static bool MenuConvert( const char *text, unsigned short *flags, char **new,
     }
     if( flags != NULL ) {
         char_offset = length - end_length;
-        *flags |= ( char_offset & ITEM_CHAR_OFFSET );
+        *flags |= char_offset & ITEM_CHAR_OFFSET;
     }
     if( end == NULL ) {
-        length ++; /* no & so need room for NULL as it doesn't replace & */
+        length++; /* no & so need room for NULL as it doesn't replace & */
     }
     new_str = (char *)GUIMemAlloc( length );
     *new = new_str;
@@ -117,7 +116,7 @@ static bool MenuConvert( const char *text, unsigned short *flags, char **new,
         strncpy( new_str, text, length - end_length );
         if( end != NULL ) {
             end++;      /* past & */
-            strncpy( new_str + length - end_length, end, end_length - 1);
+            strncpy( new_str + length - end_length, end, end_length - 1 );
         }
         new_str[length - 1] = '\0';
     }
@@ -128,11 +127,12 @@ static bool MenuConvert( const char *text, unsigned short *flags, char **new,
  *  GUIFreeMenuItems -- frees exactly what was allocated by GUICreateMenuItems
  */
 
-void GUIFreeMenuItems( MENUITEM *menus )
+void GUIFreeMenuItems( UIMENUITEM *menus )
 {
     int j;
 
-    if( menus == NULL ) return;
+    if( menus == NULL )
+        return;
     for( j = 0; !MENUENDMARKER( menus[j] ); j++ ) {
         GUIMemFree( menus[j].name );
         if( menus[j].popup != NULL ) {
@@ -142,13 +142,13 @@ void GUIFreeMenuItems( MENUITEM *menus )
     GUIMemFree( menus );
 }
 
-MENUITEM *GUIAllocMenuItems( gui_ctl_idx num_menus )
+UIMENUITEM *GUIAllocMenuItems( gui_ctl_idx num_menus )
 {
-    MENUITEM *menu;
+    UIMENUITEM  *menu;
 
-    menu = (MENUITEM *)GUIMemAlloc( sizeof( MENUITEM ) * ( num_menus + 1 ) );
+    menu = (UIMENUITEM *)GUIMemAlloc( sizeof( UIMENUITEM ) * ( num_menus + 1 ) );
     if( menu != NULL ) {
-        memset( menu, 0, sizeof( MENUITEM ) * ( num_menus + 1 ) );
+        memset( menu, 0, sizeof( UIMENUITEM ) * ( num_menus + 1 ) );
     }
     return( menu );
 }
@@ -158,7 +158,7 @@ MENUITEM *GUIAllocMenuItems( gui_ctl_idx num_menus )
  *                the end marker
  */
 
-static gui_ctl_idx GetNumItems( MENUITEM *menu )
+static gui_ctl_idx GetNumItems( UIMENUITEM *menu )
 {
     gui_ctl_idx i;
     gui_ctl_idx prev_num;
@@ -173,8 +173,8 @@ static gui_ctl_idx GetNumItems( MENUITEM *menu )
     return( prev_num );
 }
 
-static bool GetMenu( int *depth, gui_ctl_idx num_menus, MENUITEM *menu, gui_ctl_id id,
-                     MENUITEM **pmenu, gui_ctl_idx *position, MENUITEM ***to_replace )
+static bool GetMenu( int *depth, gui_ctl_idx num_menus, UIMENUITEM *menu, gui_ctl_id id,
+                     UIMENUITEM **pmenu, gui_ctl_idx *position, UIMENUITEM ***to_replace )
 {
     gui_ctl_idx     i;
     gui_ctl_idx     num_popup_menus;
@@ -209,14 +209,14 @@ static bool GetMenu( int *depth, gui_ctl_idx num_menus, MENUITEM *menu, gui_ctl_
 }
 
 /*
- * GUIGetMenu -- get the MENUITEM * for the given id.  Return true if it
+ * GUIGetMenu -- get the UIMENUITEM * for the given id.  Return true if it
  *               was found in the vbarmenu.
  */
 
-static bool GUIGetMenu( gui_window *wnd, gui_ctl_id id, MENUITEM **menu, gui_ctl_idx *position,
-                        MENUITEM ***to_replace, bool floating )
+static bool GUIGetMenu( gui_window *wnd, gui_ctl_id id, UIMENUITEM **menu, gui_ctl_idx *position,
+                        UIMENUITEM ***to_replace, bool floating )
 {
-    MENUITEM    **the_menu;
+    UIMENUITEM  **the_menu;
     gui_ctl_idx num_menus;
     bool        vbar;
     int         depth;
@@ -262,10 +262,10 @@ static bool GUIGetMenu( gui_window *wnd, gui_ctl_id id, MENUITEM **menu, gui_ctl
 
 gui_ctl_idx GUIGetMenuPopupCount( gui_window *wnd, gui_ctl_id id )
 {
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
 
     GUIGetMenu( wnd, id, &menu, NULL, NULL, false );
-    if( menu && menu->popup ) {
+    if( menu != NULL && menu->popup ) {
         return( GetNumItems( menu->popup ) );
     } else {
         return( -1 );
@@ -274,7 +274,7 @@ gui_ctl_idx GUIGetMenuPopupCount( gui_window *wnd, gui_ctl_id id )
 
 bool GUIEnableMenuItem( gui_window *wnd, gui_ctl_id id, bool enable, bool floating )
 {
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
     bool        vbar;
 
     vbar = GUIGetMenu( wnd, id, &menu, NULL, NULL, floating );
@@ -301,7 +301,7 @@ bool GUIEnableMenuItem( gui_window *wnd, gui_ctl_id id, bool enable, bool floati
 
 bool GUISetMenuText( gui_window *wnd, gui_ctl_id id, const char *text, bool floating )
 {
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
     bool        vbar;
     char        *new;
     bool        checked;
@@ -330,7 +330,7 @@ bool GUISetMenuText( gui_window *wnd, gui_ctl_id id, const char *text, bool floa
 bool GUICheckMenuItem( gui_window *wnd, gui_ctl_id id, bool check, bool floating )
 {
     bool        vbar;
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
 
     vbar = GUIGetMenu( wnd, id, &menu, NULL, NULL, floating );
     if( menu == NULL ) {
@@ -348,16 +348,16 @@ bool GUICheckMenuItem( gui_window *wnd, gui_ctl_id id, bool check, bool floating
     return( true );
 }
 
-void GUIChangeMenu( MENUITEM *menu, gui_menu_styles style )
+void GUIChangeMenu( UIMENUITEM *menu, gui_menu_styles style )
 {
-    if( style & GUI_GRAYED  ) {
+    if( style & GUI_GRAYED ) {
         menu->flags |= ITEM_GRAYED;
     } else {
         menu->flags &= ~ITEM_GRAYED;
     }
 }
 
-static bool GUISetMenuItems( gui_ctl_idx num_menus, MENUITEM *menu,
+static bool GUISetMenuItems( gui_ctl_idx num_menus, UIMENUITEM *menu,
                              gui_menu_struct *info )
 {
     gui_ctl_idx i;
@@ -366,12 +366,11 @@ static bool GUISetMenuItems( gui_ctl_idx num_menus, MENUITEM *menu,
     j = 0;
     for( i = 0; i < num_menus; i ++ ) {
         uiyield();
-        if( !(info[i].style & GUI_IGNORE) ) {
+        if( (info[i].style & GUI_IGNORE) == 0 ) {
             if( info[i].style & GUI_SEPARATOR ) {
                 menu[j].flags |= ITEM_SEPARATOR;
             } else {
-                if( !MenuConvert( info[i].label, &menu[j].flags, &menu[j].name,
-                                  info[i].style & GUI_MENU_CHECKED ) ) {
+                if( !MenuConvert( info[i].label, &menu[j].flags, &menu[j].name, (info[i].style & GUI_MENU_CHECKED) != 0 ) ) {
                     return( false );
                 }
                 GUIChangeMenu( &menu[j], info[i].style );
@@ -398,16 +397,16 @@ gui_ctl_idx GUIGetNumIgnore( gui_menu_struct *info, gui_ctl_idx num_menus )
 }
 
 /*
- * GUICreateMenuItems -- converts the gui_menu_struct to an array of MENUITEM
+ * GUICreateMenuItems -- converts the gui_menu_struct to an array of UIMENUITEM
  */
 
 bool GUICreateMenuItems( gui_ctl_idx num_menus, gui_menu_struct *info,
-                         MENUITEM **pmenu )
+                         UIMENUITEM **pmenu )
 {
     gui_ctl_idx num_ignore;
     gui_ctl_idx i;
     gui_ctl_idx j;
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
 
     if( num_menus <= 0 ) {
         *pmenu = NULL;
@@ -429,7 +428,7 @@ bool GUICreateMenuItems( gui_ctl_idx num_menus, gui_menu_struct *info,
     j = 0;
     for( i = 0; i < num_menus; i++ ) {
         uiyield();
-        if( !( info[i].style & GUI_IGNORE ) ) {
+        if( (info[i].style & GUI_IGNORE) == 0 ) {
             if( info[i].num_child_menus > 0 ) {
                 if( !GUICreateMenuItems( info[i].num_child_menus,
                                          info[i].child, &menu[j].popup ) ) {
@@ -487,29 +486,29 @@ static bool CreateVBarMenu( gui_window *wnd, int num_menus,
 }
 
 static bool InsertMenu( gui_window *wnd, gui_menu_struct *info, gui_ctl_idx position,
-                        MENUITEM **pmenu, bool append_hint, hint_type type )
+                        UIMENUITEM **pmenu, bool append_hint, hint_type type )
 {
     gui_ctl_idx num_menus;
-    MENUITEM    *new_menu;
-    MENUITEM    *menu;
+    UIMENUITEM  *new_menu;
+    UIMENUITEM  *menu;
 
     menu = *pmenu;
     num_menus = GetNumItems( menu );
     if( ( position > num_menus ) || ( position == -1 ) ) {
         position = num_menus;
     }
-    new_menu = (MENUITEM *)GUIMemAlloc( sizeof( MENUITEM ) * ( num_menus + 2 ) );
+    new_menu = (UIMENUITEM *)GUIMemAlloc( sizeof( UIMENUITEM ) * ( num_menus + 2 ) );
     if( new_menu == NULL ) {
         return( false );
     }
     if( menu != NULL ) {
-        memcpy( new_menu, menu, sizeof( MENUITEM ) * position );
+        memcpy( new_menu, menu, sizeof( UIMENUITEM ) * position );
         memcpy( &new_menu[position + 1], &menu[position],
-                sizeof( MENUITEM ) * ( num_menus + 1 - position ) );
+                sizeof( UIMENUITEM ) * ( num_menus + 1 - position ) );
     } else {
-        memset( &new_menu[position + 1], 0, sizeof( MENUITEM ) );
+        memset( &new_menu[position + 1], 0, sizeof( UIMENUITEM ) );
     }
-    memset( &new_menu[position], 0, sizeof( MENUITEM ) );
+    memset( &new_menu[position], 0, sizeof( UIMENUITEM ) );
     if( !GUISetMenuItems( 1, &new_menu[position], info ) ) {
         GUIMemFree( new_menu );
         return( false );
@@ -564,7 +563,7 @@ static bool CreateMenus( gui_window *wnd, int num_menus, gui_menu_struct *menu,
             }
             for( i = 0; i < num_menus; i ++ ) {
                 uiyield();
-                if( !( menu[i].style & GUI_IGNORE ) ) {
+                if( (menu[i].style & GUI_IGNORE) == 0 ) {
                     if( !InsertMenu( wnd, &menu[i], -1, &wnd->menu, true, MENU_HINT ) ) {
                         return( false );
                     }
@@ -589,8 +588,7 @@ bool GUICreateMenus( gui_window *wnd,  gui_create_info *dlg_info )
         GUIFreeGUIMenuStruct( menu, num );
         return( ret );
     } else {
-        return( CreateMenus( wnd, dlg_info->num_menus, dlg_info->menu,
-                             dlg_info->parent, dlg_info->style ) );
+        return( CreateMenus( wnd, dlg_info->num_menus, dlg_info->menu, dlg_info->parent, dlg_info->style ) );
     }
 }
 
@@ -644,24 +642,23 @@ bool GUIAppendMenuByIdx( gui_window *wnd, gui_ctl_idx position, gui_menu_struct 
     return( false );
 }
 
-static bool DeleteMenu( gui_window *wnd, gui_ctl_id id, MENUITEM **pmenu, int index )
+static bool DeleteMenu( gui_window *wnd, gui_ctl_id id, UIMENUITEM **pmenu, int index )
 {
     gui_ctl_idx prev_num;
-    MENUITEM    *new_menu;
-    MENUITEM    *sub;
+    UIMENUITEM  *new_menu;
+    UIMENUITEM  *sub;
 
     sub = *pmenu;
     prev_num = GetNumItems( sub );
     if( prev_num == 1 ) {
         new_menu = NULL;
     } else {
-        new_menu = (MENUITEM *)GUIMemAlloc( sizeof( MENUITEM ) * prev_num );
+        new_menu = (UIMENUITEM *)GUIMemAlloc( sizeof( UIMENUITEM ) * prev_num );
         if( new_menu == NULL ) {
             return( false );
         }
-        memcpy( new_menu, sub, sizeof( MENUITEM ) * index );
-        memcpy( &new_menu[index], &sub[index+1], sizeof( MENUITEM ) *
-                ( prev_num - index ) );
+        memcpy( new_menu, sub, sizeof( UIMENUITEM ) * index );
+        memcpy( &new_menu[index], &sub[index+1], sizeof( UIMENUITEM ) * ( prev_num - index ) );
     }
     if( sub[index].popup != NULL ) {
         GUIFreeMenuItems( sub[index].popup );
@@ -681,9 +678,9 @@ static bool DeleteMenu( gui_window *wnd, gui_ctl_id id, MENUITEM **pmenu, int in
 bool GUIDeleteMenuItem( gui_window *wnd, gui_ctl_id id, bool floating )
 {
     bool        vbar;
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
     gui_ctl_idx position;
-    MENUITEM    **to_replace;
+    UIMENUITEM  **to_replace;
 
     vbar = GUIGetMenu( wnd, id, &menu, &position, &to_replace, floating );
     if( menu == NULL ) {
@@ -703,16 +700,16 @@ bool GUIDeleteMenuItem( gui_window *wnd, gui_ctl_id id, bool floating )
 bool GUIDeleteToolbarMenuItem( gui_window *wnd, gui_ctl_id id )
 {
     gui_ctl_idx num_menus;
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
     gui_ctl_idx i;
-    EVENT       ev;
+    ui_event    ui_ev;
 
     if( wnd->vbarmenu != NULL ) {
-        ev = ID2EV( id );
+        ui_ev = ID2EV( id );
         menu = wnd->vbarmenu->titles;
         num_menus = GetNumItems( menu );
         for( i = 0; i < num_menus; i++ ) {
-            if( menu[i].event == ev ) {
+            if( menu[i].event == ui_ev ) {
                 if( !DeleteMenu( wnd, id, &wnd->vbarmenu->titles, i ) ) {
                     return( false );
                 }
@@ -808,9 +805,9 @@ bool GUIInsertMenuByIdx( gui_window *wnd, gui_ctl_idx position, gui_menu_struct 
 bool GUIInsertMenuByID( gui_window *wnd, gui_ctl_id id, gui_menu_struct *info )
 {
     bool        vbar;
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
     gui_ctl_idx position;
-    MENUITEM    **to_replace;
+    UIMENUITEM  **to_replace;
 
     vbar = GUIGetMenu( wnd, id, &menu, &position, &to_replace, false );
     if( menu == NULL ) {
@@ -860,7 +857,7 @@ static bool AddMenuItemToPopup( gui_window *wnd, gui_ctl_id id, gui_ctl_idx posi
                          gui_menu_struct *info, bool floating )
 {
     bool        vbar;
-    MENUITEM    *menu;
+    UIMENUITEM  *menu;
 
     vbar = GUIGetMenu( wnd, id, &menu, NULL, NULL, floating );
     if( menu == NULL ) {

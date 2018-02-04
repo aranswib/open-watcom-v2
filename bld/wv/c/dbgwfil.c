@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -65,8 +66,6 @@
 extern bool             FirstLinInfo( mod_handle, address *, unsigned * );
 extern unsigned         ExprSize( stack_entry * );
 
-extern stack_entry      *ExprSP;
-
 #define MAX_LINE_LEN    255 // must not wrap a gui_ord
 
 #include "menudef.h"
@@ -90,7 +89,7 @@ typedef struct {
     unsigned long       range;
     address             dotaddr;
     char                *name;
-    a_window            *asw;
+    a_window            asw;
     int                 eof;
     bool                track           : 1;
     bool                erase           : 1;
@@ -104,15 +103,15 @@ enum {
     PIECE_SOURCE
 };
 
-extern  void    SrcJoinAsm( a_window *wnd, a_window *asw )
+void    SrcJoinAsm( a_window wnd, a_window asw )
 {
     WndFile( wnd )->asw = asw;
 }
 
-extern  void    SrcNewAsmNotify( a_window *asw, mod_handle mod, bool track )
+void    SrcNewAsmNotify( a_window asw, mod_handle mod, bool track )
 {
     file_window *file;
-    a_window    *wnd;
+    a_window    wnd;
 
     for( wnd = WndNext( NULL ); wnd != NULL; wnd = WndNext( wnd ) ) {
         if( WndClass( wnd ) != WND_SOURCE )
@@ -130,7 +129,7 @@ extern  void    SrcNewAsmNotify( a_window *asw, mod_handle mod, bool track )
     }
 }
 
-extern  void    SrcFreeAsm( a_window *wnd )
+void    SrcFreeAsm( a_window wnd )
 {
     if( wnd == NULL )
         return;
@@ -138,7 +137,7 @@ extern  void    SrcFreeAsm( a_window *wnd )
 }
 
 #ifdef DEADCODE
-extern  bool    SrcIsTracking( a_window *wnd )
+bool    SrcIsTracking( a_window wnd )
 {
     return( WndFile( wnd )->track );
 }
@@ -162,14 +161,14 @@ static address GetRowAddr( file_window *file, wnd_row row, bool exact )
 }
 
 
-static void Centre( a_window *wnd, unsigned line )
+static void Centre( a_window wnd, unsigned line )
 {
     WndZapped( wnd );
     WndScroll( wnd, line - ( WndRows( wnd ) / 2 ) - WndTop( wnd ) );
 }
 
 
-static void GotoLine( a_window *wnd )
+static void GotoLine( a_window wnd )
 {
     long        line;
     mad_radix   old_radix;
@@ -194,7 +193,7 @@ static void GotoLine( a_window *wnd )
 }
 
 
-OVL_EXTERN void     FileMenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     FileMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 {
     address     addr;
     mod_handle  mod;
@@ -275,7 +274,7 @@ OVL_EXTERN void     FileMenuItem( a_window *wnd, gui_ctl_id id, int row, int pie
 }
 
 
-static void FilePosInit( a_window *wnd )
+static void FilePosInit( a_window wnd )
 {
     file_window *file = WndFile( wnd );
 
@@ -288,7 +287,7 @@ static void FilePosInit( a_window *wnd )
 }
 
 
-static void FilePos( a_window *wnd, int pos )
+static void FilePos( a_window wnd, int pos )
 {
     unsigned long       range;
     file_window *file = WndFile( wnd );
@@ -324,7 +323,7 @@ static void FilePos( a_window *wnd, int pos )
 }
 
 
-OVL_EXTERN int FileScroll( a_window *wnd, int lines )
+OVL_EXTERN int FileScroll( a_window wnd, int lines )
 {
     int         old_top;
 
@@ -334,7 +333,7 @@ OVL_EXTERN int FileScroll( a_window *wnd, int lines )
 }
 
 
-OVL_EXTERN  void    FileModify( a_window *wnd, int row, int piece )
+OVL_EXTERN  void    FileModify( a_window wnd, int row, int piece )
 {
     file_window *file = WndFile( wnd );
     address     addr;
@@ -351,7 +350,7 @@ OVL_EXTERN  void    FileModify( a_window *wnd, int row, int piece )
     }
 }
 
-static void FileSetDotAddr( a_window *wnd, address addr )
+static void FileSetDotAddr( a_window wnd, address addr )
 {
     file_window *file = WndFile( wnd );
 
@@ -366,7 +365,7 @@ static void FileSetDotAddr( a_window *wnd, address addr )
     }
 }
 
-OVL_EXTERN void FileNotify( a_window *wnd, wnd_row row, int piece )
+OVL_EXTERN void FileNotify( a_window wnd, wnd_row row, int piece )
 {
     file_window *file = WndFile( wnd );
     address     addr;
@@ -380,9 +379,10 @@ OVL_EXTERN void FileNotify( a_window *wnd, wnd_row row, int piece )
 }
 
 
-bool FileOpenGadget( a_window *wnd, wnd_line_piece *line, mod_handle mod )
+bool FileOpenGadget( a_window wnd, wnd_line_piece *line, mod_handle mod )
 {
-    a_window    *curr;
+    a_window    curr;
+
     for( curr = WndNext( NULL ); curr != NULL; curr = WndNext( curr ) ) {
         if( WndClass( curr ) != WND_SOURCE )
             continue;
@@ -398,7 +398,7 @@ bool FileOpenGadget( a_window *wnd, wnd_line_piece *line, mod_handle mod )
 }
 
 
-void FileBreakGadget( a_window *wnd, wnd_line_piece *line, bool curr, brkp *bp )
+void FileBreakGadget( a_window wnd, wnd_line_piece *line, bool curr, brkp *bp )
 {
     if( curr ) {
         if( bp == NULL ) {
@@ -420,8 +420,7 @@ void FileBreakGadget( a_window *wnd, wnd_line_piece *line, bool curr, brkp *bp )
 }
 
 
-OVL_EXTERN  bool    FileGetLine( a_window *wnd, int row, int piece,
-                             wnd_line_piece *line )
+OVL_EXTERN  bool    FileGetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
 {
     int         len;
     file_window *file = WndFile( wnd );
@@ -513,16 +512,14 @@ static unsigned ActiveLine( void )
 
 
 #ifdef DEADCODE
-void    FileReset( a_window *wnd )
+void    FileReset( a_window wnd )
 {
-    file_window *file = WndFile( wnd );
-
-    file->active = NOT_ACTIVE;
+    WndFile( wnd )->active = NOT_ACTIVE;
 }
 #endif
 
 
-static void FileSetTitle( a_window *wnd, mod_handle mod )
+static void FileSetTitle( a_window wnd, mod_handle mod )
 {
     char        *p;
     const char  *image_name;
@@ -546,7 +543,7 @@ static void FileSetTitle( a_window *wnd, mod_handle mod )
     WndSetTitle( wnd, TxtBuff );
 }
 
-static void FileTrack( a_window *wnd, cue_handle *ch )
+static void FileTrack( a_window wnd, cue_handle *ch )
 {
     unsigned    active, old_active;
     unsigned    end_line;
@@ -619,7 +616,7 @@ static void FileTrack( a_window *wnd, cue_handle *ch )
     file->active = active;
 }
 
-extern  bool    SrcMoveDot( a_window *wnd, address addr )
+bool    SrcMoveDot( a_window wnd, address addr )
 {
     unsigned    line;
     mod_handle  mod;
@@ -655,9 +652,9 @@ extern  bool    SrcMoveDot( a_window *wnd, address addr )
     return( true );
 }
 
-extern a_window *SrcWndFind( a_window *wnd, address addr, bool track )
+a_window SrcWndFind( a_window wnd, address addr, bool track )
 {
-    a_window    *new;
+    a_window    new;
     mod_handle  mod;
     DIPHDL( cue, ch );
 
@@ -678,12 +675,12 @@ extern a_window *SrcWndFind( a_window *wnd, address addr, bool track )
     return( new );
 }
 
-bool SrcHasFileOpen( a_window *wnd )
+bool SrcHasFileOpen( a_window wnd )
 {
     return( WndFile( wnd )->viewhndl != NULL );
 }
 
-static void     FileActive( a_window *wnd, mod_handle mod )
+static void     FileActive( a_window wnd, mod_handle mod )
 {
     file_window *file = WndFile( wnd );
     unsigned    line;
@@ -703,7 +700,7 @@ static void     FileActive( a_window *wnd, mod_handle mod )
     }
     if( file->mod != NO_MOD && ( UpdateFlags & UP_BREAK_CHANGE ) ) {
         WndNoSelect( wnd );
-        WndRepaint( wnd );
+        WndSetRepaint( wnd );
     }
     if( file->active != NOT_ACTIVE ) {
         WndNewCurrent( wnd, file->active, PIECE_SOURCE );
@@ -711,7 +708,7 @@ static void     FileActive( a_window *wnd, mod_handle mod )
 }
 
 
-static  void    FileNewIP( a_window *wnd )
+static  void    FileNewIP( a_window wnd )
 {
     DIPHDL( cue, ch );
 
@@ -734,7 +731,7 @@ static void ClearSrcFile( file_window *file )
     }
 }
 
-OVL_EXTERN void FileRefresh( a_window *wnd )
+OVL_EXTERN void FileRefresh( a_window wnd )
 {
     file_window *file = WndFile( wnd );
     address     dotaddr;
@@ -748,10 +745,10 @@ OVL_EXTERN void FileRefresh( a_window *wnd )
         }
         WndZapped( wnd );
     }
-    if( UpdateFlags & (UP_CSIP_CHANGE + UP_STACKPOS_CHANGE) ) {
+    if( UpdateFlags & (UP_CSIP_CHANGE | UP_STACKPOS_CHANGE) ) {
         FileNewIP( wnd );
     }
-    if( (UpdateFlags & (UP_NEW_SRC|UP_SYM_CHANGE)) && (file->mod != NO_MOD) ) {
+    if( (UpdateFlags & (UP_NEW_SRC | UP_SYM_CHANGE)) && (file->mod != NO_MOD) ) {
         ClearSrcFile( file );
         if( DIPLineCue( file->mod, file->file_id, 0, 0, ch ) != SR_NONE ) {
             dotaddr = file->dotaddr;
@@ -763,13 +760,13 @@ OVL_EXTERN void FileRefresh( a_window *wnd )
         if( file->toggled_break ) {
             file->toggled_break = false;
         } else {
-            WndRepaint( wnd );
+            WndSetRepaint( wnd );
         }
     }
 }
 
 
-OVL_EXTERN bool FileEventProc( a_window * wnd, gui_event gui_ev, void *parm )
+OVL_EXTERN bool FileWndEventProc( a_window wnd, gui_event gui_ev, void *parm )
 {
     file_window *file = WndFile( wnd );
 
@@ -811,7 +808,7 @@ OVL_EXTERN bool FileEventProc( a_window * wnd, gui_event gui_ev, void *parm )
 }
 
 wnd_info FileInfo = {
-    FileEventProc,
+    FileWndEventProc,
     FileRefresh,
     FileGetLine,
     FileMenuItem,
@@ -823,16 +820,16 @@ wnd_info FileInfo = {
     NoNextRow,
     FileNotify,
     ChkFlags,
-    UP_NEW_SRC + UP_SYM_CHANGE + UP_CSIP_CHANGE + UP_STACKPOS_CHANGE + UP_BREAK_CHANGE,
+    UP_NEW_SRC | UP_SYM_CHANGE | UP_CSIP_CHANGE | UP_STACKPOS_CHANGE | UP_BREAK_CHANGE,
     DefPopUp( FileMenu )
 };
 
-a_window        *DoWndFileOpen( const char *name, void *viewhndl,
+a_window    DoWndFileOpen( const char *name, void *viewhndl,
                                         cue_handle *ch, bool track,
                                         bool erase, wnd_class_wv wndclass )
 {
     file_window *file;
-    a_window    *wnd;
+    a_window    wnd;
     unsigned    line;
 
     file = WndMustAlloc( sizeof( file_window ) );
@@ -864,8 +861,7 @@ a_window        *DoWndFileOpen( const char *name, void *viewhndl,
     }
     file->track = track;
     FileSetTitle( wnd, file->mod );
-    WndSetSwitches( wnd, WSW_LBUTTON_SELECTS + WSW_RBUTTON_SELECTS +
-                         WSW_CHAR_CURSOR + WSW_SUBWORD_SELECT );
+    WndSetSwitches( wnd, WSW_LBUTTON_SELECTS | WSW_RBUTTON_SELECTS | WSW_CHAR_CURSOR | WSW_SUBWORD_SELECT );
     WndClrSwitches( wnd, WSW_HIGHLIGHT_CURRENT );
     if( line != 0 ) {
         WndZapped( wnd );
@@ -878,10 +874,10 @@ a_window        *DoWndFileOpen( const char *name, void *viewhndl,
     return( wnd );
 }
 
-static  a_window        *SrcFileOpen( cue_handle *ch,
+static  a_window    SrcFileOpen( cue_handle *ch,
                                 bool track, bool erase, mod_handle mod )
 {
-    a_window    *wnd;
+    a_window    wnd;
     file_window *file;
     void        *viewhndl;
 
@@ -905,13 +901,13 @@ static  a_window        *SrcFileOpen( cue_handle *ch,
 }
 
 
-extern a_window *DoWndSrcOpen( cue_handle *ch, bool track )
+a_window DoWndSrcOpen( cue_handle *ch, bool track )
 {
     return( SrcFileOpen( ch, track, false, ch == NULL ? NO_MOD : DIPCueMod( ch ) ) );
 }
 
 
-extern a_window *WndSrcOpen( void )
+a_window WndSrcOpen( void )
 {
     mod_handle  mod;
     address     addr;

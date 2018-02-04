@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -69,12 +70,12 @@ enum {
     PIECE_SOURCE,
 };
 
-OVL_EXTERN int CallNumRows( a_window *wnd )
+OVL_EXTERN int CallNumRows( a_window wnd )
 {
     return( WndCall( wnd )->tb.curr->total_depth );
 }
 
-OVL_EXTERN void     CallMenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     CallMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 {
     call_chain  *chain;
     call_window *call = WndCall( wnd );
@@ -110,7 +111,7 @@ OVL_EXTERN void     CallMenuItem( a_window *wnd, gui_ctl_id id, int row, int pie
     }
 }
 
-OVL_EXTERN  bool    CallGetLine( a_window *wnd, int row, int piece, wnd_line_piece *line )
+OVL_EXTERN  bool    CallGetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
 {
     call_chain  *chain;
     call_window *call = WndCall( wnd );
@@ -141,7 +142,7 @@ OVL_EXTERN  bool    CallGetLine( a_window *wnd, int row, int piece, wnd_line_pie
 }
 
 
-static void     CallInit( a_window *wnd )
+static void     CallInit( a_window wnd )
 {
     int                 row;
     call_window         *call = WndCall( wnd );
@@ -154,7 +155,7 @@ static void     CallInit( a_window *wnd )
     prev = call->tb.prev;
     WndNoSelect( wnd );
     if( curr->clean_size == 0 || curr->total_depth < prev->total_depth ) {
-        WndRepaint( wnd );
+        WndSetRepaint( wnd );
     } else {
         row = curr->total_depth;
         if( row < prev->total_depth ) {
@@ -177,13 +178,13 @@ static void     CallInit( a_window *wnd )
 }
 
 
-static void CallScrollPos( a_window *wnd )
+static void CallScrollPos( a_window wnd )
 {
     WndMoveCurrent( wnd, CallNumRows(wnd) - 1 + GetStackPos(), PIECE_TABSTOP );
 }
 
 
-OVL_EXTERN void     CallRefresh( a_window *wnd )
+OVL_EXTERN void     CallRefresh( a_window wnd )
 {
 
     if( ( UpdateFlags & ~UP_STACKPOS_CHANGE ) & CallInfo.flags ) {
@@ -193,7 +194,7 @@ OVL_EXTERN void     CallRefresh( a_window *wnd )
 }
 
 
-static void CallClose( a_window *wnd )
+static void CallClose( a_window wnd )
 {
     call_window *call = WndCall( wnd );
 
@@ -202,7 +203,7 @@ static void CallClose( a_window *wnd )
 }
 
 
-OVL_EXTERN bool CallEventProc( a_window * wnd, gui_event gui_ev, void *parm )
+OVL_EXTERN bool CallWndEventProc( a_window wnd, gui_event gui_ev, void *parm )
 {
     call_window *call = WndCall( wnd );
 
@@ -225,7 +226,7 @@ OVL_EXTERN bool CallEventProc( a_window * wnd, gui_event gui_ev, void *parm )
 
 
 wnd_info CallInfo = {
-    CallEventProc,
+    CallWndEventProc,
     CallRefresh,
     CallGetLine,
     CallMenuItem,
@@ -237,11 +238,11 @@ wnd_info CallInfo = {
     NoNextRow,
     NoNotify,
     ChkFlags,
-    UP_RADIX_CHANGE+UP_SYM_CHANGE+UP_CSIP_CHANGE+UP_STACKPOS_CHANGE,
+    UP_RADIX_CHANGE | UP_SYM_CHANGE | UP_CSIP_CHANGE | UP_STACKPOS_CHANGE,
     DefPopUp( CallMenu )
 };
 
-extern a_window *WndCallOpen( void )
+a_window WndCallOpen( void )
 {
     call_window *call;
 

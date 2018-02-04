@@ -39,12 +39,11 @@
 
 
 #include "app.h"
-#include "auipvt.h"
 
 typedef struct {
     int         top;
     int         saved_top;
-    a_window    *wnd;
+    a_window    wnd;
     char        *words[1];
 } w2_struct;
 
@@ -64,9 +63,9 @@ static gui_menu_struct W2AltPopUp[] = {
     { "&Top",       MENU_W2_TOP, GUI_ENABLED },
 };
 
-static void Pos( a_window *wnd, int pos )
+static void Pos( a_window wnd, int pos )
 {
-    w2_struct   *w2 = WndExtra( wnd );
+    w2_struct   *w2 = (w2_struct *)WndExtra( wnd );
     int         last;
 
     last = WORD_SIZE - WndRows( wnd ) + TITLE_SIZE;
@@ -77,21 +76,21 @@ static void Pos( a_window *wnd, int pos )
 }
 
 
-static int W2Scroll( a_window *wnd, int lines )
+static int W2Scroll( a_window wnd, int lines )
 {
-    w2_struct   *w2 = WndExtra( wnd );
+    w2_struct   *w2 = (w2_struct *)WndExtra( wnd );
     int         old_top;
 
     old_top = w2->top;
     Pos( wnd, old_top + lines );
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
     return( w2->top - old_top );
 }
 
 
-static void W2Modify( a_window *wnd, int row, int piece )
+static void W2Modify( a_window wnd, int row, int piece )
 {
-    w2_struct   *w2 = WndExtra( wnd );
+    w2_struct   *w2 = (w2_struct *)WndExtra( wnd );
 
     piece=piece;
     if( row == 0 ) {
@@ -105,10 +104,10 @@ static void W2Modify( a_window *wnd, int row, int piece )
 }
 
 
-static int W2NextRow( a_window *wnd, int row, int inc )
+static int W2NextRow( a_window wnd, int row, int inc )
 {
     int         new;
-    w2_struct   *w2 = WndExtra( wnd );
+    w2_struct   *w2 = (w2_struct *)WndExtra( wnd );
 
     if( row == WND_NO_ROW ) {
         if( inc == WND_SAVE_ROW ) {
@@ -135,7 +134,7 @@ static int W2NextRow( a_window *wnd, int row, int inc )
 }
 
 
-static void     W2MenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
+static void     W2MenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 {
 
     char        buff[80];
@@ -172,9 +171,9 @@ static void     W2MenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
     }
 }
 
-static bool W2GetLine( a_window *wnd, wnd_row row, int piece, wnd_line_piece *line )
+static bool W2GetLine( a_window wnd, wnd_row row, int piece, wnd_line_piece *line )
 {
-    w2_struct   *w2 = WndExtra( wnd );
+    w2_struct   *w2 = (w2_struct *)WndExtra( wnd );
 
     if( row < TITLE_SIZE ) {
         if( row == 0 ) {
@@ -203,9 +202,9 @@ static bool W2GetLine( a_window *wnd, wnd_row row, int piece, wnd_line_piece *li
 }
 
 
-static void W2Refresh( a_window *wnd )
+static void W2Refresh( a_window wnd )
 {
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
 }
 
 static int WordCompare( char **a, char **b )
@@ -213,25 +212,25 @@ static int WordCompare( char **a, char **b )
     return( stricmp( *a, *b ) );
 }
 
-static bool W2EventProc( a_window * wnd, gui_event gui_ev, void *parm )
+static bool W2WndEventProc( a_window wnd, gui_event gui_ev, void *parm )
 {
-    w2_struct   *w2 = WndExtra( wnd );
+    w2_struct   *w2 = (w2_struct *)WndExtra( wnd );
 
     parm=parm;
     switch( gui_ev ) {
     case GUI_INIT_WINDOW:
-        memcpy( w2->words, Word, WORD_SIZE*sizeof( char** ) );
+        memcpy( w2->words, Word, WORD_SIZE * sizeof( char ** ) );
         qsort( w2->words,
                WORD_SIZE,
                sizeof( char** ),
                ( int (*) (const void *, const void *) )WordCompare );
         w2->wnd = wnd;
         w2->top = 0;
-        WndRepaint( wnd );
+        WndSetRepaint( wnd );
         return( true );
     case GUI_RESIZE :
         Pos( wnd, 0 );
-        WndRepaint( wnd );
+        WndSetRepaint( wnd );
         return( true );
     case GUI_DESTROY :
         WndFree( w2 );
@@ -243,7 +242,7 @@ static bool W2EventProc( a_window * wnd, gui_event gui_ev, void *parm )
 }
 
 static wnd_info W2Info = {
-    W2EventProc,
+    W2WndEventProc,
     W2Refresh,
     W2GetLine,
     W2MenuItem,
@@ -259,10 +258,10 @@ static wnd_info W2Info = {
     DefPopUp( W2PopUp )
 };
 
-a_window *W2Open( void )
+a_window W2Open( void )
 {
     w2_struct   *w2;
-    a_window    *wnd;
+    a_window    wnd;
     wnd_create_struct   info;
 
     w2 = WndMustAlloc( WORD_SIZE*sizeof( char* )+sizeof( *w2 ) );
@@ -274,10 +273,7 @@ a_window *W2Open( void )
     info.extra = w2;
     wnd = WndCreateWithStruct( &info );
     if( wnd != NULL ) {
-        WndSetSwitches( wnd, WSW_RBUTTON_SELECTS+
-                             WSW_MULTILINE_SELECT+
-                             WSW_SUBWORD_SELECT+
-                             WSW_MAP_CURSOR_TO_SCROLL );
+        WndSetSwitches( wnd, WSW_RBUTTON_SELECTS | WSW_MULTILINE_SELECT | WSW_SUBWORD_SELECT | WSW_MAP_CURSOR_TO_SCROLL );
         Pos( wnd, 0 );
     }
     return( wnd );

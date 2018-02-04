@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -44,9 +45,8 @@
 #include "dbgwglob.h"
 #include "dbgwinsp.h"
 #include "dbgwmod.h"
+#include "dbgchopt.h"
 
-
-extern  bool            ModHasSourceInfo( mod_handle handle );
 
 #include "menudef.h"
 static gui_menu_struct ModMenu[] = {
@@ -77,12 +77,12 @@ typedef struct {
 #define ModList( mod ) ( &((mod)->___list) )
 
 
-OVL_EXTERN int ModNumRows( a_window *wnd )
+OVL_EXTERN int ModNumRows( a_window wnd )
 {
     return( ModListNumRows( ModList( WndMod( wnd ) ) ) );
 }
 
-static void ModCalcIndent( a_window *wnd )
+static void ModCalcIndent( a_window wnd )
 {
     gui_ord     extent, max_extent;
     int         i, size;
@@ -99,10 +99,10 @@ static void ModCalcIndent( a_window *wnd )
     }
     mod->max_modlen = max_extent + WndMidCharX( wnd );
     WndNoSelect( wnd );
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
 }
 
-static void     ModInit( a_window *wnd )
+static void     ModInit( a_window wnd )
 {
     mod_window  *mod = WndMod( wnd );
     int         size;
@@ -119,7 +119,7 @@ static void     ModInit( a_window *wnd )
     ModCalcIndent( wnd );
 }
 
-OVL_EXTERN void     ModMenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     ModMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 {
     address     addr;
     mod_handle  handle;
@@ -178,7 +178,7 @@ OVL_EXTERN void     ModMenuItem( a_window *wnd, gui_ctl_id id, int row, int piec
 }
 
 
-OVL_EXTERN void     ModModify( a_window *wnd, int row, int piece )
+OVL_EXTERN void     ModModify( a_window wnd, int row, int piece )
 {
     if( piece == PIECE_SOURCE ) {
         if( ModHasSourceInfo( ModListMod( ModList( WndMod( wnd ) ), row ) ) ) {
@@ -194,7 +194,7 @@ OVL_EXTERN void     ModModify( a_window *wnd, int row, int piece )
 }
 
 
-OVL_EXTERN  bool    ModGetLine( a_window *wnd, int row, int piece,
+OVL_EXTERN  bool    ModGetLine( a_window wnd, int row, int piece,
                              wnd_line_piece *line )
 {
     mod_handle  handle;
@@ -226,7 +226,7 @@ OVL_EXTERN  bool    ModGetLine( a_window *wnd, int row, int piece,
     }
 }
 
-static void ModSetCurrent( a_window *wnd )
+static void ModSetCurrent( a_window wnd )
 {
     int         i;
     mod_window  *mod = WndMod( wnd );
@@ -244,7 +244,7 @@ static void ModSetCurrent( a_window *wnd )
     }
 }
 
-extern void ModNewHandle( a_window *wnd, mod_handle handle )
+void ModNewHandle( a_window wnd, mod_handle handle )
 {
     mod_window  *mod = WndMod( wnd );
 
@@ -255,7 +255,7 @@ extern void ModNewHandle( a_window *wnd, mod_handle handle )
     ModSetCurrent( wnd );
 }
 
-OVL_EXTERN void     ModRefresh( a_window *wnd )
+OVL_EXTERN void     ModRefresh( a_window wnd )
 {
     int         i;
     mod_window  *mod = WndMod( wnd );
@@ -272,18 +272,18 @@ OVL_EXTERN void     ModRefresh( a_window *wnd )
                                           info->source, PIECE_SOURCE );
         }
     }
-    if( UpdateFlags & (UP_CSIP_CHANGE+UP_STACKPOS_CHANGE) ) {
+    if( UpdateFlags & (UP_CSIP_CHANGE | UP_STACKPOS_CHANGE) ) {
         ModSetCurrent( wnd );
     }
 }
 
-OVL_EXTERN void ModSetOptions( a_window *wnd )
+OVL_EXTERN void ModSetOptions( a_window wnd )
 {
     WndMod( wnd )->all_modules = _IsOn( SW_MOD_ALL_MODULES );
     ModInit( wnd );
 }
 
-OVL_EXTERN bool ModEventProc( a_window * wnd, gui_event gui_ev, void *parm )
+OVL_EXTERN bool ModWndEventProc( a_window wnd, gui_event gui_ev, void *parm )
 {
     mod_window  *mod = WndMod( wnd );
 
@@ -315,7 +315,7 @@ void ModChangeOptions( void )
 }
 
 wnd_info ModInfo = {
-    ModEventProc,
+    ModWndEventProc,
     ModRefresh,
     ModGetLine,
     ModMenuItem,
@@ -327,11 +327,11 @@ wnd_info ModInfo = {
     NoNextRow,
     NoNotify,
     ChkFlags,
-    UP_SYM_CHANGE+UP_OPEN_CHANGE+UP_CSIP_CHANGE+UP_STACKPOS_CHANGE,
+    UP_SYM_CHANGE | UP_OPEN_CHANGE | UP_CSIP_CHANGE | UP_STACKPOS_CHANGE,
     DefPopUp( ModMenu )
 };
 
-extern a_window *DoWndModOpen( mod_handle handle )
+a_window DoWndModOpen( mod_handle handle )
 {
     mod_window  *mod;
 
@@ -340,7 +340,7 @@ extern a_window *DoWndModOpen( mod_handle handle )
     return( DbgWndCreate( LIT_DUI( WindowModules ), &ModInfo, WND_MODULES, mod, &ModIcon ) );
 }
 
-extern a_window *WndModOpen( void )
+a_window WndModOpen( void )
 {
     return( DoWndModOpen( NO_MOD ) );
 }

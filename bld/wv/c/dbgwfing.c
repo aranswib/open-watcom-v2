@@ -41,56 +41,18 @@
 #include "fingmsg.h"
 
 
-#if 0
-#define _EXPIRY_YEAR    1988
-#define _EXPIRY_MONTH   5
-#define _EXPIRY_DAY     1
-#endif
-
-#ifdef _EXPIRY_YEAR
-struct date_st {
-    char day;
-    char month;
-    int year;
-};
-
-extern struct date_st getdate( void );
-#endif
-
-extern int WndNumColours;
-extern a_window *WndMain;
-
-static gui_coord BitmapSize;
-static gui_ord  Width;
-static gui_ord  Height;
-
 #define TOP_BLANK( wnd ) ( GUIIsGUI() ? 2 : ( ( WndRows(wnd) - FingMessageSize ) / 2 ) )
 
-#ifdef _EXPIRY_YEAR
-static bool ChkDate( void )
-{
-    struct date_st date;
+extern int          WndNumColours;
 
-    date = getdate();
-    if( date.year  < _EXPIRY_YEAR  )
-        return( true );
-    if( date.year  > _EXPIRY_YEAR  )
-        return( false );
-    if( date.month < _EXPIRY_MONTH )
-        return( true );
-    if( date.month > _EXPIRY_MONTH )
-        return( false );
-    if( date.day   > _EXPIRY_DAY   )
-        return( false );
-    return( true );
-}
-#endif
-
-static a_window *WndFing = NULL;
+static gui_coord    BitmapSize;
+static gui_ord      Width;
+static gui_ord      Height;
+static a_window     WndFing = NULL;
 
 void FingClose( void )
 {
-    a_window    *wnd;
+    a_window    wnd;
 
     if( WndFing != NULL ) {
         wnd = WndFing;
@@ -100,7 +62,7 @@ void FingClose( void )
 }
 
 
-OVL_EXTERN int FingNumRows( a_window *wnd )
+OVL_EXTERN int FingNumRows( a_window wnd )
 {
     /* unused parameters */ (void)wnd;
 
@@ -108,8 +70,7 @@ OVL_EXTERN int FingNumRows( a_window *wnd )
 }
 
 
-OVL_EXTERN  bool    FingGetLine( a_window *wnd, int row, int piece,
-                            wnd_line_piece *line )
+OVL_EXTERN  bool    FingGetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
 {
     if( piece != 0 )
         return( false );
@@ -139,7 +100,7 @@ OVL_EXTERN  bool    FingGetLine( a_window *wnd, int row, int piece,
     return( true );
 }
 
-OVL_EXTERN bool FingEventProc( a_window * wnd, gui_event gui_ev, void *parm )
+OVL_EXTERN bool FingWndEventProc( a_window wnd, gui_event gui_ev, void *parm )
 {
     gui_colour_set      *colours;
 
@@ -162,7 +123,7 @@ OVL_EXTERN bool FingEventProc( a_window * wnd, gui_event gui_ev, void *parm )
 }
 
 static wnd_info FingInfo = {
-    FingEventProc,
+    FingWndEventProc,
     NoRefresh,
     FingGetLine,
     NoMenuItem,
@@ -184,11 +145,6 @@ void FingOpen( void )
     int                 i;
     gui_ord             extent;
 
-#ifdef _EXPIRY_YEAR
-    if( !ChkDate() ) {
-        StartupErr( LIT_DUI( Tst_Per_Exp ) );
-    }
-#endif
     WndInitCreateStruct( &info );
     info.title = NULL;
     info.info = &FingInfo;
@@ -198,9 +154,12 @@ void FingOpen( void )
         Width = Height = 0;
         for( i = 0; i < FingMessageSize; ++i ) {
             extent = WndExtentX( WndMain, AboutMessage[i] );
-            if( extent > Width ) Width = extent;
+            if( extent > Width ) {
+                Width = extent;
+            }
         }
-        if( BitmapSize.x >= Width ) Width = BitmapSize.x;
+        if( BitmapSize.x >= Width )
+            Width = BitmapSize.x;
         Width += 4*WndMaxCharX( WndMain );
         Height = ( FingMessageSize + 5 ) * WndMaxCharY( WndMain );
         Height += BitmapSize.y;
@@ -215,6 +174,6 @@ void FingOpen( void )
     info.scroll = GUI_NOSCROLL;
     WndFing = WndCreateWithStruct( &info );
     if( WndFing != NULL ) {
-        WndRepaint( WndFing );
+        WndSetRepaint( WndFing );
     }
 }

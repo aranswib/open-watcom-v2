@@ -46,10 +46,12 @@
 #include "guirdlg.h"
 
 
-extern  bool            EditControlHasFocus;
+typedef struct dialog_wnd_node {
+    gui_window              *wnd;
+    struct dialog_wnd_node  *next;
+} dialog_wnd_node;
 
-WPI_MRESULT CALLBACK GUIEditFunc( HWND, WPI_MSG, WPI_PARAM1, WPI_PARAM2 );
-WPI_MRESULT CALLBACK GUIGroupBoxFunc( HWND, WPI_MSG, WPI_PARAM1, WPI_PARAM2 );
+extern  bool            EditControlHasFocus;
 
 controls_struct GUIControls[GUI_NUM_CONTROL_CLASSES] = {
 #if defined( __NT__ ) && !defined( _WIN64 )
@@ -61,12 +63,10 @@ controls_struct GUIControls[GUI_NUM_CONTROL_CLASSES] = {
     #undef pick
 };
 
-typedef struct dialog_wnd_node {
-    gui_window              *wnd;
-    struct dialog_wnd_node  *next;
-} dialog_wnd_node;
-
 static dialog_wnd_node  *DialogHead = NULL;
+
+WPI_MRESULT CALLBACK GUIEditFunc( HWND, WPI_MSG, WPI_PARAM1, WPI_PARAM2 );
+WPI_MRESULT CALLBACK GUIGroupBoxFunc( HWND, WPI_MSG, WPI_PARAM1, WPI_PARAM2 );
 
 bool GUIInsertCtrlWnd( gui_window *wnd )
 {
@@ -271,9 +271,6 @@ WPI_MRESULT CALLBACK GUIEditFunc( HWND hwnd, WPI_MSG message, WPI_PARAM1 wparam,
     HWND                grand_parent;
     gui_window          *wnd;
     gui_key_control     key_control;
-#ifdef __OS2_PM__
-    WORD                key_flags;
-#endif
 
     parent = _wpi_getparent( hwnd );
     wnd = GUIGetCtrlWnd( parent );
@@ -309,7 +306,7 @@ WPI_MRESULT CALLBACK GUIEditFunc( HWND hwnd, WPI_MSG message, WPI_PARAM1 wparam,
                 GUIGetKeyState( &key_control.key_state.state );
                 if( key_control.key_state.key == GUI_KEY_ENTER ) {
                     key_control.id = info->id;
-                    if( GUIEVENTWND( wnd, GUI_KEY_CONTROL, &key_control ) ) {
+                    if( GUIEVENT( wnd, GUI_KEY_CONTROL, &key_control ) ) {
                         return( 0L );
                     }
                 }
@@ -328,7 +325,7 @@ WPI_MRESULT CALLBACK GUIEditFunc( HWND hwnd, WPI_MSG message, WPI_PARAM1 wparam,
                 case GUI_KEY_DOWN :
                     key_control.id = info->id;
                     GUIGetKeyState( &key_control.key_state.state );
-                    GUIEVENTWND( wnd, GUI_KEY_CONTROL, &key_control );
+                    GUIEVENT( wnd, GUI_KEY_CONTROL, &key_control );
                 }
             }
         //} else {
@@ -340,16 +337,14 @@ WPI_MRESULT CALLBACK GUIEditFunc( HWND hwnd, WPI_MSG message, WPI_PARAM1 wparam,
 #else
     case WM_CHAR :
         if( EditControlHasFocus ) {
-            key_flags = SHORT1FROMMP( wparam );
-            if( !( key_flags & KC_KEYUP ) &&
-                GUIWindowsMapKey( wparam, lparam, &key_control.key_state.key ) ) {
+            if( !IS_KEY_UP( wparam ) && GUIWindowsMapKey( wparam, lparam, &key_control.key_state.key ) ) {
                 switch( key_control.key_state.key ) {
                 //case GUI_KEY_ENTER :
                 case GUI_KEY_UP :
                 case GUI_KEY_DOWN :
                     key_control.id = info->id;
                     GUIGetKeyState( &key_control.key_state.state );
-                    if( GUIEVENTWND( wnd, GUI_KEY_CONTROL, &key_control ) ) {
+                    if( GUIEVENT( wnd, GUI_KEY_CONTROL, &key_control ) ) {
                         return( 0L );
                     }
                 }

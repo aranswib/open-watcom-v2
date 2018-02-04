@@ -47,8 +47,6 @@
 #include "dbgprog.h"
 
 
-extern stack_entry      *ExprSP;
-
 typedef enum {
     I1,
     U1,
@@ -211,6 +209,7 @@ void FromItem( item_mach *tmp, stack_entry *entry )
             case 8:
                 //NYI: 64 bit offsets
                 entry->info.size = 4;
+                /* fall through */
             case 4:
                 entry->v.addr.mach.offset = tmp->lo;
                 return;
@@ -573,7 +572,8 @@ OVL_EXTERN bool ConvFP6( stack_entry *entry, conv_class from )
     case U2:
     case U4:
     case U8:
-        if( (entry->flags & SF_CONST) && U64Test( &entry->v.uint ) == 0 ) tmp = NilAddr;
+        if( (entry->flags & SF_CONST) && U64Test( &entry->v.uint ) == 0 )
+            tmp = NilAddr;
         //NYI: 64 bit offsets
         tmp.mach.offset = U32FetchTrunc( entry->v.uint );
         break;
@@ -581,7 +581,8 @@ OVL_EXTERN bool ConvFP6( stack_entry *entry, conv_class from )
     case I2:
     case I4:
     case I8:
-        if( (entry->flags & SF_CONST) && I64Test( &entry->v.sint ) == 0 ) tmp = NilAddr;
+        if( (entry->flags & SF_CONST) && I64Test( &entry->v.sint ) == 0 )
+            tmp = NilAddr;
         //NYI: 64 bit offsets
         tmp.mach.offset = U32FetchTrunc( entry->v.sint );
         break;
@@ -604,7 +605,8 @@ OVL_EXTERN bool ConvFP6( stack_entry *entry, conv_class from )
 
 OVL_EXTERN bool ConvFP4( stack_entry *entry, conv_class from )
 {
-    if( !ConvFP6( entry, from ) ) return( false );
+    if( !ConvFP6( entry, from ) )
+        return( false );
     entry->v.addr.mach.offset = (addr32_off)entry->v.addr.mach.offset;
     return( true );
 }
@@ -866,10 +868,8 @@ void ToItemMAD( stack_entry *entry, item_mach *tmp, mad_type_info *mti )
         ConvertTo( entry, TK_REAL, TM_NONE, bytes );
         MADTypeInfoForHost( MTK_FLOAT, sizeof( entry->v.real ), &src_mti );
         break;
+    case MTK_MMX:
     case MTK_XMM:
-        //MAD: nyi
-        ToItem( entry, tmp );
-        return;
     case MTK_CUSTOM:
         //MAD: nyi
         ToItem( entry, tmp );

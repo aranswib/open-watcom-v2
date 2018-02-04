@@ -138,19 +138,19 @@ enum {
 // matches it
 static gui_control_info dlgControls[] =
 {
-/*  0 */ DLG_STRING(    NULL, 2, 0, 11 ),
-/*  1 */ DLG_STRING(    NULL, DIR_START, 0, DIR_START+12 ),
-/*  2 */ DLG_EDIT(      NULL, CTL_EDIT, 2, 1, BOX_WIDTH+3 ),
-/*  3 */ DLG_DYNSTRING( NULL, CTL_DIR_NAME, DIR_START, 1, DLG_FILE_COLS-1 ),
-/*  4 */ DLG_LIST_BOX(  NULL, CTL_FILE_LIST,    2, 3, 2+BOX_WIDTH, 9 ),
-/*  5 */ DLG_LIST_BOX(  NULL, CTL_DIR_LIST,     DIR_START, 3, DIR_START+BOX_WIDTH2, 9 ),
-/*  6 */ DLG_DEFBUTTON( NULL, CTL_OK,   (DIR_START+BOX_WIDTH2+4), 4, (DIR_START+BOX_WIDTH2+14) ),
-/*  7 */ DLG_BUTTON(    NULL, CTL_CANCEL,       (DIR_START+BOX_WIDTH2+4), 6, (DIR_START+BOX_WIDTH2+14) ),
-/*  8 */ DLG_STRING(    NULL, 2, 11, 20 ),
-/*  9 */ DLG_COMBO_BOX( NULL, CTL_FILE_TYPES, 2,12,2+BOX_WIDTH+3,15 ),
+/*  0 */ DLG_STRING(    NULL,                 2,                            0,  11 ),
+/*  1 */ DLG_STRING(    NULL,                 DIR_START,                    0,  DIR_START + 12 ),
+/*  2 */ DLG_EDIT(      NULL, CTL_EDIT,       2,                            1,  BOX_WIDTH + 3 ),
+/*  3 */ DLG_DYNSTRING( NULL, CTL_DIR_NAME,   DIR_START,                    1,  DLG_FILE_COLS - 1 ),
+/*  4 */ DLG_LIST_BOX(  NULL, CTL_FILE_LIST,  2,                            3,  2 + BOX_WIDTH,                9 ),
+/*  5 */ DLG_LIST_BOX(  NULL, CTL_DIR_LIST,   DIR_START,                    3,  DIR_START + BOX_WIDTH2,       9 ),
+/*  6 */ DLG_DEFBUTTON( NULL, CTL_OK,         (DIR_START + BOX_WIDTH2 + 4), 4, (DIR_START + BOX_WIDTH2 + 14) ),
+/*  7 */ DLG_BUTTON(    NULL, CTL_CANCEL,     (DIR_START + BOX_WIDTH2 + 4), 6, (DIR_START + BOX_WIDTH2 + 14) ),
+/*  8 */ DLG_STRING(    NULL,                 2,                            11, 20 ),
+/*  9 */ DLG_COMBO_BOX( NULL, CTL_FILE_TYPES, 2,                            12, 2 + BOX_WIDTH + 3,            15 ),
 #if !defined( __UNIX__ ) && !defined( __NETWARE__ )
-/* 10 */ DLG_STRING(    NULL, DIR_START+2, 11, DIR_START+8 ),
-/* 11 */ DLG_COMBO_BOX( NULL, CTL_DRIVES, DIR_START+2,12,DIR_START+BOX_WIDTH,15 )
+/* 10 */ DLG_STRING(    NULL,                 DIR_START + 2,                11, DIR_START + 8 ),
+/* 11 */ DLG_COMBO_BOX( NULL, CTL_DRIVES,     DIR_START + 2,                12, DIR_START + BOX_WIDTH,        15 )
 #endif
 };
 
@@ -1103,9 +1103,9 @@ static void InitTextList( gui_window *gui, gui_ctl_id id, const char **text_list
 }
 
 /*
- * GetFileNameEvent - event handler for GetFileName dialog
+ * GetFileNameGUIEventProc - event handler for GetFileName dialog
  */
-static bool GetFileNameEvent( gui_window *gui, gui_event gui_ev, void *param )
+static bool GetFileNameGUIEventProc( gui_window *gui, gui_event gui_ev, void *param )
 {
     gui_ctl_id  id;
     int         sel;
@@ -1122,19 +1122,18 @@ static bool GetFileNameEvent( gui_window *gui, gui_event gui_ev, void *param )
 #endif
         if( !initDialog( gui, dlg->fileExtensions[dlg->currExtIndex], dlg->currOFN->file_name ) ) {
             dlg->dialogRC = FN_RC_FAILED_TO_INITIALIZE;
-            return( false );
+            break;
         }
         dlg->initted = true;
         GUISetFocus( gui, CTL_EDIT );
         return( true );
-        break;
     case GUI_CONTROL_DCLICKED:
         GUI_GETID( param, id );
         switch( id ) {
         case CTL_FILE_LIST:
         case CTL_DIR_LIST:
             ProcessOKorDClick( gui, id );
-            break;
+            return( true );
         }
         break;
     case GUI_CONTROL_CLICKED:
@@ -1144,15 +1143,15 @@ static bool GetFileNameEvent( gui_window *gui, gui_event gui_ev, void *param )
         switch( id ) {
         case CTL_OK:
             ProcessOKorDClick( gui, id );
-            break;
+            return( true );
         case CTL_CANCEL:
             GUICloseDialog( gui );
-            break;
+            return( true );
         case CTL_FILE_LIST:
             ptr = GUIGetText( gui, id );
             GUISetText( gui, CTL_EDIT, ptr );
             GUIMemFree( ptr );
-            break;
+            return( true );
         case CTL_DRIVES :
             sel = GUIGetCurrSelect( gui, id );
             strcpy( path, GetDriveTextList()[sel] );
@@ -1162,22 +1161,22 @@ static bool GetFileNameEvent( gui_window *gui, gui_event gui_ev, void *param )
                 dlg->dialogRC = FN_RC_RUNTIME_ERROR;
                 GUICloseDialog( gui );
             }
-            break;
+            return( true );
         case CTL_FILE_TYPES:
             sel = GUIGetCurrSelect( gui, id );
             if( !initDialog( gui, dlg->fileExtensions[sel], NULL ) ) {
                 dlg->dialogRC = FN_RC_RUNTIME_ERROR;
                 GUICloseDialog( gui );
             }
-            break;
+            return( true );
         }
-        return( true );
+        break;
     default:
         break;  // makes GCC happy.
     }
     return( false );
 
-} /* GetFileNameEvent */
+} /* GetFileNameGUIEventProc */
 
 /*
  * GUIGetFileName - get a file name from the user
@@ -1211,7 +1210,7 @@ int GUIGetFileName( gui_window *gui, open_file_name *ofn )
         goToDir( gui, ofn->initial_dir );
 
         GUIModalDlgOpen( gui, ofn->title, DLG_FILE_ROWS, DLG_FILE_COLS,
-                    dlgControls, ARRAY_SIZE( dlgControls ), &GetFileNameEvent, &dlg );
+                    dlgControls, ARRAY_SIZE( dlgControls ), &GetFileNameGUIEventProc, &dlg );
 
         if( !(ofn->flags & FN_CHANGEDIR) ) {
             goToDir( gui, olddir );

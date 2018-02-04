@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -66,16 +67,15 @@
 #include "dbgupdt.h"
 #include "dbglkup.h"
 #include "ntdbgpb.h"
+#include "dbgstdio.h"
+#include "dlgfile.h"
 
 #include "clibext.h"
 
 
-extern void             StdInNew( void );
-extern void             StdOutNew( void );
 extern char             *GetCmdArg( int );
 extern void             SetCmdArgStart( int, char * );
 extern void             SetNoSectSeg( void );
-extern void             SetLastExe( const char *name );
 extern void             VarFreeScopes( void );
 extern void             VarUnMapScopes( image_entry * );
 extern void             VarReMapScopes( image_entry * );
@@ -1086,7 +1086,7 @@ static void DoResNew( bool have_parms, const char *cmd,
 }
 
 
-extern void LoadNewProg( const char *cmd, const char *parms )
+void LoadNewProg( const char *cmd, const char *parms )
 {
     size_t      clen, plen;
     char        prog[FILENAME_MAX];

@@ -35,7 +35,6 @@
 
 extern int DlgOptions( void );
 
-extern void DlgCmd( void );
 extern void Password( const char *, char *, unsigned );
 extern gui_colour_set WndColours[];
 
@@ -123,17 +122,19 @@ static const char *FmtNum( const void *data_handle, int item )
 
 static void TimeIt( void )
 {
-    char        buff[80];
-    int         len;
-    long        iters;
-    a_window    *wnd;
+    char                buff[80];
+    int                 len;
+    long                iters;
+    a_window            wnd;
     gui_text_metrics    dummy;
 
     wnd = WndFindActive();
-    if( !wnd ) return;
+    if( wnd == NULL )
+        return;
     buff[0]='\0';
     DlgNew( "Enter Iterations", buff, 80 );
-    if( buff[0] == '\0' ) return;
+    if( buff[0] == '\0' )
+        return;
     iters = strtol( buff, NULL, 10 );
     strcpy( buff, "This is just some text" );
     len = strlen( buff );
@@ -166,10 +167,10 @@ static void OpenTools( void )
     WndCreateToolBar( 867, true, ArraySize( ToolBar ), ToolBar );
 }
 
-extern bool     WndMainMenuProc( a_window *wnd, gui_ctl_id id )
+bool     WndMainMenuProc( a_window wnd, gui_ctl_id id )
 {
-    a_window            *new;
-    a_window            *active;
+    a_window            new;
+    a_window            active;
     int                 i;
     char                *p = 0;
 
@@ -181,7 +182,8 @@ extern bool     WndMainMenuProc( a_window *wnd, gui_ctl_id id )
         TimeIt();
         break;
     case MENU_MATCH:
-        if( active == NULL ) return( true );
+        if( active == NULL )
+            return( true );
         if( WndKeyPiece( active ) == WND_NO_PIECE ) {
             Say( "Match not supported in this window" );
         } else {
@@ -210,22 +212,23 @@ extern bool     WndMainMenuProc( a_window *wnd, gui_ctl_id id )
         GetPassword();
         break;
     case MENU_NEXT:
-        if( active != NULL ) WndSearch( active, false, 1 );
+        if( active != NULL )
+            WndSearch( active, false, 1 );
         break;
     case MENU_PREV:
-        if( active != NULL ) WndSearch( active, false, -1 );
+        if( active != NULL )
+            WndSearch( active, false, -1 );
         break;
     case MENU_SEARCH:
-        if( SrchHistory == NULL ) SrchHistory = WndInitHistory();
+        if( SrchHistory == NULL )
+            SrchHistory = WndInitHistory();
         if( active != NULL ) {
             WndSearch( active, false, DlgSearch( active, SrchHistory ) );
         }
         break;
     case MENU_OPEN1:
         new = W1Open();
-        WndSetSwitches( new, WSW_MULTILINE_SELECT+WSW_RBUTTON_SELECTS+
-                             WSW_SUBWORD_SELECT+
-                             WSW_RBUTTON_CHANGE_CURR );
+        WndSetSwitches( new, WSW_MULTILINE_SELECT | WSW_RBUTTON_SELECTS | WSW_SUBWORD_SELECT | WSW_RBUTTON_CHANGE_CURR );
         break;
     case MENU_OPEN2:
         W2Open();
@@ -281,8 +284,8 @@ extern bool     WndMainMenuProc( a_window *wnd, gui_ctl_id id )
         break;
     case MENU_OPEN1A:
         new = W1Open();
-        WndSetSwitches( new, WSW_LBUTTON_SELECTS+WSW_MAP_CURSOR_TO_SCROLL );
-        WndClrSwitches( new, WSW_SELECT_IN_TABSTOP+WSW_ALLOW_POPUP );
+        WndSetSwitches( new, WSW_LBUTTON_SELECTS | WSW_MAP_CURSOR_TO_SCROLL );
+        WndClrSwitches( new, WSW_SELECT_IN_TABSTOP | WSW_ALLOW_POPUP );
         break;
     case MENU_QUIT:
         WndFini();

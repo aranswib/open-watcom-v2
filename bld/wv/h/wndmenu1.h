@@ -2,7 +2,7 @@
 *
 *                            Open Watcom Project
 *
-*    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
+* Copyright (c) 2018-2018 The Open Watcom Contributors. All Rights Reserved.
 *
 *  ========================================================================
 *
@@ -24,19 +24,9 @@
 *
 *  ========================================================================
 *
-* Description:  WHEN YOU FIGURE OUT WHAT THIS MODULE DOES, PLEASE
-*               DESCRIBE IT HERE!
+* Description:  Top level debugger menu.
 *
 ****************************************************************************/
 
 
-#define CTL_NEW_OK      100
-#define CTL_NEW_CANCEL  101
-#define CTL_NEW_EDIT    102
-#define CTL_NEW__LAST   103
-
-extern  bool    DlgNewWithCtl( const char *title, char *buff, unsigned buff_len,
-                               gui_control_info *controls, int num_controls,
-                               GUICALLBACK *callback, int rows,
-                               int cols, int max_cols );
-extern GUICALLBACK DlgNewEvent;
+extern void SetMADMenuItems( void );

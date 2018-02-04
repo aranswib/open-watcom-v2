@@ -493,7 +493,7 @@ walk_result MADIMPENTRY( RegSetWalk )( mad_type_kind tk, MI_REG_SET_WALKER *wk, 
             return( wr );
         }
     }
-    if( (tk & MTK_CUSTOM) && (MCSystemConfig()->cpu & X86_MMX) ) {
+    if( (tk & MTK_MMX) && (MCSystemConfig()->cpu & X86_MMX) ) {
         wr = wk( &RegSet[MMX_REG_SET], d );
         if( wr != WR_CONTINUE ) {
             return( wr );
@@ -1234,8 +1234,13 @@ static mad_status XMMGetPiece(
     row = piece / ( group + 2 );
     column = piece % ( group + 2 );
     if( row == 0 ) {
+        /* header line */
         if( column < group ) {
-            *max_value_p = 2;
+            if( group - piece > 10 ) {
+                *max_value_p = 3;
+            } else {
+                *max_value_p = 2;
+            }
             *reg_p = &XXX_dummy.info;
             *disp_type_p = (mad_type_handle)( X86T_XMM_TITLE0 - 1 + group - piece );
         } else {

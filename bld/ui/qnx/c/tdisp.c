@@ -70,7 +70,28 @@
 #endif
 #define PIXELEQUAL(p1,p2)   ((p1).ch == (p2).ch && (p1).attr == (p2).attr)
 
-extern  LP_PIXEL    asmNonBlankEnd( LP_PIXEL, int, PIXEL );
+extern LP_PIXEL asmNonBlankEnd( LP_PIXEL, int, PIXEL );
+#ifdef _M_I86
+    #pragma aux asmNonBlankEnd =    \
+        "std"                       \
+        "repe scasw"                \
+        "je L1"                     \
+        "inc di"                    \
+    "L1:"                           \
+        "cld"                       \
+    parm  [es di] [cx] [ax]         \
+    value [es di];
+#else
+    #pragma aux asmNonBlankEnd =    \
+        "std"                       \
+        "repe scasw"                \
+        "je L1"                     \
+        "inc edi"                   \
+    "L1:"                           \
+        "cld"                       \
+    parm  [es edi] [ecx] [ax]       \
+    value [edi];
+#endif
 
 bool    UserForcedTermRefresh = false;
 
@@ -80,7 +101,7 @@ static bool         TermIsQNXTerm;
 
 static void         TI_SETATTR( void );
 static int          new_attr( int nattr, int oattr );
-static int          ti_refresh( int must );
+static int          ti_refresh( bool must );
 
 bool TermCheck( void )
 /********************/
@@ -169,7 +190,6 @@ static void __puts( char *s )
  * Qnx terminal codes
  */
 
-#define _ESC    "\033"
 #define QNX_CURSOR_OFF()        __puts(_ESC "y0")
 #define QNX_CURSOR_NORMAL()     __puts(_ESC "y1")
 #define QNX_CURSOR_BOLD()       __puts(_ESC "y2")
@@ -195,14 +215,14 @@ static void __puts( char *s )
 
 static void QNX_CURSOR_MOVE( int c, int r )
 {
-    __putchar( 033 ); __putchar( '=' );
+    __putchar( _ESC_CHAR ); __putchar( '=' );
     __putchar( r + ' ' );
     __putchar( c + ' ' );
 }
 
 static void QNX_SETCOLOUR( int f, int b )
 {
-    __putchar( 033 ); __putchar( '@' );
+    __putchar( _ESC_CHAR ); __putchar( '@' );
     __putchar( '0' + f );
     __putchar( '0' + b );
 }
@@ -739,8 +759,8 @@ static bool setupscrnbuff( int srows, int scols )
 /***********************************************/
 {
     LP_PIXEL    scrn;
-    int         num;
-    int         i;
+    size_t      size;
+    size_t      i;
     int         rows;
     int         cols;
 
@@ -769,43 +789,43 @@ static bool setupscrnbuff( int srows, int scols )
     UIData->height = rows;
     UIData->cursor_type = C_NORMAL;
 
-    num = UIData->width * UIData->height * 2;
+    size = UIData->width * UIData->height * sizeof( PIXEL );
     scrn = UIData->screen.origin;
-#if defined( __386__ )
-    scrn = uirealloc( scrn, num );
-    if( scrn == NULL )
-        return( false );
-    if( (shadow = uirealloc( shadow, num )) == NULL ) {
-        uifree( scrn );
-        return( false );
-    }
-#else
     {
+#ifdef _M_I86
         unsigned        seg;
 
         if( scrn == NULL ) {
-            seg = qnx_segment_alloc( num );
+            seg = qnx_segment_alloc( size );
         } else {
-            seg = qnx_segment_realloc( FP_SEG( scrn ), num );
+            seg = qnx_segment_realloc( FP_SEG( scrn ), size );
         }
         if( seg == -1 )
             return( false );
         scrn = MK_FP( seg, 0 );
         if( shadow == NULL ) {
-            seg = qnx_segment_alloc( num );
+            seg = qnx_segment_alloc( size );
         } else {
-            seg = qnx_segment_realloc( FP_SEG( shadow ), num );
+            seg = qnx_segment_realloc( FP_SEG( shadow ), size );
         }
         if( seg == -1 ) {
             qnx_segment_free( FP_SEG( scrn ) );
             return( false );
         }
         shadow = MK_FP( seg, 0 );
-    }
+#else
+        scrn = uirealloc( scrn, size );
+        if( scrn == NULL )
+            return( false );
+        if( (shadow = uirealloc( shadow, size )) == NULL ) {
+            uifree( scrn );
+            return( false );
+        }
 #endif
+    }
     save_cursor_type = -1; /* C_NORMAL; */
-    num /= 2;
-    for( i = 0; i < num; ++i ) {
+    size /= sizeof( PIXEL );
+    for( i = 0; i < size; ++i ) {
         scrn[i].ch = ' ';       /* a space with normal attributes */
         scrn[i].attr = 7;       /* a space with normal attributes */
     }
@@ -814,19 +834,19 @@ static bool setupscrnbuff( int srows, int scols )
     return( true );
 }
 
-static volatile int SizePending;
+static volatile bool SizePending = false;
 
 static void size_handler( int signo )
 /***********************************/
 {
     /* unused parameters */ (void)signo;
 
-    SizePending = 1;
+    SizePending = true;
 }
 
 
-static EVENT td_sizeevent( void )
-/*******************************/
+static ui_event td_sizeevent( void )
+/**********************************/
 {
     SAREA           area;
 
@@ -836,7 +856,7 @@ static EVENT td_sizeevent( void )
         return( EV_NO_EVENT );
     if( !setupscrnbuff( UIData->height, UIData->width ) )
         return( EV_NO_EVENT );
-    SizePending = 0;
+    SizePending = false;
     area.row = 0;
     area.col = 0;
     area.height = UIData->height;
@@ -905,8 +925,8 @@ static bool initmonitor( void )
 
 
 #if 0
-static int td_init( void )
-/************************/
+static bool td_init( void )
+/*************************/
 {
     if( UIData == NULL ) {
         UIData = &ui_data;
@@ -921,18 +941,18 @@ static int td_init( void )
 
     uiinitcursor();
     initkeyboard();
-    UIData->mouse_acc_delay = 277;
-    UIData->mouse_rpt_delay = 55;
-    UIData->mouse_clk_delay = 277;
-    UIData->tick_delay      = 500;
+    UIData->mouse_acc_delay = uiclockdelay( 277 /* ms */ );
+    UIData->mouse_rpt_delay = uiclockdelay( 55  /* ms */ );
+    UIData->mouse_clk_delay = uiclockdelay( 277 /* ms */ );
+    UIData->tick_delay      = uiclockdelay( 500 /* ms */ );
     UIData->f10menus        = true;
-    td_refresh( 1 );
+    td_refresh( true );
     return( true );
 }
 #endif
 
-static int td_init( void )
-/************************/
+static bool td_init( void )
+/*************************/
 {
     int         rows, cols;
     const char  *tmp;
@@ -977,23 +997,23 @@ static int td_init( void )
     if( !initkeyboard() )
         return( false );
 
-    UIData->mouse_acc_delay = 277;
-    UIData->mouse_rpt_delay = 100;
-    UIData->mouse_clk_delay = 277;
-    UIData->tick_delay      = 500;
+    UIData->mouse_acc_delay = uiclockdelay( 277 /* ms */ );
+    UIData->mouse_rpt_delay = uiclockdelay( 100 /* ms */ );
+    UIData->mouse_clk_delay = uiclockdelay( 277 /* ms */ );
+    UIData->tick_delay      = uiclockdelay( 500 /* ms */ );
     UIData->f10menus        = true;
 
     //find point at which repeat chars code becomes efficient
     ti_find_cutoff();
 
-    ti_refresh( 1 );
+    ti_refresh( true );
     return( true );
 }
 
 
 #if 0
-static int td_fini( void )
-/************************/
+static bool td_fini( void )
+/*************************/
 {
     QNX_RESTORE_ATTR();
     QNX_HOME();
@@ -1002,12 +1022,12 @@ static int td_fini( void )
     __flush_con();
     finikeyboard();
     uifinicursor();
-    return( 0 );
+    return( false );
 }
 #endif
 
-static int td_fini( void )
-/************************/
+static bool td_fini( void )
+/*************************/
 {
     TI_RESTORE_ATTR();
     TI_HOME();
@@ -1023,7 +1043,7 @@ static int td_fini( void )
 
     finikeyboard();
     uifinicursor();
-    return( 0 );
+    return( false );
 }
 
 /* update the physical screen with contents of virtual copy */
@@ -1109,11 +1129,11 @@ static void ti_hwcursor( void )
 }
 
 
-static int td_refresh( int must )
-/*******************************/
+static int td_refresh( bool must )
+/********************************/
 {
     int             i;
-    int             incr;
+    unsigned        incr;
     LP_PIXEL        bufp, sbufp;
 
     must |= UserForcedTermRefresh;
@@ -1160,7 +1180,7 @@ QNXDebugPrintf2("cursor address %d,%d\n",j,i);
                 lastattr = new_attr( bufp[j].attr, lastattr );
             }
             if( bufp[j].ch < 0x20 )
-                __putchar( 033 );
+                __putchar( _ESC_CHAR );
             __putchar( bufp[j].ch );
             sbufp[j] = bufp[j];
         }
@@ -1199,34 +1219,12 @@ QNXDebugPrintf2("cursor address %d,%d\n",j,i);
 
 #define NonBlankEnd(b,n,c) (((c).ch == ' ')?(asmNonBlankEnd((b),(n),(c))):(b))
 
-#ifdef __386__
-    #pragma aux asmNonBlankEnd =    \
-        "std"                       \
-        "repe scasw"                \
-        "je L1"                     \
-        "inc edi"                   \
-    "L1:"                           \
-        "cld"                       \
-    parm  [es edi] [ecx] [ax]       \
-    value [edi];
-#else
-    #pragma aux asmNonBlankEnd =    \
-        "std"                       \
-        "repe scasw"                \
-        "je L1"                     \
-        "inc di"                    \
-    "L1:"                           \
-        "cld"                       \
-    parm  [es di] [cx] [ax]         \
-    value [es di];
-#endif
-
 
 static void update_shadow( void )
 /*******************************/
 {
     LP_PIXEL    bufp, sbufp;    // buffer and shadow buffer
-    int         incr = UIData->screen.increment;
+    unsigned    incr = UIData->screen.increment;
 
     // make sure cursor is back where it belongs
     ti_hwcursor();
@@ -1246,11 +1244,11 @@ static void update_shadow( void )
 }
 
 
-static int ti_refresh( int must )
-/*******************************/
+static int ti_refresh( bool must )
+/********************************/
 {
     int         i;
-    int         incr;               // chars per line
+    unsigned    incr;               // chars per line
     LP_PIXEL    bufp, sbufp;        // buffer and shadow buffer
     LP_PIXEL    pos;                // the address of the current char
     LP_PIXEL    blankStart;         // start of spaces to eos and then complete
@@ -1594,19 +1592,19 @@ static int td_setcur( ORD row, ORD col, CURSOR_TYPE typ, int attr )
 }
 
 
-EVENT td_event( void )
+ui_event td_event( void )
 {
-    EVENT       ev;
+    ui_event    ui_ev;
 
-    ev = td_sizeevent();
-    if( ev > EV_NO_EVENT )
-        return( ev );
+    ui_ev = td_sizeevent();
+    if( ui_ev > EV_NO_EVENT )
+        return( ui_ev );
     /* In a terminal environment we have to go for the keyboard first,
        since that's how the mouse events are coming in */
-    ev = tk_keyboardevent();
-    if( ev > EV_NO_EVENT ) {
+    ui_ev = tk_keyboardevent();
+    if( ui_ev > EV_NO_EVENT ) {
         uihidemouse();
-        return( ev );
+        return( ui_ev );
     }
     return( mouseevent() );
 }

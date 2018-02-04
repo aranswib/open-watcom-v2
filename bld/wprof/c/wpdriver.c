@@ -118,13 +118,13 @@ int WndNumMenus = { WndMenuSize( WndMainMenu ) };
 
 
 
-bool WndMainMenuProc( a_window *wnd, gui_ctl_id id )
-/**************************************************/
+bool WndMainMenuProc( a_window wnd, gui_ctl_id id )
+/*************************************************/
 {
-    a_window *      active;
-    sio_data *      curr_sio;
+    a_window    active;
+    sio_data    *curr_sio;
 #if !defined( __WINDOWS__ ) && !defined( __NT__ ) && !defined( __OS2__ ) && !defined( __UNIX__ )
-    char *          sys_spec;
+    char        *sys_spec;
 #endif
 
     /* unused parameters */ (void)wnd;
@@ -145,8 +145,7 @@ bool WndMainMenuProc( a_window *wnd, gui_ctl_id id )
     case MENU_SYSTEM:
         GUISpawnStart();
         sys_spec = getenv( "COMSPEC" );
-        if( sys_spec == NULL
-         || spawnl( P_WAIT, sys_spec, sys_spec, NULL ) == -1 ) {
+        if( sys_spec == NULL || spawnl( P_WAIT, sys_spec, sys_spec, NULL ) == -1 ) {
             ErrorMsg( LIT( Bad_System_Load ) );
         }
         GUISpawnEnd();
@@ -196,16 +195,16 @@ bool WndMainMenuProc( a_window *wnd, gui_ctl_id id )
 void OpenSample( void )
 /*********************/
 {
-    void        *cursor_type;
+    gui_mcursor_handle  old_cursor;
 
 #if defined( __WINDOWS__ ) || defined( __NT__ ) || defined( __OS2_PM__ )
     AboutClose();
 #else
     AboutSetOff();
 #endif
-    cursor_type = WndHourGlass( NULL );
+    old_cursor = WndHourGlass( NULL );
     if( GetSampleInfo() ) {
         WPSampleOpen();
     }
-    WndHourGlass( cursor_type );
+    WndHourGlass( old_cursor );
 }

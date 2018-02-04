@@ -30,24 +30,26 @@
 ****************************************************************************/
 
 
-#include "auipvt.h"////
+#include "_aui.h"////
 
 wnd_row         WndMenuRow;
 int             WndMenuPiece;
 
 
-void WndSelectEvent( a_window *wnd, gui_event event, void *parm )
+void WndSelectEvent( a_window wnd, gui_event gui_ev, void *parm )
 {
     gui_key             key;
     gui_keystate        state;
 
-    switch( event ) {
+    switch( gui_ev ) {
     case GUI_RBUTTONDOWN:
     case GUI_LBUTTONDOWN:
         WndNoSelect( wnd );
         return;
     case GUI_MOUSEMOVE:
-        if( _Is( wnd, WSW_SELECTING_WITH_KEYBOARD ) ) break;
+        if( WndSwitchOn( wnd, WSW_SELECTING_WITH_KEYBOARD ) )
+            break;
+        /* fall through */
     case GUI_PAINT:
         return;
     case GUI_KEYDOWN:
@@ -62,6 +64,7 @@ void WndSelectEvent( a_window *wnd, gui_event event, void *parm )
         case GUI_KEY_END:
             if( GUI_SHIFT_STATE( state ) )
                 return;
+            /* fall through */
         case GUI_KEY_ESCAPE:
             WndNoSelect( wnd );
             break;
@@ -71,12 +74,11 @@ void WndSelectEvent( a_window *wnd, gui_event event, void *parm )
     default :
         break;
     }
-    _Clr( wnd, WSW_SELECTING );
-    _Clr( wnd, WSW_SELECTING_WITH_KEYBOARD );
+    WndClrSwitches( wnd, WSW_SELECTING | WSW_SELECTING_WITH_KEYBOARD );
 }
 
 
-extern  void    WndSelEnds( a_window *wnd, wnd_coord **pstart, wnd_coord **pend )
+void    WndSelEnds( a_window wnd, wnd_coord **pstart, wnd_coord **pend )
 {
     wnd_coord   *start;
     wnd_coord   *end;
@@ -101,14 +103,16 @@ extern  void    WndSelEnds( a_window *wnd, wnd_coord **pstart, wnd_coord **pend 
     *pend = end;
 }
 
-extern bool     WndSelected( a_window *wnd, wnd_line_piece *line, wnd_row row,
+bool     WndSelected( a_window wnd, wnd_line_piece *line, wnd_row row,
                              int piece, int *first, int *len )
 {
     wnd_coord   *start;
     wnd_coord   *end;
 
-    if( wnd->sel_end.row == WND_NO_ROW ) return( false );
-    if( line->bitmap ) return( false );
+    if( wnd->sel_end.row == WND_NO_ROW )
+        return( false );
+    if( line->bitmap )
+        return( false );
 
     /* figure out start and end */
 
@@ -142,27 +146,29 @@ extern bool     WndSelected( a_window *wnd, wnd_line_piece *line, wnd_row row,
             return( true );
         }
     } else if( row == start->row ) {
-        if( piece > start->piece && piece < end->piece ) return( true );
+        if( piece > start->piece && piece < end->piece ) {
+            return( true );
+        }
     }
     return( false );
 }
 
 
-extern  bool    WndSelSetStart( a_window *wnd, void *parm )
+bool    WndSelSetStart( a_window wnd, void *parm )
 {
     WndNoSelect( wnd );
     return( WndSetPoint( wnd, parm, false, &wnd->sel_start, WND_NO_ROW, true ) );
 }
 
 
-extern  bool    WndSelGetEndPiece( a_window *wnd, void *parm, wnd_coord *piece )
+bool    WndSelGetEndPiece( a_window wnd, void *parm, wnd_coord *piece )
 {
     bool        success;
 
-    if( wnd->sel_start.row == WND_NO_ROW ) return( false );
-    if( _Isnt( wnd, WSW_MULTILINE_SELECT ) ) {
-        success = WndSetPoint( wnd, parm, false,
-                               piece, wnd->sel_start.row, true );
+    if( wnd->sel_start.row == WND_NO_ROW )
+        return( false );
+    if( WndSwitchOff( wnd, WSW_MULTILINE_SELECT ) ) {
+        success = WndSetPoint( wnd, parm, false, piece, wnd->sel_start.row, true );
     } else {
         success = WndSetPoint( wnd, parm, false, piece, WND_NO_ROW, true );
     }
@@ -170,23 +176,26 @@ extern  bool    WndSelGetEndPiece( a_window *wnd, void *parm, wnd_coord *piece )
 }
 
 
-extern  bool    WndSelSetEnd( a_window *wnd, void *parm )
+bool    WndSelSetEnd( a_window wnd, void *parm )
 {
     bool                success;
 
-    if( wnd->sel_start.row == WND_NO_ROW ) return( false );
+    if( wnd->sel_start.row == WND_NO_ROW )
+        return( false );
     success = WndSelGetEndPiece( wnd, parm, &wnd->sel_end );
     return( success );
 }
 
 
-extern void     WndSelPieceChange( a_window *wnd, wnd_coord *piece )
+void     WndSelPieceChange( a_window wnd, wnd_coord *piece )
 {
     wnd_coord           old_sel_end;
     int                 end_col;
 
-    if( wnd->keyindex != 0 ) return;
-    if( wnd->sel_start.row == WND_NO_ROW ) return;
+    if( wnd->keyindex != 0 )
+        return;
+    if( wnd->sel_start.row == WND_NO_ROW )
+        return;
     if( wnd->sel_end.row == WND_NO_ROW ) {
         old_sel_end = wnd->sel_start;
     } else {
@@ -194,12 +203,11 @@ extern void     WndSelPieceChange( a_window *wnd, wnd_coord *piece )
     }
     wnd->sel_end = *piece;
     if( old_sel_end.row != wnd->sel_end.row ) {
-        if( old_sel_end.row == wnd->sel_end.row + 1 ||
-            old_sel_end.row == wnd->sel_end.row - 1 ) {
+        if( old_sel_end.row == wnd->sel_end.row + 1 || old_sel_end.row == wnd->sel_end.row - 1 ) {
             WndDirtyScreenRow( wnd, old_sel_end.row );
             WndDirtyScreenRow( wnd, wnd->sel_end.row );
         } else {
-            WndRepaint( wnd );
+            WndSetRepaint( wnd );
         }
     } else if( old_sel_end.piece != wnd->sel_end.piece ) {
         WndDirtyScreenPiece( wnd, &old_sel_end );
@@ -216,7 +224,7 @@ extern void     WndSelPieceChange( a_window *wnd, wnd_coord *piece )
 }
 
 
-extern void     WndSelChange( a_window *wnd, void *parm )
+void     WndSelChange( a_window wnd, void *parm )
 {
     wnd_coord   piece;
 
@@ -224,13 +232,15 @@ extern void     WndSelChange( a_window *wnd, void *parm )
     WndSelPieceChange( wnd, &piece );
 }
 
-extern  void    WndNoSelect( a_window *wnd )
+void    WndNoSelect( a_window wnd )
 {
     wnd_coord   *start;
     wnd_coord   *end;
 
-    if( _Is( wnd, WSW_SELECT_EVENT ) ) return;
-    if( wnd->sel_end.row == WND_NO_ROW ) return;
+    if( WndSwitchOn( wnd, WSW_SELECT_EVENT ) )
+        return;
+    if( wnd->sel_end.row == WND_NO_ROW )
+        return;
     WndSelEnds( wnd, &start, &end );
 
     if( start->row == end->row ) {
@@ -240,21 +250,22 @@ extern  void    WndNoSelect( a_window *wnd )
             WndDirtyScreenRow( wnd, start->row );
         }
     } else {
-        WndRepaint( wnd );
+        WndSetRepaint( wnd );
     }
     WndNullPopItem( wnd );
     wnd->sel_start.row = WND_NO_ROW;
     wnd->sel_end.row = WND_NO_ROW;
 }
 
-extern  wnd_row WndSelRow( a_window *wnd )
+wnd_row WndSelRow( a_window wnd )
 {
-    if( wnd->sel_start.row == WND_NO_ROW ) return( WND_NO_ROW );
+    if( wnd->sel_start.row == WND_NO_ROW )
+        return( WND_NO_ROW );
     return( WndVirtualRow( wnd, wnd->sel_start.row ) );
 }
 
 
-extern  void    SetWndMenuRow( a_window *wnd )
+void    SetWndMenuRow( a_window wnd )
 {
     if( wnd->sel_end.row != WND_NO_ROW ) {
         WndMenuRow = wnd->sel_end.row;
@@ -268,20 +279,19 @@ extern  void    SetWndMenuRow( a_window *wnd )
     }
 }
 
-void WndToSelectMode( a_window *wnd )
+void WndToSelectMode( a_window wnd )
 {
-    if( WndHasCurrent( wnd ) && _Is( wnd, WSW_CHAR_CURSOR ) ) {
-        if( _Isnt( wnd, WSW_SELECTING ) ) {
+    if( WndHasCurrent( wnd ) && WndSwitchOn( wnd, WSW_CHAR_CURSOR ) ) {
+        if( WndSwitchOff( wnd, WSW_SELECTING ) ) {
             WndNoSelect( wnd );
             wnd->sel_start = wnd->current;
-            _Set( wnd, WSW_SELECTING );
-            _Set( wnd, WSW_SELECTING_WITH_KEYBOARD );
+            WndSetSwitches( wnd, WSW_SELECTING | WSW_SELECTING_WITH_KEYBOARD );
         }
     }
-    _Set( wnd, WSW_SELECT_EVENT );
+    WndSetSwitches( wnd, WSW_SELECT_EVENT );
 }
 
-void WndEndSelectEvent( a_window *wnd )
+void WndEndSelectEvent( a_window wnd )
 {
-    _Clr( wnd, WSW_SELECT_EVENT );
+    WndClrSwitches( wnd, WSW_SELECT_EVENT );
 }

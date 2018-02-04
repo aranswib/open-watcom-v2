@@ -2,7 +2,7 @@
 *
 *                            Open Watcom Project
 *
-*    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
+* Copyright (c) 2018-2018 The Open Watcom Contributors. All Rights Reserved.
 *
 *  ========================================================================
 *
@@ -30,11 +30,12 @@
 ****************************************************************************/
 
 
-#include "hostsys.h"
-#error Don't include this - it sucks!
-#ifndef _FAR
-    #define _FAR
-#endif
-#ifndef _NEAR
-    #define _NEAR
-#endif
+extern void     AsmChangeOptions( void );
+extern void     FPUChangeOptions( void );
+extern void     FuncChangeOptions( void );
+extern void     GlobChangeOptions( void );
+extern void     MMXChangeOptions( void );
+extern void     ModChangeOptions( void );
+extern void     RegChangeOptions( void );
+extern void     VarChangeOptions( void );
+extern void     XMMChangeOptions( void );

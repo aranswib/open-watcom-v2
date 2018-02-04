@@ -2,7 +2,7 @@
 *
 *                            Open Watcom Project
 *
-* Copyright (c) 2017-2017 The Open Watcom Contributors. All Rights Reserved.
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -750,26 +750,26 @@ static MONITOR ui_data = {
 };
 
 
-static  PIXEL _FAR *shadow;
-static  int   save_cursor_type;
+static LP_PIXEL shadow;
+static int      save_cursor_type;
 
 static bool setupscrnbuff( int srows, int scols )
 /***********************************************/
 {
-    PIXEL               *scrn;
-    int                 num;
-    int                 i;
-    struct winsize      size;
+    LP_PIXEL            scrn;
+    size_t              size;
+    size_t              i;
+    struct winsize      wsize;
     int                 rows, cols;
 
     rows = 0;
     cols = 0;
     // trying to get current terminal size by ioctl
     if( isatty( UIConHandle ) ) {
-        if( ioctl( UIConHandle, TIOCGWINSZ, &size ) != -1 ) {
+        if( ioctl( UIConHandle, TIOCGWINSZ, &wsize ) != -1 ) {
             // Under EMACS gdb, zero is returned for rows and cols
-            rows = size.ws_row;
-            cols = size.ws_col;
+            rows = wsize.ws_row;
+            cols = wsize.ws_col;
         }
     }
     if( rows == 0 ) {
@@ -795,20 +795,20 @@ static bool setupscrnbuff( int srows, int scols )
     UIData->height = rows;
     UIData->cursor_type = C_NORMAL;
 
-    num = UIData->width * UIData->height * sizeof( PIXEL );
+    size = UIData->width * UIData->height * sizeof( PIXEL );
     scrn = UIData->screen.origin;
-    scrn = uirealloc( scrn, num );
 
+    scrn = uirealloc( scrn, size );
     if( scrn == NULL )
         return( false );
-    if( (shadow = uirealloc( shadow, num )) == NULL ) {
+    if( (shadow = uirealloc( shadow, size )) == NULL ) {
         uifree( scrn );
         return( false );
     }
 
     save_cursor_type = -1; /* C_NORMAL; */
-    num /= sizeof( PIXEL );
-    for( i = 0; i < num; ++i ) {
+    size /= sizeof( PIXEL );
+    for( i = 0; i < size; ++i ) {
         scrn[i].ch = ' ';       /* a space with normal attributes */
         scrn[i].attr = 7;       /* a space with normal attributes */
     }
@@ -828,8 +828,8 @@ static void size_handler( int signo )
 }
 
 
-static EVENT td_sizeevent( void )
-/*******************************/
+static ui_event td_sizeevent( void )
+/**********************************/
 {
     SAREA           area;
 
@@ -929,10 +929,10 @@ static int new_attr( int nattr, int oattr )
     return( nattr );
 }
 
-static int ti_refresh( int must );
+static int ti_refresh( bool must );
 
-static int ti_init( void )
-/************************/
+static bool ti_init( void )
+/*************************/
 {
     int         rows, cols;
     const char  *tmp;
@@ -980,21 +980,21 @@ static int ti_init( void )
 
     uiinitcursor();
 
-    UIData->mouse_acc_delay = 277;
-    UIData->mouse_rpt_delay = 55;
-    UIData->mouse_clk_delay = 277;
-    UIData->tick_delay      = 500;
+    UIData->mouse_acc_delay = uiclockdelay( 277 /* ms */ );
+    UIData->mouse_rpt_delay = uiclockdelay( 55  /* ms */ );
+    UIData->mouse_clk_delay = uiclockdelay( 277 /* ms */ );
+    UIData->tick_delay      = uiclockdelay( 500 /* ms */ );
     UIData->f10menus        = true;
 
     //find point at which repeat chars code becomes efficient
     ti_find_cutoff();
 
-    ti_refresh( 1 );
+    ti_refresh( true );
     return( true );
 }
 
-static int ti_fini( void )
-/************************/
+static bool ti_fini( void )
+/*************************/
 {
     TI_RESTORE_ATTR();
     TI_HOME();
@@ -1010,7 +1010,7 @@ static int ti_fini( void )
 
     finikeyboard();
     uifinicursor();
-    return( 0 );
+    return( false );
 }
 
 /* update the physical screen with contents of virtual copy */
@@ -1103,7 +1103,7 @@ static void update_shadow( void )
 /*******************************/
 {
     LP_PIXEL    bufp, sbufp;    // buffer and shadow buffer
-    int         incr = UIData->screen.increment;
+    unsigned    incr = UIData->screen.increment;
 
     // make sure cursor is back where it belongs
     ti_hwcursor();
@@ -1123,11 +1123,11 @@ static void update_shadow( void )
     dirty_area.row0 = dirty_area.row1 = dirty_area.col0 = dirty_area.col1 = 0;
 }
 
-static int ti_refresh( int must )
-/*******************************/
+static int ti_refresh( bool must )
+/********************************/
 {
     int         i;
-    int         incr;               // chars per line
+    unsigned    incr;               // chars per line
     LP_PIXEL    bufp, sbufp;        // buffer and shadow buffer
     LP_PIXEL    pos;                // the address of the current char
     LP_PIXEL    blankStart;         // start of spaces to eos and then complete
@@ -1415,19 +1415,19 @@ static int td_setcur( ORD row, ORD col, CURSOR_TYPE typ, int attr )
 }
 
 
-static EVENT td_event( void )
+static ui_event td_event( void )
 {
-    EVENT       ev;
+    ui_event    ui_ev;
 
-    ev = td_sizeevent();
-    if( ev > EV_NO_EVENT )
-        return( ev );
+    ui_ev = td_sizeevent();
+    if( ui_ev > EV_NO_EVENT )
+        return( ui_ev );
     /* In a terminal environment we have to go for the keyboard first,
        since that's how the mouse events are coming in */
-    ev = tk_keyboardevent();
-    if( ev > EV_NO_EVENT ) {
+    ui_ev = tk_keyboardevent();
+    if( ui_ev > EV_NO_EVENT ) {
          uihidemouse();
-         return( ev );
+         return( ui_ev );
     }
     return( mouseevent() );
 }

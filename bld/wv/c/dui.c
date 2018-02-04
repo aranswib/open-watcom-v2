@@ -64,13 +64,9 @@
 #include "wndhelp.h"
 #include "wndmenu.h"
 #include "fingmsg.h"
+#include "dlgnewp.h"
 
 
-extern a_window         *WndMain;
-extern const char       WndNameTab[];
-
-extern GUICALLBACK      WndMainEventProc;
-extern void             DlgNewProg( void );
 extern void             InitPaint( void );
 extern void             InitFileMap( void );
 extern void             InitScreen( void );
@@ -196,7 +192,8 @@ void DUIInit( void )
 #if defined(__GUI__)
     TellWinHandle();
 #endif
-    if( WndMain != NULL ) WndSetIcon( WndMain, &MainIcon );
+    if( WndMain != NULL )
+        WndSetIcon( WndMain, &MainIcon );
     StartTimer();
     InitHelp();
     InitGadget();
@@ -239,7 +236,7 @@ void DUIShow( void )
     WndDebug();
     WndShowAll();
     WndShowWndMain();
-    WndMainEventProc( WndGui( WndMain ), GUI_NO_EVENT, NULL );
+    WndMainGUIEventProc( WndGui( WndMain ), GUI_NO_EVENT, NULL );
     if( _IsOff( SW_HAVE_TASK ) && _IsOff( SW_PROC_ALREADY_STARTED ) ) {
         DlgNewProg();
     }
@@ -338,11 +335,6 @@ bool DUIInfoRelease( void )
     if( VarInfoRelease() )
         return( true );
     return( false );
-}
-
-void *DUIHourGlass( void *x )
-{
-    return( WndHourGlass( x ) );
 }
 
 void WndDoInput( void )

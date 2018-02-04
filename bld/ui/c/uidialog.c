@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -43,8 +44,6 @@
 
 
 #define CTRL_BUF_LEN    80
-
-typedef EVENT           an_event;
 
 static bool exit_field( a_dialog *ui_dlg_info, VFIELD *field )
 {
@@ -176,17 +175,17 @@ static void print_field( VSCREEN *vs, VFIELD *field, bool current )
         uidisplayhotspot( vs, field );
         return;
     case FLD_TEXT :
-        attr = UIData->attrs[ ATTR_NORMAL ];
+        attr = UIData->attrs[ATTR_NORMAL];
         str  = field->u.str;
         break;
     case FLD_LABEL :
-        attr = UIData->attrs[ ATTR_NORMAL ];
+        attr = UIData->attrs[ATTR_NORMAL];
         strcpy( ctrlbuf, field->u.str );
         strcat( ctrlbuf, ":" );
         length = area->width;
         break;
     case FLD_FRAME :
-        uidrawbox( vs, area, UIData->attrs[ ATTR_NORMAL ], field->u.str );
+        uidrawbox( vs, area, UIData->attrs[ATTR_NORMAL], field->u.str );
         return;
     case FLD_EDIT :
     case FLD_INVISIBLE_EDIT :
@@ -213,9 +212,9 @@ static void print_field( VSCREEN *vs, VFIELD *field, bool current )
         list  = &combo->list;
 
         if( !combo->perm ) {
-            ctrlbuf[0] = UiGChar[ UI_ARROW_DOWN ];  /* JBS was 25 */
+            ctrlbuf[0] = UiGChar[UI_ARROW_DOWN];  /* JBS was 25 */
             uivtextput( vs, area->row, area->col + area->width + 1,
-                        UIData->attrs[ ATTR_SCROLL_ICON ], ctrlbuf, 1 );
+                        UIData->attrs[ATTR_SCROLL_ICON], ctrlbuf, 1 );
             ctrlbuf[0] = '\0';
         }
         if( edit->buffer != NULL ) {
@@ -244,9 +243,9 @@ static void print_field( VSCREEN *vs, VFIELD *field, bool current )
         break;
     case FLD_PULLDOWN :
         list = field->u.list;
-        ctrlbuf[0] = UiGChar[ UI_ARROW_DOWN ];  /* JBS was 25 */
+        ctrlbuf[0] = UiGChar[UI_ARROW_DOWN];  /* JBS was 25 */
         uivtextput( vs, area->row, area->col + area->width,
-                    UIData->attrs[ ATTR_SCROLL_ICON ], ctrlbuf, 1 );
+                    UIData->attrs[ATTR_SCROLL_ICON], ctrlbuf, 1 );
         ctrlbuf[0] = '\0';
         if( list->get == NULL ) {
             list->get = uigetlistelement;
@@ -312,7 +311,7 @@ static void print_field( VSCREEN *vs, VFIELD *field, bool current )
         if( current ) {
             hotattr = attr;
         } else {
-            hotattr = UIData->attrs[ ATTR_RADIO_HOTSPOT ];
+            hotattr = UIData->attrs[ATTR_RADIO_HOTSPOT];
         }
         hotkey = uidrawhottext( vs, ctrlbuf, area, attr, hotattr, false, false, false );
         if( field->typ == FLD_CHECK ) {
@@ -355,11 +354,11 @@ unsigned ui_split_line( char **sptr, char *t, unsigned max )
     len = t - str;
     if( len < max ) max = len;
     for( delim = 0, cr = 0, i = 0 ; i < max ; ++i ) {
-        ch = str[ i ];
+        ch = str[i];
         if( ch == '\n' ) {
             break;
         } else if( ch == '\r' ) {
-            str[ i ] = ' ';
+            str[i] = ' ';
             cr = i;
         } else if( ch == ' ' || ch == ',' || ch == ')' ) {
             delim = i;
@@ -371,7 +370,7 @@ unsigned ui_split_line( char **sptr, char *t, unsigned max )
     } else if( len == max ) {     /* everything fit */
         slen = max;
     } else if( cr > 0 ) {         /* split at the carriage return */
-        str[ cr ] = '\r';
+        str[cr] = '\r';
         max = cr+1;
         slen = cr;
     } else if( delim > 0 ) {      /* split at the space, comma, or paren */
@@ -397,8 +396,8 @@ void *uiinitdialog( const char *title, ATTR attr, char *lines[],
 
     uisetscreenarea( &area, true, false );
     width = UIData->width - 2;
-    for( depth = 0, i = 0 ; lines[ i ] != NULL ; ++i ) {
-        s = lines[ i ];
+    for( depth = 0, i = 0 ; lines[i] != NULL ; ++i ) {
+        s = lines[i];
         len = strlen( s );
         for( t = s + len ; s < t ; ) {
             ++ depth;
@@ -419,8 +418,8 @@ void *uiinitdialog( const char *title, ATTR attr, char *lines[],
     width = area.width;
     area.row = 1;
     area.height = 1;
-    for( i = 0 ; lines[ i ] != NULL ; ++i ) {
-        s = lines[ i ];
+    for( i = 0 ; lines[i] != NULL ; ++i ) {
+        s = lines[i];
         len = strlen( s );
         for( t = s + len ; s < t ; ) {
             line = s;
@@ -459,7 +458,7 @@ static void enter_field( a_dialog *ui_dlg_info, VFIELD *field )
         }
         if( ui_dlg_info->edit_data == NULL ) {
             ui_dlg_info->edit_data = uibegedit( ui_dlg_info->vs, area.row, area.col, area.width,
-                                  UIData->attrs[ ATTR_CURR_EDIT ],
+                                  UIData->attrs[ATTR_CURR_EDIT],
                                   edit->buffer, edit->length, 0, 0, true, 0,
                                   field->typ == FLD_INVISIBLE_EDIT );
         }
@@ -527,7 +526,7 @@ a_dialog *uibegdialog( const char *title, VFIELD *fields, ORD rows, ORD cols, in
     char                *lines[1];
     a_dialog            *ui_dlg_info;
 
-    lines[ 0 ] = NULL;
+    lines[0] = NULL;
     ui_dlg_info = uimalloc( sizeof( a_dialog ) );
     if( ui_dlg_info == NULL ) {
         return( NULL );
@@ -535,7 +534,7 @@ a_dialog *uibegdialog( const char *title, VFIELD *fields, ORD rows, ORD cols, in
     ui_dlg_info->field = 0;
     ui_dlg_info->edit_data = NULL;
     ui_dlg_info->moving = false;
-    ui_dlg_info->vs = uiinitdialog( title, UIData->attrs[ ATTR_NORMAL ],
+    ui_dlg_info->vs = uiinitdialog( title, UIData->attrs[ATTR_NORMAL],
                            lines, rows, cols, rpos, cpos );
     uireinitdialog( ui_dlg_info, fields );
     return( ui_dlg_info );
@@ -637,7 +636,7 @@ static  void setcombobuffer( a_dialog *ui_dlg_info, VFIELD *fld )
     }
 }
 
-static EVENT   pulldownfilter( EVENT ev, a_dialog *ui_dlg_info )
+static ui_event pulldownfilter( ui_event ui_ev, a_dialog *ui_dlg_info )
 {
     a_list          *list = NULL;
     a_combo_box     *combo;
@@ -657,7 +656,7 @@ static EVENT   pulldownfilter( EVENT ev, a_dialog *ui_dlg_info )
     if( list->get == NULL ) {
         list->get = uigetlistelement;       // set get_element function
     }
-    switch( ev ) {
+    switch( ui_ev ) {
     case EV_MOUSE_DCLICK:
     case EV_MOUSE_PRESS:
     {
@@ -696,7 +695,7 @@ static EVENT   pulldownfilter( EVENT ev, a_dialog *ui_dlg_info )
         area.row = 0;
         area.col = 0;
         list->box = uibeglistbox( vs, &area, list );
-        if( ev != EV_MOUSE_PRESS && ev != EV_MOUSE_DCLICK
+        if( ui_ev != EV_MOUSE_PRESS && ui_ev != EV_MOUSE_DCLICK
                         && fld->typ == FLD_COMBOBOX ) {
             ui_dlg_info->dirty = true;
             setcombobuffer( ui_dlg_info, fld );
@@ -704,14 +703,14 @@ static EVENT   pulldownfilter( EVENT ev, a_dialog *ui_dlg_info )
         }
         break;
     }
-    return( ev );
+    return( ui_ev );
 }
 
 static void *forwardtab( a_dialog *ui_dlg_info )
 {
     VFIELD             *fld;
 
-    if( ui_dlg_info->curr == NULL ){
+    if( ui_dlg_info->curr == NULL ) {
         fld = ui_dlg_info->first;
     } else {
         fld = nextfield( ui_dlg_info->curr );
@@ -871,9 +870,9 @@ bool uiresizedialog( a_dialog *ui_dlg_info, SAREA *new_area )
 static  ORD     PrevRow = 0;
 static  ORD     PrevCol = 0;
 
-static EVENT uicheckmove( EVENT ev, a_dialog *ui_dlg_info )
+static ui_event uicheckmove( ui_event ui_ev, a_dialog *ui_dlg_info )
 {
-    EVENT       new_ev;
+    ui_event    new_ui_ev;
     ORD         row;
     ORD         col;
     SAREA       new_area;
@@ -881,8 +880,8 @@ static EVENT uicheckmove( EVENT ev, a_dialog *ui_dlg_info )
     int         prev_row;
     int         prev_col;
 
-    new_ev = ev;
-    switch( ev ) {
+    new_ui_ev = ui_ev;
+    switch( ui_ev ) {
     case EV_MOUSE_PRESS :
         if( uivmousepos( NULL, &row, &col ) == ui_dlg_info->vs ) {
             vs = ui_dlg_info->vs;
@@ -890,7 +889,7 @@ static EVENT uicheckmove( EVENT ev, a_dialog *ui_dlg_info )
                 PrevRow = row;
                 PrevCol = col;
                 ui_dlg_info->moving = true;
-                new_ev = EV_NO_EVENT;
+                new_ui_ev = EV_NO_EVENT;
             }
         }
         break;
@@ -918,75 +917,75 @@ static EVENT uicheckmove( EVENT ev, a_dialog *ui_dlg_info )
                 PrevRow += new_area.row - prev_row;
                 PrevCol += new_area.col - prev_col;
             }
-            new_ev = EV_NO_EVENT;
+            new_ui_ev = EV_NO_EVENT;
         }
         break;
     case EV_MOUSE_RELEASE :
         if( ui_dlg_info->moving ) {
             ui_dlg_info->moving = false;
-            new_ev = EV_NO_EVENT;
+            new_ui_ev = EV_NO_EVENT;
         }
     }
-    return( new_ev );
+    return( new_ui_ev );
 }
 
-static EVENT uitabkey( EVENT ev, a_dialog *ui_dlg_info )
+static ui_event uitabkey( ui_event ui_ev, a_dialog *ui_dlg_info )
 {
     VFIELD          *curr, *fld;
     ORD             row, col;
     SAREA           area;
-    EVENT           newev;
+    ui_event        new_ui_ev;
 
     if( ui_dlg_info->first == NULL ) return( false );
     curr = ui_dlg_info->curr;
-    newev = ev;
-    switch( ev ){
+    new_ui_ev = ui_ev;
+    switch( ui_ev ) {
     case EV_MOUSE_DCLICK:
     case EV_MOUSE_PRESS:
-    {
-        a_combo_box         *combo;
-        a_list              *list;
-        VSCREEN             *mousevs;
+        {
+            a_combo_box         *combo;
+            a_list              *list;
+            VSCREEN             *mousevs;
 
-        mousevs = uivmousepos( ui_dlg_info->vs, &row, &col );
-        fld = ui_dlg_info->first;
-        while( fld != NULL ) {
-            list = NULL;
-            area = fld->area;
-            if( fld->typ == FLD_PULLDOWN ) {
-                list = fld->u.list;
-                area.height = 1;
-                area.width += 1;    /* pulldown button */
-            } else if( fld->typ == FLD_LISTBOX ) {
-                list = fld->u.list;
-            } else if( fld->typ == FLD_EDIT_MLE ) {
-                list = fld->u.list;
-            } else if( fld->typ == FLD_COMBOBOX ) {
-                area.height = 1;
-                area.width += 2;    /* pulldown button */
-                combo = fld->u.combo;
-                list = &combo->list;
-            }
-            if( mousevs != ui_dlg_info->vs ) {
-                if( list != NULL && list->box != NULL ) {
-                    if( list->box->vs == mousevs ) {
-                        break;
-                    }
+            mousevs = uivmousepos( ui_dlg_info->vs, &row, &col );
+            fld = ui_dlg_info->first;
+            while( fld != NULL ) {
+                list = NULL;
+                area = fld->area;
+                if( fld->typ == FLD_PULLDOWN ) {
+                    list = fld->u.list;
+                    area.height = 1;
+                    area.width += 1;    /* pulldown button */
+                } else if( fld->typ == FLD_LISTBOX ) {
+                    list = fld->u.list;
+                } else if( fld->typ == FLD_EDIT_MLE ) {
+                    list = fld->u.list;
+                } else if( fld->typ == FLD_COMBOBOX ) {
+                    area.height = 1;
+                    area.width += 2;    /* pulldown button */
+                    combo = fld->u.combo;
+                    list = &combo->list;
                 }
-            } else if( row >= area.row  && row < area.row + area.height &&
-                        col >= area.col  && col < area.col + area.width ) {
-                break;
+                if( mousevs != ui_dlg_info->vs ) {
+                    if( list != NULL && list->box != NULL ) {
+                        if( list->box->vs == mousevs ) {
+                            break;
+                        }
+                    }
+                } else if( row >= area.row  && row < area.row + area.height &&
+                            col >= area.col  && col < area.col + area.width ) {
+                    break;
+                }
+                fld = nextfield( fld );
             }
-            fld = nextfield( fld );
-        }
-        /* check boxes don't get mouse events unless mouse over them */
-        if( fld == NULL && curr != NULL && curr->typ == FLD_CHECK ) {
-            newev = EV_NO_EVENT;
-        } else {
-            curr = fld;
+            /* check boxes don't get mouse events unless mouse over them */
+            if( fld == NULL && curr != NULL && curr->typ == FLD_CHECK ) {
+                new_ui_ev = EV_NO_EVENT;
+            } else {
+                curr = fld;
+            }
         }
         break;
-    }
     case EV_TAB_FORWARD :
         curr = forwardtab( ui_dlg_info );
         break;
@@ -995,64 +994,64 @@ static EVENT uitabkey( EVENT ev, a_dialog *ui_dlg_info )
         break;
     case EV_CURSOR_RIGHT :
     case EV_CURSOR_DOWN :
-    {
-        a_radio             *r1, *r2;
+        {
+            a_radio             *r1, *r2;
 
-        if( curr!= NULL && curr->typ == FLD_RADIO ) {
-            fld = nextfield( curr );
-            if( fld != NULL ) {
-                r1 = curr->u.radio;
-                r2 = fld->u.radio;
-                if( r1->group == r2->group ) {
-                    curr = fld;
-                    do_radio( ui_dlg_info, fld );
-                    newev = EV_CHECK_BOX_CLICK;
+            if( curr!= NULL && curr->typ == FLD_RADIO ) {
+                fld = nextfield( curr );
+                if( fld != NULL ) {
+                    r1 = curr->u.radio;
+                    r2 = fld->u.radio;
+                    if( r1->group == r2->group ) {
+                        curr = fld;
+                        do_radio( ui_dlg_info, fld );
+                        new_ui_ev = EV_CHECK_BOX_CLICK;
+                    }
                 }
             }
         }
         break;
-    }
     case EV_CURSOR_LEFT :
     case EV_CURSOR_UP :
-    {
-        a_radio             *r1, *r2;
+        {
+            a_radio             *r1, *r2;
 
-        if( curr!= NULL && curr->typ == FLD_RADIO ) {
-            if( curr != ui_dlg_info->first ) {
-                fld = curr - 1;
-                r1 = curr->u.radio;
-                r2 = fld->u.radio;
-                if( r1->group == r2->group ) {
-                    curr = fld;
-                    do_radio( ui_dlg_info, fld );
-                    newev = EV_CHECK_BOX_CLICK;
+            if( curr!= NULL && curr->typ == FLD_RADIO ) {
+                if( curr != ui_dlg_info->first ) {
+                    fld = curr - 1;
+                    r1 = curr->u.radio;
+                    r2 = fld->u.radio;
+                    if( r1->group == r2->group ) {
+                        curr = fld;
+                        do_radio( ui_dlg_info, fld );
+                        new_ui_ev = EV_CHECK_BOX_CLICK;
+                    }
                 }
             }
         }
         break;
-    }
     }
     if( ui_dlg_info->curr != curr ) {
         uidialogsetcurr( ui_dlg_info, curr );
     }
-    return( newev );
+    return( new_ui_ev );
 }
 
-EVENT uihotkeyfilter( a_dialog *ui_dlg_info, EVENT ev )
+ui_event uihotkeyfilter( a_dialog *ui_dlg_info, ui_event ui_ev )
 {
     char        ch, hotkey;
     VFIELD      *vf;
 
     /* is the event a key press or alt-key press */
-    if( ev < 0x100 && isalpha( ev ) ) {
-        ch = tolower( ev );
+    if( ui_ev < 0x100 && isalpha( ui_ev ) ) {
+        ch = tolower( ui_ev );
     } else {
-        ch = uialtchar( ev );
+        ch = uialtchar( ui_ev );
     }
 
     if( ch ) {
         hotkey = '\0';
-        for( vf = ui_dlg_info->fields ; vf->typ != FLD_VOID; ++vf ){
+        for( vf = ui_dlg_info->fields ; vf->typ != FLD_VOID; ++vf ) {
             switch( vf->typ ) {
             case FLD_HOT:
                 hotkey = vf->u.hs->flags;
@@ -1080,26 +1079,26 @@ EVENT uihotkeyfilter( a_dialog *ui_dlg_info, EVENT ev )
         if( hotkey == ch ) {
             switch( vf->typ ) {
                 case FLD_HOT:
-                    ev = vf->u.hs->event;
+                    ui_ev = vf->u.hs->event;
                     break;
                 case FLD_CHECK:
                     ui_dlg_info->dirty = true;
                     vf->u.check->val = !vf->u.check->val;
                     print_field( ui_dlg_info->vs, vf, true );
-                    ev = EV_CHECK_BOX_CLICK;
+                    ui_ev = EV_CHECK_BOX_CLICK;
                     break;
                 case FLD_RADIO:
                     do_radio( ui_dlg_info, vf );
-                    ev = EV_CHECK_BOX_CLICK;
+                    ui_ev = EV_CHECK_BOX_CLICK;
                     break;
             }
         }
     }
 
-    return( ev );
+    return( ui_ev );
 }
 
-EVENT uiprocessdialogevent( EVENT ev, a_dialog *ui_dlg_info )
+ui_event uiprocessdialogevent( ui_event ui_ev, a_dialog *ui_dlg_info )
 {
     VFIELD              *field;
     a_check             *check;
@@ -1108,18 +1107,18 @@ EVENT uiprocessdialogevent( EVENT ev, a_dialog *ui_dlg_info )
     a_combo_box         *combo;
     a_list              *list;
 
-    ev = uicheckmove( ev, ui_dlg_info );
-    ev = uitabkey( ev, ui_dlg_info );
+    ui_ev = uicheckmove( ui_ev, ui_dlg_info );
+    ui_ev = uitabkey( ui_ev, ui_dlg_info );
     field = ui_dlg_info->curr;
     if( field != NULL ) {
         switch( field->typ ) {
         case FLD_CHECK:
         case FLD_RADIO:
-            switch( ev ) {
+            switch( ui_ev ) {
             case EV_MOUSE_DCLICK:
             case EV_MOUSE_PRESS:
             case ' ' :
-                ev = EV_CHECK_BOX_CLICK;
+                ui_ev = EV_CHECK_BOX_CLICK;
                 if( field->typ == FLD_RADIO ) {
                     do_radio( ui_dlg_info, field );
                     break;
@@ -1135,7 +1134,7 @@ EVENT uiprocessdialogevent( EVENT ev, a_dialog *ui_dlg_info )
             break;
         case FLD_EDIT:
         case FLD_INVISIBLE_EDIT:
-            ev = uiledit( ev );
+            ui_ev = uiledit( ui_ev );
             edit = field->u.edit;
             if( ui_dlg_info->edit_data != NULL ) {
                 edit->buffer = ui_dlg_info->edit_data->edit_buffer;
@@ -1145,15 +1144,15 @@ EVENT uiprocessdialogevent( EVENT ev, a_dialog *ui_dlg_info )
         case FLD_LISTBOX:
         case FLD_EDIT_MLE:
             list = field->u.list;
-            ev = uilistbox( ev, list, true );
+            ui_ev = uilistbox( ui_ev, list, true );
             break;
         case FLD_PULLDOWN:
             list = field->u.list;
             if( list->box == NULL ) {
-                ev = pulldownfilter( ev, ui_dlg_info );
+                ui_ev = pulldownfilter( ui_ev, ui_dlg_info );
             } else {
                 choice = list->choice;
-                ev = uilistbox( ev, list, false );
+                ui_ev = uilistbox( ui_ev, list, false );
                 if( choice != list->choice ) {
                     ui_dlg_info->dirty = true;
                     print_field( ui_dlg_info->vs, field, true );
@@ -1165,17 +1164,17 @@ EVENT uiprocessdialogevent( EVENT ev, a_dialog *ui_dlg_info )
             list  = &combo->list;
             edit  = &combo->edit;
             if( list->box == NULL ) {
-                ev = pulldownfilter( ev, ui_dlg_info );
+                ui_ev = pulldownfilter( ui_ev, ui_dlg_info );
             } else {
                 choice = list->choice;
-                ev = uilistbox( ev, list, combo->perm );
+                ui_ev = uilistbox( ui_ev, list, combo->perm );
                 if( choice != list->choice ) {
                     ui_dlg_info->dirty = true;
                     setcombobuffer( ui_dlg_info, field );
                     print_field( ui_dlg_info->vs, field, true );
                 }
             }
-            ev = uiledit( ev );
+            ui_ev = uiledit( ui_ev );
             if( ui_dlg_info->edit_data != NULL ) {
                 edit->buffer = ui_dlg_info->edit_data->edit_buffer;
                 edit->length = ui_dlg_info->edit_data->edit_eline.length;
@@ -1183,18 +1182,18 @@ EVENT uiprocessdialogevent( EVENT ev, a_dialog *ui_dlg_info )
             break;
         }
     }
-    ev = uihotkeyfilter( ui_dlg_info, ev );
-    ev = uihotspotfilter( ui_dlg_info->vs, ui_dlg_info->fields, ev );
-    return( ev );
+    ui_ev = uihotkeyfilter( ui_dlg_info, ui_ev );
+    ui_ev = uihotspotfilter( ui_dlg_info->vs, ui_dlg_info->fields, ui_ev );
+    return( ui_ev );
 }
 
-an_event uidialog( a_dialog *ui_dlg_info )
+ui_event uidialog( a_dialog *ui_dlg_info )
 {
-    static EVENT    dialog_events[] = {
+    static ui_event dialog_events[] = {
         'a',            'z',
         'A',            'Z',
         EV_ALT_Q,       EV_ALT_M,
-        EV_NO_EVENT,
+        __rend__,
         EV_ALT_CURSOR_DOWN,
         EV_CURSOR_UP,
         EV_CURSOR_DOWN,
@@ -1209,15 +1208,15 @@ an_event uidialog( a_dialog *ui_dlg_info )
         EV_MOUSE_DCLICK,
         EV_ENTER,
         ' ',
-        EV_NO_EVENT
+        __end__
     };
-    an_event    ev;
+    ui_event    ui_ev;
     VFIELD      *field;
 
-    ev = EV_NO_EVENT;
+    ui_ev = EV_NO_EVENT;
     enter_field( ui_dlg_info, ui_dlg_info->curr );
 
-    while( ev == EV_NO_EVENT || !uiinlists( ev ) ) {
+    while( ui_ev == EV_NO_EVENT || !uiinlists( ui_ev ) ) {
         field = ui_dlg_info->curr;
         if( field != NULL ) {
             switch( field->typ ) {
@@ -1239,8 +1238,8 @@ an_event uidialog( a_dialog *ui_dlg_info )
             }
         }
         uipushlist( dialog_events );
-        ev = uidialogevent( ui_dlg_info->vs );
-        ev = uidialogcallback( ui_dlg_info, ev );
+        ui_ev = uidialogevent( ui_dlg_info->vs );
+        ui_ev = uidialogcallback( ui_dlg_info, ui_ev );
         uipoplist( /* dialog_events */ );
 
         if( field != NULL ) {
@@ -1262,18 +1261,18 @@ an_event uidialog( a_dialog *ui_dlg_info )
                 break;
             }
         }
-        ev = uiprocessdialogevent( ev, ui_dlg_info );
+        ui_ev = uiprocessdialogevent( ui_ev, ui_dlg_info );
     }
     /* This code will make sure to exit the current fields before returning
      * a default hot spot event. This is for consistency with windows.
      */
-    if( uiisdefaulthotspot( ui_dlg_info->fields, ev ) ) {
+    if( uiisdefaulthotspot( ui_dlg_info->fields, ui_ev ) ) {
         if( exit_field( ui_dlg_info, ui_dlg_info->curr ) ) {
             ui_dlg_info->dirty = true;
         }
     }
     ui_dlg_info->field = ui_dlg_info->curr - ui_dlg_info->fields;
-    return( ev );
+    return( ui_ev );
 }
 
 void uifreedialog( a_dialog *ui_dlg_info )

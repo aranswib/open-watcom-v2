@@ -46,24 +46,6 @@ static gui_menu_struct Menu = {
 };
 #define NUM_MENU_ITEMS ( sizeof( Menu ) / sizeof( gui_menu_struct ) )
 
-static GUICALLBACK ToolbarCallBack;
-
-static gui_create_info FloatingToolbar = {
-    NULL,
-    { 0, 0, 0, 0 },
-    GUI_NOSCROLL,
-    GUI_SYSTEM_MENU | GUI_VISIBLE | GUI_RESIZEABLE | GUI_CLOSEABLE | GUI_INIT_INVISIBLE,
-    NULL,
-    NUM_MENU_ITEMS,
-    &Menu,
-    0,
-    NULL,
-    ToolbarCallBack,
-    NULL,
-    NULL,
-    NULL                                // Menu Resource
-};
-
 static gui_control_info Button = {
     GUI_PUSH_BUTTON,
     NULL,
@@ -110,7 +92,7 @@ bool GUIXCreateFixedToolbar( gui_window *wnd )
         }
         GUIMemFree( with_excl );
     }
-    GUIEVENTWND( wnd, GUI_TOOLBAR_FIXED, NULL );
+    GUIEVENT( wnd, GUI_TOOLBAR_FIXED, NULL );
     return( true );
 }
 
@@ -126,47 +108,118 @@ static bool FixToolbar( gui_window *wnd )
     return( GUIXCreateFixedToolbar( parent ) );
 }
 
-bool ToolbarCallBack( gui_window *wnd, gui_event gui_ev, void *param )
+static bool ToolbarGUIEventProc( gui_window *wnd, gui_event gui_ev, void *param )
 {
     gui_ctl_id  id;
 
     switch( gui_ev ) {
     case GUI_INIT_WINDOW :
-        GUIEVENTWND( wnd->parent, GUI_TOOLBAR_FLOATING, NULL );
+        GUIEVENT( wnd->parent, GUI_TOOLBAR_FLOATING, NULL );
         return( true );
     case GUI_KEYDOWN :
     case GUI_KEYUP :
-        GUIEVENTWND( wnd->parent, gui_ev, param );
-        break;
+        GUIEVENT( wnd->parent, gui_ev, param );
+        return( true );
     case GUI_CLICKED :
         GUI_GETID( param, id );
         if( id == FIX_TOOLBAR ) {
             FixToolbar( wnd );
         }
-        break;
+        return( true );
     case GUI_CONTROL_CLICKED :
         GUI_GETID( param, id );
         id = EV2ID( id );
-        GUIEVENTWND( wnd->parent, GUI_CLICKED, &id );
-        break;
+        GUIEVENT( wnd->parent, GUI_CLICKED, &id );
+        return( true );
     case GUI_LBUTTONDBLCLK :
         FixToolbar( wnd );
-        break;
+        return( true );
     case GUI_DESTROY :
         /* didn't get close first */
         if( wnd->parent->tbinfo->floattoolbar != NULL ) {
             wnd->parent->tbinfo->floattoolbar = NULL;
         }
         GUICloseToolBar( wnd->parent );
-        break;
+        return( true );
     case GUI_CLOSE :
         wnd->parent->tbinfo->floattoolbar = NULL;
-        break;
+        return( true );
     default :
         break;
     }
+    return( false );
+}
+
+bool GUIXCreateToolBarWithTips( gui_window *wnd, bool fixed, gui_ord height,
+                                int num_items, gui_toolbar_struct *toolinfo, bool excl,
+                                gui_colour_set *plain, gui_colour_set *standout,
+                                gui_rect *float_pos, bool use_tips )
+{
+    /* unused parameters */ (void)use_tips;
+
+    return( GUIXCreateToolBar( wnd, fixed, height, num_items, toolinfo, excl, plain, standout, float_pos ) );
+}
+
+bool GUIXCloseToolBar( gui_window *wnd )
+{
+    int         i;
+    bool        switching;
+    toolbarinfo *tbar;
+
+    if( wnd->tbinfo == NULL ) {
+        return( true );
+    }
+    tbar = wnd->tbinfo;
+    switching = tbar->switching;
+    if( tbar->fixed ) {
+        for( i = 0; i < tbar->num_items; i++ ) {
+            GUIDeleteToolbarMenuItem( wnd, tbar->toolinfo[i].id );
+        }
+    } else {
+        if( tbar->floattoolbar != NULL ) {
+            GUIDestroyWnd( tbar->floattoolbar );
+        }
+    }
+    if( ( tbar->toolinfo != NULL ) && !switching ) {
+        for( i = 0; i < tbar->num_items; i++ ) {
+            GUIMemFree( (void *)tbar->toolinfo[i].label );
+        }
+        GUIMemFree( tbar->toolinfo );
+        GUIMemFree( tbar );
+        wnd->tbinfo = NULL;
+    }
+    if( !switching ) {
+        GUIEVENT( wnd, GUI_TOOLBAR_DESTROYED, NULL );
+    }
     return( true );
 }
+
+bool GUIHasToolBar( gui_window *wnd )
+{
+    return( wnd->tbinfo != NULL );
+}
+
+bool GUIToolBarFixed( gui_window *wnd )
+{
+    if( GUIHasToolBar( wnd ) ) {
+        return( wnd->tbinfo->fixed );
+    }
+    return( false );
+}
+
+static gui_create_info FloatingToolbar = {
+    NULL,
+    { 0, 0, 0, 0 },
+    GUI_NOSCROLL,
+    GUI_SYSTEM_MENU | GUI_VISIBLE | GUI_RESIZEABLE | GUI_CLOSEABLE | GUI_INIT_INVISIBLE,
+    NULL,
+    NUM_MENU_ITEMS, &Menu,              // Menu array
+    0, NULL,                            // Colour attribute array
+    ToolbarGUIEventProc,                // GUI Event Callback function
+    NULL,
+    NULL,
+    NULL                                // Menu Resource
+};
 
 
 static bool CreateFloatingToolbar( gui_window *wnd, gui_ord height )
@@ -287,63 +340,6 @@ bool GUIXCreateToolBar( gui_window *wnd, bool fixed, gui_ord height,
     } else {
         return( CreateFloatingToolbar( wnd, height ) );
     }
-}
-
-bool GUIXCreateToolBarWithTips( gui_window *wnd, bool fixed, gui_ord height,
-                                int num_items, gui_toolbar_struct *toolinfo, bool excl,
-                                gui_colour_set *plain, gui_colour_set *standout,
-                                gui_rect *float_pos, bool use_tips )
-{
-    /* unused parameters */ (void)use_tips;
-
-    return( GUIXCreateToolBar( wnd, fixed, height, num_items, toolinfo, excl, plain, standout, float_pos ) );
-}
-
-bool GUIXCloseToolBar( gui_window *wnd )
-{
-    int         i;
-    bool        switching;
-    toolbarinfo *tbar;
-
-    if( wnd->tbinfo == NULL ) {
-        return( true );
-    }
-    tbar = wnd->tbinfo;
-    switching = tbar->switching;
-    if( tbar->fixed ) {
-        for( i = 0; i < tbar->num_items; i++ ) {
-            GUIDeleteToolbarMenuItem( wnd, tbar->toolinfo[i].id );
-        }
-    } else {
-        if( tbar->floattoolbar != NULL ) {
-            GUIDestroyWnd( tbar->floattoolbar );
-        }
-    }
-    if( ( tbar->toolinfo != NULL ) && !switching ) {
-        for( i = 0; i < tbar->num_items; i++ ) {
-            GUIMemFree( (void *)tbar->toolinfo[i].label );
-        }
-        GUIMemFree( tbar->toolinfo );
-        GUIMemFree( tbar );
-        wnd->tbinfo = NULL;
-    }
-    if( !switching ) {
-        GUIEVENTWND( wnd, GUI_TOOLBAR_DESTROYED, NULL );
-    }
-    return( true );
-}
-
-bool GUIHasToolBar( gui_window *wnd )
-{
-    return( wnd->tbinfo != NULL );
-}
-
-bool GUIToolBarFixed( gui_window *wnd )
-{
-    if( GUIHasToolBar( wnd ) ) {
-        return( wnd->tbinfo->fixed );
-    }
-    return( false );
 }
 
 static bool FloatToolbar( gui_window *wnd )

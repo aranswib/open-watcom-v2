@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -63,6 +64,8 @@
 #include "dbglkup.h"
 #include "dbgerr.h"
 
+
+extern bool     UserForcedTermRefresh;
 
 char            XConfig[2048];
 char            *DbgTerminal;
@@ -329,7 +332,7 @@ void InitScreen( void )
         StartupErr( "unable to initialize user interface" );
     }
     if( _IsOn( SW_USE_MOUSE ) ) {
-        GUIInitMouse( 1 );
+        GUIInitMouse( INIT_MOUSE );
     }
     DebugScreen();
 }
@@ -367,7 +370,6 @@ static int DebugPutc( int c )
 
 bool DebugScreen( void )
 {
-    extern bool UserForcedTermRefresh;
     struct vt_stat vt_state;
 
     switch( ConMode ) {

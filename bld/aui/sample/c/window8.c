@@ -32,15 +32,16 @@
 
 #include "app.h"
 
+
 #define NUM_ROWS 50
 
-static int W8NumRows( a_window *wnd )
+static int W8NumRows( a_window wnd )
 {
     wnd=wnd;
     return( NUM_ROWS );
 }
 
-static bool    W8GetLine( a_window *wnd, int row, int piece,
+static bool    W8GetLine( a_window wnd, int row, int piece,
                              wnd_line_piece *line )
 {
     wnd=wnd;
@@ -55,13 +56,13 @@ static bool    W8GetLine( a_window *wnd, int row, int piece,
 }
 
 
-static void    W8Refresh( a_window *wnd )
+static void    W8Refresh( a_window wnd )
 {
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
 }
 
 static wnd_info W8Info = {
-    NoEventProc,
+    NoWndEventProc,
     W8Refresh,
     W8GetLine,
     NoMenuItem,
@@ -77,7 +78,7 @@ static wnd_info W8Info = {
     NoPopUp
 };
 
-a_window *W8Open( void )
+a_window W8Open( void )
 {
     wnd_create_struct   info;
 

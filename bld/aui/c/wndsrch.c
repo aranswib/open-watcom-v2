@@ -30,14 +30,14 @@
 ****************************************************************************/
 
 
-#include "auipvt.h"//
+#include "_aui.h"//
 #include <string.h>
 #include "rxwrap.h"
 #include "wndregx.h"
 
 bool    WndDoingSearch = false;
 
-void WndSetSrchItem( a_window *wnd, const char *expr )
+void WndSetSrchItem( a_window wnd, const char *expr )
 {
     GUIMemFree( wnd->searchitem );
     wnd->searchitem = GUIMemAlloc( strlen( expr ) + 1 );
@@ -67,7 +67,7 @@ void WndFreeRX( void *rx )
 void WndSetMagicStr( const char *str )
 {
     char        *meta;
-    int		i;
+    int     i;
 
     i = 0;
     for( meta = SrchMetaChars; i < MAX_MAGIC_STR && *meta != '\0'; ++meta ) {
@@ -122,17 +122,17 @@ bool WndRXFind( void *_rx, const char **pos, const char **endpos )
     return( true );
 }
 
-static void NotFound( a_window *wnd, regexp *rx, const char *msg )
+static void NotFound( a_window wnd, regexp *rx, const char *msg )
 {
     Ring();
     WndNextRow( wnd, WND_NO_ROW, WND_RESTORE_ROW );
     WndStatusText( msg );
     WndFreeRX( rx );
     WndDoingSearch = false;
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
 }
 
-extern  bool    WndSearch( a_window *wnd, bool from_top, int direction )
+bool    WndSearch( a_window wnd, bool from_top, int direction )
 {
     wnd_line_piece      line;
     regexp              *rx;
@@ -184,10 +184,10 @@ extern  bool    WndSearch( a_window *wnd, bool from_top, int direction )
                 NotFound( wnd, rx, not_found );
                 rc = false;
                 goto done;
-            } else if( _Is( wnd, WSW_SEARCH_WRAP ) ) {
+            } else if( WndSwitchOn( wnd, WSW_SEARCH_WRAP ) ) {
                 rows = WndNumRows( wnd );
                 if( rows == -1 ) {
-                    WndRepaint( wnd );
+                    WndSetRepaint( wnd );
                     WndScrollAbs( wnd, -wnd->title_size );
                     rows = WndScrollAbs( wnd, WND_MAX_ROW ) + WndRows( wnd );
                 }
@@ -211,7 +211,7 @@ extern  bool    WndSearch( a_window *wnd, bool from_top, int direction )
                     NotFound( wnd, rx, not_found );
                     rc = false;
                     goto done;
-                } else if( _Is( wnd, WSW_SEARCH_WRAP ) ) {
+                } else if( WndSwitchOn( wnd, WSW_SEARCH_WRAP ) ) {
                     curr.row = 0;
                     curr.col = 0;
                     curr.piece = -1;
@@ -254,15 +254,14 @@ extern  bool    WndSearch( a_window *wnd, bool from_top, int direction )
             WndNoSelect( wnd );
             WndNoCurrent( wnd );
             if( curr.row < WndVirtualTop( wnd ) ) {
+                WndSetRepaint( wnd );
                 if( curr.row > wnd->rows / 2 ) {
-                    WndRepaint( wnd );
                     WndScrollAbs( wnd, curr.row - wnd->rows / 2 );
                 } else {
-                    WndRepaint( wnd );
                     WndScrollAbs( wnd, -wnd->title_size );
                 }
             } else if( curr.row >= WndVirtualBottom( wnd ) ) {
-                WndRepaint( wnd );
+                WndSetRepaint( wnd );
                 WndScrollAbs( wnd, curr.row - wnd->rows / 2 );
             }
             wnd->sel_start.row = WndScreenRow( wnd, curr.row );

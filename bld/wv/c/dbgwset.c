@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -59,24 +60,21 @@
 #include "dbgwvar.h"
 #include "dbgwdisp.h"
 #include "wndmenu.h"
+#include "dbgsetfn.h"
 
 #include "clibext.h"
 
 
 extern void             WndUserAdd( char *, unsigned int );
-extern void             WndMenuOn( void );
-extern void             WndMenuOff( void );
-extern void             WndRestoreToFront( a_window* );
+extern void             WndRestoreToFront( a_window );
 
-extern const char       WndNameTab[];
 extern margins          SrcMar;
 extern margins          AsmMar;
-extern wnd_macro        *WndMacroList;
 
 static unsigned         TabInterval = 8;
 
 
-extern void DClickSet( void )
+void DClickSet( void )
 {
     unsigned    value;
     mad_radix   old_radix;
@@ -91,17 +89,17 @@ extern void DClickSet( void )
 }
 
 
-extern void DClickConf( void )
+void DClickConf( void )
 {
     CnvULongDec( WndGetDClick(), TxtBuff, TXT_LEN );
     ConfigLine( TxtBuff );
 }
 
 
-extern void InputSet( void )
+void InputSet( void )
 {
     wnd_class_wv    wndclass;
-    a_window        *wnd;
+    a_window        wnd;
 
     wndclass = ReqWndName();
     ReqEOC();
@@ -114,9 +112,9 @@ extern void InputSet( void )
 }
 
 
-extern void InputConf( void )
+void InputConf( void )
 {
-    a_window  *wnd;
+    a_window  wnd;
 
     wnd = WndFindActive();
     if( wnd != NULL && WndHasClass( wnd ) ) {
@@ -474,7 +472,7 @@ wnd_macro *MacAddDel( unsigned key, wnd_class_wv wndclass, cmd_list *cmds )
 }
 
 
-extern void MacroSet( void )
+void MacroSet( void )
 {
     wnd_class_wv    wndclass;
     cmd_list        *cmds;
@@ -516,7 +514,7 @@ extern void MacroSet( void )
     MacAddDel( key, wndclass, cmds );
 }
 
-extern  void    MacroConf( void )
+void    MacroConf( void )
 {
     char        wnd_name[20];
     wnd_macro   *mac;
@@ -534,7 +532,7 @@ extern  void    MacroConf( void )
     }
 }
 
-extern  void    FiniMacros( void )
+void    FiniMacros( void )
 {
     wnd_macro   *mac;
     wnd_macro   *junk;
@@ -563,7 +561,7 @@ void TabIntervalSet( int new )
     WndRedraw( WND_SOURCE );
 }
 
-extern void TabSet( void )
+void TabSet( void )
 {
     int         value;
     mad_radix   old_radix;
@@ -578,7 +576,7 @@ extern void TabSet( void )
 }
 
 
-extern void TabConf( void )
+void TabConf( void )
 {
     CnvULongDec( TabInterval, TxtBuff, TXT_LEN );
     ConfigLine( TxtBuff );
@@ -599,7 +597,7 @@ enum {
 };
 
 
-extern void SearchSet( void )
+void SearchSet( void )
 {
     const char  *start;
     size_t      len;
@@ -631,7 +629,7 @@ extern void SearchSet( void )
 }
 
 
-extern void SearchConf( void )
+void SearchConf( void )
 {
     char        *ptr;
 

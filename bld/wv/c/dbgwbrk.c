@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -84,7 +85,7 @@ static brkp     *BrkGetBP( int row )
     return( bp );
 }
 
-OVL_EXTERN void     BrkMenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     BrkMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 {
     brkp        *bp;
 
@@ -133,7 +134,7 @@ OVL_EXTERN void     BrkMenuItem( a_window *wnd, gui_ctl_id id, int row, int piec
     }
 }
 
-OVL_EXTERN void     BrkModify( a_window *wnd, int row, int piece )
+OVL_EXTERN void     BrkModify( a_window wnd, int row, int piece )
 {
     brkp        *bp;
 
@@ -163,7 +164,7 @@ OVL_EXTERN void     BrkModify( a_window *wnd, int row, int piece )
     }
 }
 
-OVL_EXTERN int BrkNumRows( a_window *wnd )
+OVL_EXTERN int BrkNumRows( a_window wnd )
 {
     brkp        *bp;
     int         count;
@@ -177,7 +178,7 @@ OVL_EXTERN int BrkNumRows( a_window *wnd )
     return( count );
 }
 
-OVL_EXTERN  bool    BrkGetLine( a_window *wnd, int row, int piece,
+OVL_EXTERN  bool    BrkGetLine( a_window wnd, int row, int piece,
                              wnd_line_piece *line )
 {
     brkp                *bp;
@@ -229,7 +230,7 @@ OVL_EXTERN  bool    BrkGetLine( a_window *wnd, int row, int piece,
 }
 
 
-static void     BrkInit( a_window *wnd )
+static void     BrkInit( a_window wnd )
 {
     gui_ord             length, max;
     break_window        *wndbreak;
@@ -260,16 +261,16 @@ static void     BrkInit( a_window *wnd )
         return;
     }
     WndNoSelect( wnd );
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
 }
 
 
-OVL_EXTERN void     BrkRefresh( a_window *wnd )
+OVL_EXTERN void     BrkRefresh( a_window wnd )
 {
     brkp        *bp;
     int         row;
 
-    if( UpdateFlags & BrkInfo.flags & ~(UP_OPEN_CHANGE|UP_MEM_CHANGE) ) {
+    if( UpdateFlags & BrkInfo.flags & ~(UP_OPEN_CHANGE | UP_MEM_CHANGE) ) {
         BrkInit( wnd );
     } else if( UpdateFlags & UP_MEM_CHANGE ) {
         row = 0;
@@ -299,7 +300,7 @@ OVL_EXTERN void     BrkRefresh( a_window *wnd )
 }
 
 
-OVL_EXTERN bool BrkEventProc( a_window * wnd, gui_event gui_ev, void *parm )
+OVL_EXTERN bool BrkWndEventProc( a_window wnd, gui_event gui_ev, void *parm )
 {
     break_window        *wndbreak = WndBreak( wnd );
 
@@ -315,12 +316,13 @@ OVL_EXTERN bool BrkEventProc( a_window * wnd, gui_event gui_ev, void *parm )
         return( true );
     case GUI_DESTROY:
         WndFree( wndbreak );
+        return( true );
     }
     return( false );
 }
 
 wnd_info BrkInfo = {
-    BrkEventProc,
+    BrkWndEventProc,
     BrkRefresh,
     BrkGetLine,
     BrkMenuItem,
@@ -332,14 +334,13 @@ wnd_info BrkInfo = {
     NoNextRow,
     NoNotify,
     ChkFlags,
-    UP_MEM_CHANGE+UP_RADIX_CHANGE+
-    UP_SYM_CHANGE+UP_BREAK_CHANGE+UP_OPEN_CHANGE,
+    UP_MEM_CHANGE | UP_RADIX_CHANGE | UP_SYM_CHANGE | UP_BREAK_CHANGE | UP_OPEN_CHANGE,
     DefPopUp( BrkMenu )
 };
 
-extern a_window *WndBrkOpen( void )
+a_window WndBrkOpen( void )
 {
-    a_window            *wnd;
+    a_window            wnd;
     break_window        *brkw;
 
     brkw = WndMustAlloc( sizeof( *brkw ) );

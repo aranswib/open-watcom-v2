@@ -53,13 +53,6 @@ bool UIAPI uiset80col( void )
     return( true );
 }
 
-unsigned UIAPI uiclockdelay( unsigned milli )
-{
-    /* this routine converts milli-seconds into platform  */
-    /* dependant units - used to set mouse & timer delays */
-    return( milli );
-}
-
 const char *GetTermType( void )
 {
     if( UITermType == NULL ) {
@@ -145,7 +138,7 @@ void permit_refresh( void )
         RefreshForbid--;
     }
     if( !RefreshForbid ) {
-        _ui_refresh( 0 );
+        _ui_refresh( false );
     }
 }
 
@@ -153,7 +146,7 @@ void intern physupdate( SAREA *area )
 {
     _physupdate( area );
     if( !RefreshForbid ) {
-        _ui_refresh( 0 );
+        _ui_refresh( false );
     }
 }
 

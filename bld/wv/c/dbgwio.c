@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -81,13 +82,13 @@ typedef struct {
 #define WndIO( wnd ) ( (io_window *)WndExtra( wnd ) )
 
 
-OVL_EXTERN int IONumRows( a_window *wnd )
+OVL_EXTERN int IONumRows( a_window wnd )
 {
     return( WndIO( wnd )->num_rows );
 }
 
 
-static void IOAddNewAddr( a_window *wnd, address *addr, int type )
+static void IOAddNewAddr( a_window wnd, address *addr, int type )
 {
     io_window   *io = WndIO( wnd );
     int         row;
@@ -102,7 +103,7 @@ static void IOAddNewAddr( a_window *wnd, address *addr, int type )
     curr->value_known = false;
 }
 
-OVL_EXTERN void     IOMenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     IOMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 {
     io_window   *io = WndIO( wnd );
     address     addr;
@@ -132,7 +133,7 @@ OVL_EXTERN void     IOMenuItem( a_window *wnd, gui_ctl_id id, int row, int piece
         memcpy( &io->list[row], &io->list[row + 1],
                 ( io->num_rows - row ) * sizeof( io_location ) );
         WndNoSelect( wnd );
-        WndRepaint( wnd );
+        WndSetRepaint( wnd );
         break;
     case MENU_IO_NEW_ADDRESS:
         addr = NilAddr;
@@ -183,7 +184,7 @@ OVL_EXTERN void     IOMenuItem( a_window *wnd, gui_ctl_id id, int row, int piece
 }
 
 
-OVL_EXTERN void     IOModify( a_window *wnd, int row, int piece )
+OVL_EXTERN void     IOModify( a_window wnd, int row, int piece )
 {
     if( row < 0 ) {
         IOMenuItem( wnd, MENU_IO_NEW_ADDRESS, row, piece );
@@ -204,7 +205,7 @@ OVL_EXTERN void     IOModify( a_window *wnd, int row, int piece )
     }
 }
 
-OVL_EXTERN  bool    IOGetLine( a_window *wnd, int row, int piece, wnd_line_piece *line )
+OVL_EXTERN  bool    IOGetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
 {
     io_window   *io = WndIO( wnd );
 //    bool        ret;
@@ -251,10 +252,10 @@ OVL_EXTERN  bool    IOGetLine( a_window *wnd, int row, int piece, wnd_line_piece
 }
 
 
-OVL_EXTERN void     IORefresh( a_window *wnd )
+OVL_EXTERN void     IORefresh( a_window wnd )
 {
     WndNoSelect( wnd );
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
 }
 
 
@@ -295,7 +296,7 @@ void FiniIOWindow( void )
     MemFiniTypes( &IOData );
 }
 
-OVL_EXTERN bool IOEventProc( a_window * wnd, gui_event gui_ev, void *parm )
+OVL_EXTERN bool IOWndEventProc( a_window wnd, gui_event gui_ev, void *parm )
 {
     io_window   *io = WndIO( wnd );
 
@@ -316,7 +317,7 @@ OVL_EXTERN bool IOEventProc( a_window * wnd, gui_event gui_ev, void *parm )
 }
 
 wnd_info IOInfo = {
-    IOEventProc,
+    IOWndEventProc,
     IORefresh,
     IOGetLine,
     IOMenuItem,
@@ -332,15 +333,15 @@ wnd_info IOInfo = {
     DefPopUp( IOMenu )
 };
 
-extern void IONewAddr( a_window *wnd, address *addr, int type )
+void IONewAddr( a_window wnd, address *addr, int type )
 {
     IOAddNewAddr( wnd, addr, type );
     IOMenuItem( wnd, MENU_IO_READ, WndIO( wnd )->num_rows-1, PIECE_VALUE );
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
 }
 
 
-extern a_window *DoWndIOOpen( address *addr, mad_type_handle mth )
+a_window DoWndIOOpen( address *addr, mad_type_handle mth )
 {
     io_window   *io;
     int         i;
@@ -367,10 +368,10 @@ extern a_window *DoWndIOOpen( address *addr, mad_type_handle mth )
     return( DbgWndCreate( LIT_DUI( WindowIO_Ports ), &IOInfo, WND_IO, io, &IOIcon ) );
 }
 
-extern a_window *WndIOOpen( void )
+a_window WndIOOpen( void )
 {
     io_window   *io;
-    a_window    *wnd;
+    a_window    wnd;
 
     io = WndMustAlloc( sizeof( io_window ) );
     io->list = NULL;

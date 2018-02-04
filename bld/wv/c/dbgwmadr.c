@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -99,7 +100,7 @@ static bool GetDisplayPiece( reg_display_piece *disp, reg_window *reg, machine_s
                                   &disp->disp_mth, &disp->max_value ) == MS_OK );
 }
 
-static bool RegResize( a_window *wnd )
+static bool RegResize( a_window wnd )
 {
     reg_window          *reg = WndReg( wnd );
     gui_ord             space;
@@ -225,7 +226,7 @@ static bool RegResize( a_window *wnd )
 }
 
 
-OVL_EXTERN int RegNumRows( a_window *wnd )
+OVL_EXTERN int RegNumRows( a_window wnd )
 {
     return( WndReg( wnd )->rows );
 }
@@ -259,7 +260,7 @@ OVL_EXTERN const char *RegValueName( const void *data_handle, int item )
     return( TxtBuff );
 }
 
-OVL_EXTERN  void    RegModify( a_window *wnd, int row, int piece )
+OVL_EXTERN  void    RegModify( a_window wnd, int row, int piece )
 {
     int                     i;
     item_mach               value;
@@ -314,7 +315,7 @@ OVL_EXTERN  void    RegModify( a_window *wnd, int row, int piece )
     NewCurrRadix( old_radix );
 }
 
-OVL_EXTERN void     RegMenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     RegMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 {
     reg_window              *reg = WndReg( wnd );
     int                     i;
@@ -356,8 +357,7 @@ OVL_EXTERN void     RegMenuItem( a_window *wnd, gui_ctl_id id, int row, int piec
 }
 
 
-OVL_EXTERN  bool    RegGetLine( a_window *wnd, int row, int piece,
-                            wnd_line_piece *line )
+OVL_EXTERN  bool    RegGetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
 {
     int                 column;
     int                 i;
@@ -407,7 +407,7 @@ OVL_EXTERN  bool    RegGetLine( a_window *wnd, int row, int piece,
 }
 
 
-OVL_EXTERN void     RegRefresh( a_window *wnd )
+OVL_EXTERN void     RegRefresh( a_window wnd )
 {
     int                 row,rows;
     int                 reg_num;
@@ -441,7 +441,7 @@ OVL_EXTERN void     RegRefresh( a_window *wnd )
     }
 }
 
-OVL_EXTERN bool RegEventProc( a_window * wnd, gui_event gui_ev, void *parm )
+OVL_EXTERN bool RegWndEventProc( a_window wnd, gui_event gui_ev, void *parm )
 {
     reg_window          *reg = WndReg( wnd );
 
@@ -471,7 +471,7 @@ OVL_EXTERN bool RegEventProc( a_window * wnd, gui_event gui_ev, void *parm )
 }
 
 wnd_info MadRegInfo = {
-    RegEventProc,
+    RegWndEventProc,
     RegRefresh,
     RegGetLine,
     RegMenuItem,
@@ -483,20 +483,20 @@ wnd_info MadRegInfo = {
     NoNextRow,
     NoNotify,
     ChkFlags,
-    UP_MAD_CHANGE+UP_REG_CHANGE+UP_REG_RESIZE,
+    UP_MAD_CHANGE | UP_REG_CHANGE | UP_REG_RESIZE,
     DefPopUp( RegMenu )
 };
 
-void MadRegChangeOptions( a_window *wnd )
+void MadRegChangeOptions( a_window wnd )
 {
     RegResize( wnd );
     WndZapped( wnd );
 }
 
-extern a_window *WndMadRegOpen( mad_type_kind kind, wnd_class_wv wndclass, gui_resource *icon )
+a_window WndMadRegOpen( mad_type_kind kind, wnd_class_wv wndclass, gui_resource *icon )
 {
     reg_window  *reg;
-    a_window    *wnd;
+    a_window    wnd;
 
     reg = WndMustAlloc( sizeof( reg_window ) );
     reg->kind = kind;

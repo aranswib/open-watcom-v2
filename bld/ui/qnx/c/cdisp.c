@@ -88,36 +88,37 @@ static bool setupscrnbuff( void )
 {
     int                 rows, cols;
     LP_PIXEL            scrn;
-    size_t              num;
-    int                 i;
+    size_t              size;
+    size_t              i;
 
     if( console_size( UIConCtrl, UIConsole, 0, 0, &rows, &cols ) != 0 ) {
         return( false );
     }
     UIData->width = cols;
     UIData->height = rows;
-    num = UIData->width * UIData->height * 2;
+    size = UIData->width * UIData->height * sizeof( PIXEL );
     scrn = UIData->screen.origin;
-#if defined( __386__ )
-    scrn = uirealloc( scrn, num );
-    if( scrn == NULL )
-        return( false );
-#else
     {
-        unsigned                seg;
+#ifdef _M_I86
+        unsigned    seg;
 
         if( scrn == NULL ) {
-            seg = qnx_segment_alloc( num );
+            seg = qnx_segment_alloc( size );
         } else {
-            seg = qnx_segment_realloc( FP_SEG( scrn ), num );
+            seg = qnx_segment_realloc( FP_SEG( scrn ), size );
         }
         if( seg == -1 )
             return( false );
         scrn = MK_FP( seg, 0 );
-    }
+#else
+        scrn = uirealloc( scrn, size );
+        if( scrn == NULL ) {
+            return( false );
+        }
 #endif
-    num /= 2;
-    for( i = 0; i < num; ++i ) {
+    }
+    size /= sizeof( PIXEL );
+    for( i = 0; i < size; ++i ) {
         scrn[i].ch = ' ';       /* a space with normal attributes */
         scrn[i].attr = 7;       /* a space with normal attributes */
     }
@@ -137,8 +138,8 @@ static void state_handler( int signo )
 }
 
 
-static EVENT cd_sizeevent( void )
-/*******************************/
+static ui_event cd_sizeevent( void )
+/**********************************/
 {
     SAREA       area;
     unsigned    state;
@@ -250,8 +251,8 @@ static void my_console_write(
 }
 
 
-static int cd_init( void )
-/************************/
+static bool cd_init( void )
+/*************************/
 {
     int         initialized;
 
@@ -266,17 +267,17 @@ static int cd_init( void )
 
     uiinitcursor();
     initkeyboard();
-    UIData->mouse_acc_delay = 277;
-    UIData->mouse_rpt_delay = 100;
-    UIData->mouse_clk_delay = 277;
-    UIData->tick_delay      = 500;
+    UIData->mouse_acc_delay = uiclockdelay( 277 /* ms */ );
+    UIData->mouse_rpt_delay = uiclockdelay( 100 /* ms */ );
+    UIData->mouse_clk_delay = uiclockdelay( 277 /* ms */ );
+    UIData->tick_delay      = uiclockdelay( 500 /* ms */ );
     UIData->f10menus        = true;
     return( true );
 }
 
 
-static int cd_fini( void )
-/************************/
+static bool cd_fini( void )
+/*************************/
 {
     finikeyboard();
     uifinicursor();
@@ -314,7 +315,7 @@ static int cd_update( SAREA *area )
     return( 0 );
 }
 
-static int cd_refresh( int must )
+static int cd_refresh( bool must )
 {
     /* unused parameters */ (void)must;
 
@@ -349,21 +350,21 @@ static int cd_setcur( ORD row, ORD col, CURSOR_TYPE typ, int attr )
     return( 0 );
 }
 
-static EVENT cd_event( void )
+static ui_event cd_event( void )
 {
-    EVENT       ev;
+    ui_event    ui_ev;
 
-    ev = cd_sizeevent();
-    if( ev > EV_NO_EVENT )
-        return( ev );
-    ev = mouseevent();
-    if( ev > EV_NO_EVENT )
-        return( ev );
-    ev = ck_keyboardevent();
-    if( ev == EV_NO_EVENT )
-        return( ev );
+    ui_ev = cd_sizeevent();
+    if( ui_ev > EV_NO_EVENT )
+        return( ui_ev );
+    ui_ev = mouseevent();
+    if( ui_ev > EV_NO_EVENT )
+        return( ui_ev );
+    ui_ev = ck_keyboardevent();
+    if( ui_ev == EV_NO_EVENT )
+        return( ui_ev );
     uihidemouse();
-    return( ev );
+    return( ui_ev );
 }
 
 Display ConsDisplay = {

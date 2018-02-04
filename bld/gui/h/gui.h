@@ -60,10 +60,10 @@ typedef enum {
     GUI_ICONIFIED,
     GUI_FONT_CHANGED,
     GUI_PAINT,
-    GUI_KEYDOWN,         /* keystroke messages */
+    GUI_KEYDOWN,                /* keystroke messages */
     GUI_KEYUP,
     GUI_KEY_CONTROL,
-    GUI_SCROLL_UP,       /* scrolling messages */
+    GUI_SCROLL_UP,              /* scrolling messages */
     GUI_SCROLL_PAGE_UP,
     GUI_SCROLL_TOP,
     GUI_SCROLL_DOWN,
@@ -77,9 +77,9 @@ typedef enum {
     GUI_SCROLL_PAGE_RIGHT,
     GUI_SCROLL_FULL_RIGHT,
     GUI_SCROLL_HORIZONTAL,
-    GUI_CLICKED,                /* menu clicked        */
+    GUI_CLICKED,                /* menu clicked */
     GUI_CONTROL_DCLICKED,       /* control double clicked */
-    GUI_LBUTTONDOWN,      /* mouse messages                 */
+    GUI_LBUTTONDOWN,            /* mouse messages */
     GUI_LBUTTONUP,
     GUI_LBUTTONDBLCLK,
     GUI_RBUTTONDOWN,
@@ -224,13 +224,13 @@ typedef struct gui_colour_set {
     gui_colour back;
 } gui_colour_set;
 
-typedef unsigned long gui_rgb;
+typedef unsigned long       gui_rgb;
 
-#define GUIRGB(r,g,b)          ((gui_rgb)(((unsigned char)(r)) | (((unsigned short)(g))<<8) | (((unsigned long)(b))<<16)))
+#define GUIRGB(r,g,b)       ((gui_rgb)(((unsigned char)(r)) | (((unsigned short)(g))<<8) | (((unsigned long)(b))<<16)))
 
-#define GUIGETRVALUE(rgb)       ((rgb) & 0xff)
-#define GUIGETGVALUE(rgb)       (((rgb) & 0xff00 ) >> 8)
-#define GUIGETBVALUE(rgb)       (((rgb) & 0xff0000) >> 16)
+#define GUIGETRVALUE(rgb)   ((rgb) & 0xff)
+#define GUIGETGVALUE(rgb)   (((rgb) & 0xff00 ) >> 8)
+#define GUIGETBVALUE(rgb)   (((rgb) & 0xff0000) >> 16)
 
 typedef struct gui_rect {
     gui_ord     x;
@@ -319,8 +319,8 @@ typedef enum gui_bar_styles {
 } gui_bar_styles;
 
 typedef struct gui_resource {
-    gui_bitmap  res;
-    char        *chars; /* Character based              */
+    gui_bitmap          res;
+    char                *chars; /* Character based */
 } gui_resource;
 
 typedef struct gui_control_info {
@@ -333,7 +333,7 @@ typedef struct gui_control_info {
     gui_ctl_id          id;
 } gui_control_info;
 
-typedef bool (GUICALLBACK)( gui_window *, gui_event ev, void *param );
+typedef bool (GUICALLBACK)( gui_window *, gui_event gui_ev, void *param );
 typedef void (ENUMCALLBACK)( gui_window *, void *param );
 typedef void (CONTRENUMCALLBACK)( gui_window *parent, gui_ctl_id id, void *param );
 typedef void (GUIPICKCALLBACK)( gui_window *, gui_ctl_id id );
@@ -383,8 +383,8 @@ typedef enum {
 } gui_message_return;
 
 typedef struct gui_text_metrics {
-    gui_coord avg;
-    gui_coord max;
+    gui_coord   avg;
+    gui_coord   max;
 } gui_text_metrics;
 
 typedef struct gui_system_metrics {
@@ -407,17 +407,19 @@ typedef enum {
 } gui_mouse_track;
 
 typedef enum {
-    GUI_KS_NONE       =    0x00,
-    GUI_KS_ALT        =    0x01,
-    GUI_KS_SHIFT      =    0x02,
-    GUI_KS_CTRL       =    0x04
+    GUI_KS_NONE         = 0x00,
+    GUI_KS_ALT          = 0x01,
+    GUI_KS_SHIFT        = 0x02,
+    GUI_KS_CTRL         = 0x04
 } gui_keystate;
 
 typedef enum {
     GUI_ARROW_CURSOR,
     GUI_HOURGLASS_CURSOR,
     GUI_CROSS_CURSOR
-} gui_mouse_cursor;
+} gui_mcursor_type;
+
+typedef void            *gui_mcursor_handle;
 
 typedef enum {
     GUI_NO_CURSOR,
@@ -499,9 +501,8 @@ typedef enum {
 #define GUI_ALT_STATE( state )      ((state & GUI_KS_ALT) != 0)
 #define GUI_CTRL_STATE( state )     ((state & GUI_KS_CTRL) != 0)
 
-#define GUI_NO_COLUMN   ((gui_ord)-1)
-#define GUI_NO_ROW      ((gui_ord)-1)
-#define NO_SELECT       ((gui_ctl_id)-1)
+#define GUI_NO_COLUMN           ((gui_ord)-1)
+#define GUI_NO_ROW              ((gui_ord)-1)
 
 // GUIIsChecked and GUISetChecked values
 #define GUI_NOT_CHECKED         0
@@ -564,22 +565,27 @@ typedef struct gui_timer_event {
 
 #define GUI_GET_BOOL( param, b )    ( b = *(bool *)param )
 
-#define GUI_GET_ENDSESSION( param, b, l ) {                                 \
-                                b = ((gui_end_session *)param)->endsession; \
-                                l = ((gui_end_session *)param)->logoff;     \
-                            }
+#define GUI_GET_ENDSESSION( param, b, l )           \
+    {                                               \
+        b = ((gui_end_session *)param)->endsession; \
+        l = ((gui_end_session *)param)->logoff;     \
+    }
 
 #define GUI_GET_POINT( param, point ) ( point = *(gui_point *)param )
 
-#define GUI_GET_ROWS( param, gui_start, gui_num ) {                          \
-                                gui_start = ((gui_row_num *)param)->start; \
-                                gui_num =   ((gui_row_num *)param)->num;   \
-                                                   }
+#define GUI_GET_ROWS( param, gui_start, gui_num )   \
+    {                                               \
+        gui_start = ((gui_row_num *)param)->start;  \
+        gui_num =   ((gui_row_num *)param)->num;    \
+    }
 
 #define GUI_GETID( param, id ) ( id = *(gui_ctl_id *)param )
 
-#define GUI_GET_SIZE( param, size ) { size.x = ((gui_coord *)param)->x; \
-                                      size.y = ((gui_coord *)param)->y; }
+#define GUI_GET_SIZE( param, size )         \
+    {                                       \
+        size.x = ((gui_coord *)param)->x;   \
+        size.y = ((gui_coord *)param)->y;   \
+    }
 
 #define GUI_GET_SCROLL( param, scroll ) ( scroll = *(int *)param )
 
@@ -663,7 +669,7 @@ extern void GUIShowWindowNA( gui_window *wnd );
 extern bool GUIIsWindowVisible( gui_window *wnd );
 extern void GUISetRestoredSize( gui_window *wnd, gui_rect *rect );
 extern bool GUIGetRestoredSize( gui_window *wnd, gui_rect *rect );
-extern bool GUISetIcon( gui_window * wnd, gui_resource *res );
+extern bool GUISetIcon( gui_window *wnd, gui_resource *res );
 extern bool GUISetRedraw( gui_window *wnd, bool redraw );
 
 extern bool GUICascadeWindows( void );
@@ -677,8 +683,8 @@ extern bool GUISetCursorPos( gui_window *wnd, gui_point *point );
 extern bool GUIGetCursorType( gui_window *wnd, gui_char_cursor *cursor );
 extern bool GUISetCursorType( gui_window *wnd, gui_char_cursor cursor );
 
-extern void *GUISetMouseCursor( gui_mouse_cursor type );
-extern void GUIResetMouseCursor( void* old_cursor );
+extern gui_mcursor_handle GUISetMouseCursor( gui_mcursor_type type );
+extern void GUIResetMouseCursor( gui_mcursor_handle old_cursor );
 
 /* Font Functions */
 
@@ -731,21 +737,21 @@ extern bool GUIDrawBarGroup( gui_window *wnd, gui_ord row, gui_ord start,
 
 /* Text Functions */
 
-extern bool GUISetWindowText( gui_window * wnd, const char * data );
+extern bool GUISetWindowText( gui_window *wnd, const char *data );
 extern size_t GUIGetWindowTextLength( gui_window *wnd );
 extern size_t GUIGetWindowText( gui_window *wnd, char *buff, size_t buff_len );
 extern gui_ord GUIGetRow( gui_window *wnd, gui_point *pos );
 extern gui_ord GUIGetCol( gui_window *wnd, const char *text, gui_point *pos );
 extern gui_ord GUIGetStringPos( gui_window *wnd, gui_ord indent,
                                 const char *string, int mouse_x );
-extern gui_ord GUIGetExtentX( gui_window *wnd, const char * text, size_t length );
-extern gui_ord GUIGetExtentY( gui_window *wnd, const char * text );
-extern gui_ord GUIGetControlExtentX( gui_window * wnd, gui_ctl_id id, const char * text, size_t length );
-extern gui_ord GUIGetControlExtentY( gui_window * wnd, gui_ctl_id id, const char * text );
+extern gui_ord GUIGetExtentX( gui_window *wnd, const char *text, size_t length );
+extern gui_ord GUIGetExtentY( gui_window *wnd, const char *text );
+extern gui_ord GUIGetControlExtentX( gui_window *wnd, gui_ctl_id id, const char *text, size_t length );
+extern gui_ord GUIGetControlExtentY( gui_window *wnd, gui_ctl_id id, const char *text );
 extern void GUIGetTextMetrics( gui_window *wnd, gui_text_metrics *metrics );
 extern void GUIGetDlgTextMetrics( gui_text_metrics *metrics );
-extern void GUIGetMaxDialogSize( gui_coord * size );
-extern void GUIGetPoint( gui_window* wnd, gui_ord extent, gui_ord row,
+extern void GUIGetMaxDialogSize( gui_coord *size );
+extern void GUIGetPoint( gui_window *wnd, gui_ord extent, gui_ord row,
                          gui_point *point );
 
 /* Menu Functions */
@@ -848,8 +854,8 @@ extern void GUIDoVScrollClip( gui_window *wnd, int rows, int start, int end );
 
 /* deals in percent of range */
 
-extern void GUISetHScrollThumb( gui_window * wnd, int percent );
-extern void GUISetVScrollThumb( gui_window * wnd, int percent );
+extern void GUISetHScrollThumb( gui_window *wnd, int percent );
+extern void GUISetVScrollThumb( gui_window *wnd, int percent );
 
 /* deals with user defined scale */
 
@@ -878,13 +884,12 @@ extern bool GUICreateDialog( gui_create_info *dlg_info, int num_controls, gui_co
 extern bool GUICreateSysModalDialog( gui_create_info *dlg_info, int num_controls, gui_control_info *controls_info );
 extern bool GUICreateResDialog( gui_create_info *dlg_info, res_name_or_id dlg_id );
 extern bool GUICreateDialogFromRes( res_name_or_id dlg_id, gui_window *parent, GUICALLBACK *gui_call_back, void *extra );
-extern void GUICloseDialog( gui_window * wnd );
+extern void GUICloseDialog( gui_window *wnd );
 extern void GUISetModalDlgs( bool );
 
 /* Control Functions */
 
-extern bool GUIAddControl( gui_control_info *ctl_info, gui_colour_set *plain,
-                           gui_colour_set *standout );
+extern bool GUIAddControl( gui_control_info *ctl_info, gui_colour_set *plain, gui_colour_set *standout );
 extern bool GUIDeleteControl( gui_window *wnd, gui_ctl_id id );
 extern bool GUIResizeControl( gui_window *wnd, gui_ctl_id id, gui_rect *rect );
 extern bool GUIEnableControl( gui_window *wnd, gui_ctl_id id, bool enable );

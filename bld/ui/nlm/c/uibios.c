@@ -106,7 +106,7 @@ bool intern initbios( void )
 
     if( initmonitor() ) {
 
-        UIData->screen.origin = (LPPIXEL)uimalloc( UIData->width * UIData->height * sizeof( PIXEL ) );
+        UIData->screen.origin = (LP_PIXEL)uimalloc( UIData->width * UIData->height * sizeof( PIXEL ) );
 
         for( i = 0 ; i < UIData->width * UIData->height ; ++i ){
             UIData->screen.origin[i].ch = ' ';
@@ -127,7 +127,7 @@ bool intern initbios( void )
 
 /* A 500 millisecond tick delay is pretty reasonable. */
 
-        UIData->tick_delay      = uiclockdelay( 500 );
+        UIData->tick_delay      = uiclockdelay( 500 /* ms */ );
 
         initialized = true;
     } /* end if */
@@ -135,13 +135,6 @@ bool intern initbios( void )
     return( initialized );
 
 } /* end initbios */
-
-unsigned UIAPI uiclockdelay( unsigned milli )
-{
-    /* NetWare uses a clock tick of .01 seconds. */
-
-    return( milli / 10 );
-}
 
 static void finimonitor( void )
 /********************/

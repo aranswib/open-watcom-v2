@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -53,7 +54,7 @@
 
 a_ui_edit       *UIEdit = NULL;
 
-extern EVENT LineEvents[];
+extern ui_event     LineEvents[];
 
 static bool extend( unsigned n )
 {
@@ -88,7 +89,7 @@ void uiedittrim( char *s )
 
 void uieditmarking( bool set, unsigned anchor )
 {
-    Eline.mark_attr = UIData->attrs[ ATTR_MARK_NORMAL ];
+    Eline.mark_attr = UIData->attrs[ATTR_MARK_NORMAL];
     if( set ) {
         if( !Eline.marking ) {
             Eline.marking = true;
@@ -158,10 +159,10 @@ a_ui_edit *uibegedit( VSCREEN *vs, ORD row, ORD col, ORD len,
 
 void uieditpushlist( void )
 {
-    static EVENT mousepress[] = {
-        EV_NO_EVENT,
+    static ui_event mousepress[] = {
+        __rend__,
         EV_MOUSE_PRESS,
-        EV_NO_EVENT
+        __end__
     };
 
     uipushlist( LineEvents );
@@ -170,43 +171,42 @@ void uieditpushlist( void )
 
 void uieditpoplist( void )
 {
-    uipoplist();
-    uipoplist();
+    uipoplist( /* mousepress */ );
+    uipoplist( /* LineEvents */ );
 }
 
 static int mouse( int *row, int *col )
 {
-    return( uimousepos( UIEdit->edit_screen, row, col )
-            == UIEdit->edit_screen
+    return( uimousepos( UIEdit->edit_screen, row, col ) == UIEdit->edit_screen
             && *row == Eline.row
             && *col >= Eline.col
             && *col < Eline.col + Eline.fldlen );
 }
 
-EVENT uiledit( EVENT ev )
+ui_event uiledit( ui_event ui_ev )
 {
-    static EVENT full[] = {
-        EV_NO_EVENT,
+    static ui_event full[] = {
+        __rend__,
         EV_BUFFER_FULL,
-        EV_NO_EVENT
+        __end__
     };
 
     unsigned    before;
     int         row, col, i;
-    EVENT       new;
+    ui_event    new_ui_ev;
 
     if( UIEdit->edit_maxlen == 0 ) {
         uipushlist( full );
     }
     before = Eline.index;
-    ev = uiveditevent( UIEdit->edit_screen, &Eline, ev );
-    if( ev != EV_NO_EVENT ) Eline.update = true; // causes lots of flashing!
+    ui_ev = uiveditevent( UIEdit->edit_screen, &Eline, ui_ev );
+    if( ui_ev != EV_NO_EVENT ) Eline.update = true; // causes lots of flashing!
     if( UIEdit->edit_maxlen == 0 ) {
-        uipoplist();
+        uipoplist( /* full */ );
     }
 
-    new = EV_NO_EVENT;
-    switch( ev ){
+    new_ui_ev = EV_NO_EVENT;
+    switch( ui_ev ) {
     case EV_BUFFER_FULL:
         if( !extend( Eline.length + 10 ) ) {
             Eline.index = before;       // set cursor back to correct pos'n
@@ -230,13 +230,13 @@ EVENT uiledit( EVENT ev )
                 }
             }
         }
-        if( !uiinlists( ev ) )
+        if( !uiinlists( ui_ev ) )
             break;
         /* THIS CASE FALLS INTO THE DEFAULT */
     default:
-        new = ev;
+        new_ui_ev = ui_ev;
     }
-    return( new );
+    return( new_ui_ev );
 }
 
 void uieditinsert( char *str, unsigned n )
@@ -253,7 +253,7 @@ void uieditinsert( char *str, unsigned n )
     }
     before = Eline.length;
     if( extend( Eline.length + n ) ) {
-        ins = &UIEdit->edit_buffer[ Eline.index ];
+        ins = &UIEdit->edit_buffer[Eline.index];
         memmove( ins + n, ins, before - Eline.index );
         memcpy( ins, str, n );
         Eline.index += n;

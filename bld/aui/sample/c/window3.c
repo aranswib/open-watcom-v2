@@ -33,6 +33,7 @@
 
 #include "app.h"
 
+
 static gui_menu_struct W3PopUp[] = {
     { "Default Popup", MENU_W3_POPUP, GUI_ENABLED },
     { "Show Lisa The Bug", MENU_W3_BUG, GUI_ENABLED },
@@ -262,7 +263,7 @@ static char *Stuff[] =
 
 static int TheSize = ArraySize( Stuff );
 
-static void W3MenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
+static void W3MenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 {
     row=row;piece=piece;
     switch( id ) {
@@ -271,24 +272,24 @@ static void W3MenuItem( a_window *wnd, gui_ctl_id id, int row, int piece )
         break;
     case MENU_W3_BUG:
         TheSize = TheSize == ArraySize( Stuff ) ? 10 : ArraySize( Stuff );
-        WndRepaint( wnd );
+        WndSetRepaint( wnd );
         break;
     }
 }
 
-static void W3Modify( a_window *wnd, int row, int piece )
+static void W3Modify( a_window wnd, int row, int piece )
 {
     W3MenuItem( wnd, 0, row, piece );
 }
 
 
-static int W3NumRows( a_window *wnd )
+static int W3NumRows( a_window wnd )
 {
     wnd=wnd;
     return( TheSize );
 }
 
-static bool W3GetLine( a_window *wnd, wnd_row row, int piece, wnd_line_piece *line )
+static bool W3GetLine( a_window wnd, wnd_row row, int piece, wnd_line_piece *line )
 {
     wnd=wnd;
     if( row >= TheSize ) return( false );
@@ -300,13 +301,13 @@ static bool W3GetLine( a_window *wnd, wnd_row row, int piece, wnd_line_piece *li
 }
 
 
-static void W3Refresh( a_window *wnd )
+static void W3Refresh( a_window wnd )
 {
-    WndRepaint( wnd );
+    WndSetRepaint( wnd );
 }
 
 static wnd_info W3Info = {
-    NoEventProc,
+    NoWndEventProc,
     W3Refresh,
     W3GetLine,
     W3MenuItem,
@@ -322,16 +323,16 @@ static wnd_info W3Info = {
     DefPopUp( W3PopUp )
 };
 
-a_window *W3Open( void )
+a_window W3Open( void )
 {
-    a_window    *wnd;
+    a_window    wnd;
     wnd_create_struct   info;
 
     WndInitCreateStruct( &info );
     info.info = &W3Info;
     wnd = WndCreateWithStruct( &info );
     if( wnd != NULL ) {
-        WndSetSwitches( wnd, WSW_LBUTTON_SELECTS+WSW_CHAR_CURSOR );
+        WndSetSwitches( wnd, WSW_LBUTTON_SELECTS | WSW_CHAR_CURSOR );
         WndClrSwitches( wnd, WSW_HIGHLIGHT_CURRENT );
     }
     return( wnd );

@@ -215,7 +215,7 @@ static bool DlgEditField( gui_ctl_id id )
 }
 
 
-OVL_EXTERN bool BrkEvent( gui_window *gui, gui_event gui_ev, void *param )
+OVL_EXTERN bool BrkGUIEventProc( gui_window *gui, gui_event gui_ev, void *param )
 {
     gui_ctl_id  id;
     gui_ctl_id  from;
@@ -298,7 +298,7 @@ OVL_EXTERN bool BrkEvent( gui_window *gui, gui_event gui_ev, void *param )
             }
             return( true );
         }
-        return( false );
+        break;
     case GUI_DESTROY:
         if( dlg->brand_new ) {
             if( dlg->cancel || dlg->clear ) {
@@ -319,6 +319,7 @@ OVL_EXTERN bool BrkEvent( gui_window *gui, gui_event gui_ev, void *param )
             }
         }
         DbgUpdate( UP_BREAK_CHANGE );
+        return( true );
     }
     return( false );
 }
@@ -353,7 +354,7 @@ bool DlgBreak( address addr )
     }
     dlg.tmpbp = *bp;
     CnvULongDec( bp->index, StrCopy( " ", StrCopy( LIT_DUI( DlgBreak ), TxtBuff ) ), TXT_LEN );
-    ResDlgOpen( &BrkEvent, &dlg, DIALOG_BREAK );
+    ResDlgOpen( BrkGUIEventProc, &dlg, DIALOG_BREAK );
     SetRecord( true );
     return( !dlg.cancel );
 }

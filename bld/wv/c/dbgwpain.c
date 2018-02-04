@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -41,8 +42,6 @@
 #include "dbgwdisp.h"
 #include "dbgwpain.h"
 
-
-extern const char       WndNameTab[];
 
 static gui_colour_set   *WndClassColour[WND_NUM_CLASSES];
 gui_colour_set          WndStatusColour = { GUI_BRIGHT_WHITE, GUI_BLUE };
@@ -370,7 +369,7 @@ void ProcPaint( void )
 void ProcPendingPaint( void )
 {
     gui_colour_set      *set;
-    a_window            *wnd;
+    a_window            wnd;
 
     if( _IsOff( SW_PENDING_REPAINT ) ) return;
     _SwitchOff( SW_PENDING_REPAINT );
@@ -404,7 +403,7 @@ void FiniPaint( void )
     }
 }
 
-extern gui_colour_set *GetWndColours( wnd_class_wv wndclass )
+gui_colour_set *GetWndColours( wnd_class_wv wndclass )
 {
     if( WndClassColour[wndclass] != NULL )
         return( WndClassColour[wndclass] );
