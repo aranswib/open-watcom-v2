@@ -34,12 +34,8 @@
 #include "uidef.h"
 #include "uiattrs.h"
 
-#define         _swap(a,b)              {int i; i=a; a=b; b=i;}
 
-static BYTE             OldCursorAttr;
-static WORD             OldCursorRow;
-static WORD             OldCursorCol;
-static CURSOR_TYPE      OldCursorType;
+#define _swap(a,b)      {int i; i=a; a=b; b=i;}
 
 /* NOTE:  Not sure about these constants.  Try and see! */
 
@@ -47,6 +43,11 @@ static CURSOR_TYPE      OldCursorType;
 #define END_INSERT_CURSOR   14
 #define START_NORMAL_CURSOR 12
 #define END_NORMAL_CURSOR   14
+
+static CATTR            OldCursorAttr;
+static WORD             OldCursorRow;
+static WORD             OldCursorCol;
+static CURSOR_TYPE      OldCursorType;
 
 void UIAPI uioffcursor( void )
 /****************************/
@@ -80,7 +81,7 @@ void UIAPI uioncursor( void )
 
     SetPositionOfInputCursor( UIData->cursor_row, UIData->cursor_col );
 
-//NYI ???    if( UIData->cursor_attr != -2 ) { }
+//NYI ???    if( UIData->cursor_attr != CATTR_VOFF ) { }
 
     DisplayInputCursor();
 
@@ -97,8 +98,8 @@ static void newcursor( void )
     }
 }
 
-void UIAPI uigetcursor( ORD *row, ORD *col, int *type, int *attr )
-/****************************************************************/
+void UIAPI uigetcursor( ORD *row, ORD *col, CURSOR_TYPE *type, CATTR *attr )
+/**************************************************************************/
 {
     BYTE startline;
     BYTE endline;
@@ -128,8 +129,8 @@ void UIAPI uigetcursor( ORD *row, ORD *col, int *type, int *attr )
     //NYI:  Read the attribute
 }
 
-void UIAPI uisetcursor( ORD row, ORD col, CURSOR_TYPE typ, int attr )
-/*******************************************************************/
+void UIAPI uisetcursor( ORD row, ORD col, CURSOR_TYPE typ, CATTR attr )
+/*********************************************************************/
 {
     if( ( typ != UIData->cursor_type ) || ( row != UIData->cursor_row )  ||
         ( col != UIData->cursor_col )  || ( attr != UIData->cursor_attr ) ) {
@@ -137,8 +138,7 @@ void UIAPI uisetcursor( ORD row, ORD col, CURSOR_TYPE typ, int attr )
         UIData->cursor_type = typ;
         UIData->cursor_row = row;
         UIData->cursor_col = col;
-
-        if( attr != -1 ) {
+        if( attr != CATTR_OFF ) {
             UIData->cursor_attr = attr;
         }
         newcursor();

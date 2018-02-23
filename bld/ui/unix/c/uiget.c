@@ -34,14 +34,14 @@
 #include "uiforce.h"
 #include <sys/types.h>
 #include <sys/time.h>
-#include "uivirt.h"
-#include "unxuiext.h"
+#include "uivirts.h"
+#include "uiextrn.h"
 
 
 MOUSETIME UIAPI uiclock( void )
 /*****************************
- * this routine get time in platform dependant units, 
- * used for mouse & timer delays 
+ * this routine get time in platform dependant units,
+ * used for mouse & timer delays
  */
 {
     struct timeval  timev;
@@ -94,11 +94,12 @@ static ui_event doget( bool update )
     }
     ReturnIdle = 1;
     if( ui_ev == EV_REDRAW_SCREEN ) {
-        SAREA   screen={ 0, 0, 0, 0 };
+        SAREA   screen;
 
-        screen.height= UIData->height;
-        screen.width=  UIData->width;
-
+        screen.row = 0;
+        screen.col = 0;
+        screen.height = UIData->height;
+        screen.width = UIData->width;
         uidirty( screen );
         UserForcedTermRefresh = true;
         physupdate( &screen );
@@ -112,8 +113,8 @@ ui_event UIAPI uieventsource( bool update )
     ui_event    ui_ev;
 
     ui_ev = doget( update );
-    stopmouse();
-    stopkeyboard();
+    _stopmouse();
+    _stopkeyb();
     return( uieventsourcehook( ui_ev ) );
 }
 

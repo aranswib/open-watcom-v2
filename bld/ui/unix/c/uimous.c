@@ -51,12 +51,6 @@ void intern checkmouse( MOUSESTAT *status, MOUSEORD *row, MOUSEORD *col, MOUSETI
     _checkmouse( status, row, col, time );
 }
 
-void intern stopmouse( void )
-/***************************/
-{
-    _stopmouse();
-}
-
 bool UIAPI initmouse( init_mode install )
 /***************************************/
 {

@@ -88,14 +88,14 @@ void intern kbdspawnend( void )
 ui_event intern keyboardevent( void )
 /***********************************/
 {
-    register    unsigned                scan;
-    register    unsigned char           key;
-    register    unsigned char           ascii;
-    register    ui_event                ui_ev;
-    register    unsigned char           newshift;
-    register    unsigned char           changed;
-    struct _KBDKEYINFO                  keyInfo;
-    struct _KBDINFO                     shiftInfo;
+    unsigned                scan;
+    unsigned char           key;
+    unsigned char           ascii;
+    ui_event                ui_ev;
+    unsigned char           newshift;
+    unsigned char           changed;
+    struct _KBDKEYINFO      keyInfo;
+    struct _KBDINFO         shiftInfo;
 
 
     shiftInfo.cb = sizeof( shiftInfo );
@@ -135,11 +135,10 @@ ui_event intern keyboardevent( void )
     } else {
         changed = ( newshift ^ UIData->old_shift ) & ~S_INSERT;
         if( changed != 0 ) {
-            key = 0;
             scan = 1;
-            while( scan < (1 << 7) ) {
-                if( ( changed & scan ) != 0 ) {
-                    if( ( newshift & scan ) != 0 ) {
+            for( key = 0; key < sizeof( ShiftkeyEvents ) / sizeof( ShiftkeyEvents[0] ); key++ ) {
+                if( changed & scan ) {
+                    if( newshift & scan ) {
                         UIData->old_shift |= scan;
                         return( ShiftkeyEvents[key].press );
                     } else {
@@ -148,7 +147,6 @@ ui_event intern keyboardevent( void )
                     }
                 }
                 scan <<= 1;
-                ++key;
             }
         }
         ui_ev = EV_NO_EVENT;

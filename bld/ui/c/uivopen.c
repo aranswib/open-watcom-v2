@@ -39,12 +39,13 @@
 #include "clibext.h"
 
 
-static void update( SAREA area, VSCREEN *vptr )
-/*********************************************/
+static void update( SAREA area, void *_vptr )
+/*******************************************/
 {
-    register    int                     row;
-    register    int                     vrow;
-    register    int                     vcol;
+    int             row;
+    int             vrow;
+    int             vcol;
+    VSCREEN         *vptr = (VSCREEN *)_vptr;
 
     for( row = area.row; row < area.row + area.height; ++row ) {
         vrow = row - (int)vptr->area.row;
@@ -57,21 +58,21 @@ static void update( SAREA area, VSCREEN *vptr )
 VSCREEN* UIAPI uivopen( VSCREEN *vptr )
 /*************************************/
 {
-    unsigned char           *box;
+    const char              *box;
     ATTR                    attr;
     int                     priority;
-    void                    (_FAR *updatertn)( struct sarea, void * );
+    update_func             updatertn;
     bool                    okbuffer;
-    int                     len;
+    uisize                  len;
     ORD                     col;
-    unsigned int            flags;
+    screen_flags            flags;
     bool                    covered;
     SAREA                   area;
 
     okarea( vptr->area );
     flags = vptr->flags;
     area = vptr->area;
-    if( ( flags & V_DIALOGUE ) != 0 ) {
+    if( flags & V_DIALOGUE ) {
         if( flags & V_LISTBOX ) {
             box = SBOX_CHARS();
             attr = UIData->attrs[ATTR_NORMAL];
@@ -86,31 +87,31 @@ VSCREEN* UIAPI uivopen( VSCREEN *vptr )
         attr = UIData->attrs[ATTR_FRAME];
         priority = P_VSCREEN;
     }
-    if( ( flags & V_UNFRAMED ) == 0 ) {
+    if( (flags & V_UNFRAMED) == 0 ) {
         (area.row)--;
         (area.col)--;
         (area.height) += 2;
         (area.width) += 2;
         okarea( area );
     }
-    if( ( flags & V_UNBUFFERED ) != 0 ) {
+    if( flags & V_UNBUFFERED ) {
         priority = P_UNBUFFERED;
         bfake( &(vptr->window.type.buffer), area.row, area.col );
         okbuffer = true;
         updatertn = NULL;
     } else {
         okbuffer = balloc( &(vptr->window.type.buffer), area.height, area.width );
-        updatertn = (void(*)(struct sarea,void *))update;
+        updatertn = update;
     }
     if( okbuffer ) {
         vptr->window.area = area;
         vptr->window.priority = priority;
-        vptr->window.update = updatertn;
+        vptr->window.update_proc = updatertn;
         vptr->window.parm = vptr;
         covered = openwindow( &(vptr->window) );
         vptr->flags = flags;
-        if( ( flags & V_UNFRAMED ) == 0 ) {
-            if( !UIData->no_blowup && !covered && ( (flags & V_NO_ZOOM) == 0 ) ) {
+        if( (flags & V_UNFRAMED) == 0 ) {
+            if( !UIData->no_blowup && !covered && (flags & V_NO_ZOOM) == 0 ) {
                 blowup( &UIData->screen, area, box, attr );
             }
             area.row = 0;
@@ -157,8 +158,8 @@ void UIAPI uivclose( VSCREEN *vptr )
 {
     if( vptr->open ) {
         closewindow( &(vptr->window) );
-        if( ( vptr->flags & V_UNBUFFERED ) == 0 ) {
-            if( ( vptr->flags & V_UNFRAMED ) == 0 ) {
+        if( (vptr->flags & V_UNBUFFERED) == 0 ) {
+            if( (vptr->flags & V_UNFRAMED) == 0 ) {
                 bunframe( &(vptr->window.type.buffer) );
             }
             bfree( &(vptr->window.type.buffer) );

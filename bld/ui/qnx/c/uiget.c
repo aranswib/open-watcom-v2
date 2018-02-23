@@ -36,16 +36,16 @@
 #include <sys/dev.h>
 #include <sys/types.h>
 #include <sys/osinfo.h>
-#include "uivirt.h"
-#include "qnxuiext.h"
+#include "uivirts.h"
+#include "uiextrn.h"
 
 
 struct _timesel     __far *_SysTime;
 
 MOUSETIME UIAPI uiclock( void )
 /*****************************
- * this routine get time in platform dependant units, 
- * used for mouse & timer delays 
+ * this routine get time in platform dependant units,
+ * used for mouse & timer delays
  */
 {
     return( _SysTime->nsec / 1000000 + _SysTime->seconds * 1000 );
@@ -99,9 +99,8 @@ static ui_event doget( bool update )
     case EV_REDRAW_SCREEN:
         screen.row = 0;
         screen.col = 0;
-        screen.height= UIData->height;
-        screen.width=  UIData->width;
-
+        screen.height = UIData->height;
+        screen.width = UIData->width;
         uidirty( screen );
         UserForcedTermRefresh = true;
         physupdate( &screen );
@@ -125,8 +124,8 @@ ui_event UIAPI uieventsource( bool update )
     ui_event    ui_ev;
 
     ui_ev = doget( update );
-    stopmouse();
-    stopkeyboard();
+    _stopmouse();
+    _stopkeyb();
     return( uieventsourcehook( ui_ev ) );
 }
 

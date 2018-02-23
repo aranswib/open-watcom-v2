@@ -153,26 +153,6 @@ UIMENUITEM *GUIAllocMenuItems( gui_ctl_idx num_menus )
     return( menu );
 }
 
-/*
- * GetNumItems -- count the number of items in the menu array, excluding
- *                the end marker
- */
-
-static gui_ctl_idx GetNumItems( UIMENUITEM *menu )
-{
-    gui_ctl_idx i;
-    gui_ctl_idx prev_num;
-
-    if( menu == NULL ) {
-        return( 0 );
-    }
-    prev_num = 0;
-    for( i = 0; !MENUENDMARKER( menu[i] ); i++ ) {
-        prev_num++;
-    }
-    return( prev_num );
-}
-
 static bool GetMenu( int *depth, gui_ctl_idx num_menus, UIMENUITEM *menu, gui_ctl_id id,
                      UIMENUITEM **pmenu, gui_ctl_idx *position, UIMENUITEM ***to_replace )
 {
@@ -192,7 +172,7 @@ static bool GetMenu( int *depth, gui_ctl_idx num_menus, UIMENUITEM *menu, gui_ct
             (*depth)++;
         }
         if( menu[i].popup != NULL ) {
-            num_popup_menus = GetNumItems( menu[i].popup );
+            num_popup_menus = uimenucount( menu[i].popup );
             if( GetMenu( depth, num_popup_menus, menu[i].popup, id, pmenu, position, to_replace ) ) {
                 if( ( to_replace != NULL ) && ( *to_replace == NULL ) ) {
                     *to_replace = &menu[i].popup;
@@ -246,7 +226,7 @@ static bool GUIGetMenu( gui_window *wnd, gui_ctl_id id, UIMENUITEM **menu, gui_c
             vbar = true;
         }
     }
-    num_menus = GetNumItems( *the_menu );
+    num_menus = uimenucount( *the_menu );
     depth = 0;
     if( GetMenu( &depth, num_menus, *the_menu, id, menu, position, to_replace ) ) {
         if( ( to_replace != NULL ) && ( *to_replace == NULL ) ) {
@@ -266,7 +246,7 @@ gui_ctl_idx GUIGetMenuPopupCount( gui_window *wnd, gui_ctl_id id )
 
     GUIGetMenu( wnd, id, &menu, NULL, NULL, false );
     if( menu != NULL && menu->popup ) {
-        return( GetNumItems( menu->popup ) );
+        return( uimenucount( menu->popup ) );
     } else {
         return( -1 );
     }
@@ -441,7 +421,7 @@ bool GUICreateMenuItems( gui_ctl_idx num_menus, gui_menu_struct *info,
     return( true );
 }
 
-bool GUIAllocVBarMenu( VBARMENU **pmenu )
+static bool GUIAllocVBarMenu( VBARMENU **pmenu )
 {
     VBARMENU    *menu;
 
@@ -453,9 +433,20 @@ bool GUIAllocVBarMenu( VBARMENU **pmenu )
         return( false );
     }
     menu->titles = NULL;
-    menu->menu = 1;
+    menu->currmenu = 0;
     *pmenu = menu;
     return( true );
+}
+
+static void GUIFreeVBarMenu( VBARMENU *menu )
+{
+    if( menu != NULL ) {
+        uinomenus();
+        if( menu->titles != NULL ) {
+            GUIFreeMenuItems( menu->titles );
+        }
+        GUIMemFree( menu );
+    }
 }
 
 /*
@@ -493,7 +484,7 @@ static bool InsertMenu( gui_window *wnd, gui_menu_struct *info, gui_ctl_idx posi
     UIMENUITEM  *menu;
 
     menu = *pmenu;
-    num_menus = GetNumItems( menu );
+    num_menus = uimenucount( menu );
     if( ( position > num_menus ) || ( position == -1 ) ) {
         position = num_menus;
     }
@@ -592,17 +583,6 @@ bool GUICreateMenus( gui_window *wnd,  gui_create_info *dlg_info )
     }
 }
 
-void GUIFreeVBarMenu( VBARMENU *menu )
-{
-    if( menu != NULL ) {
-        uinomenus();
-        if( menu->titles != NULL ) {
-            GUIFreeMenuItems( menu->titles );
-        }
-        GUIMemFree( menu );
-    }
-}
-
 /*
  * GUIFreeMenus -- frees everything allocated by CreateMenus
  */
@@ -631,7 +611,7 @@ bool GUIAppendMenuByIdx( gui_window *wnd, gui_ctl_idx position, gui_menu_struct 
     gui_ctl_idx num_menus;
 
     if( wnd->vbarmenu != NULL ) {
-        num_menus = GetNumItems( wnd->vbarmenu->titles );
+        num_menus = uimenucount( wnd->vbarmenu->titles );
         if( num_menus < ( position + 1 ) ) {
             return( false );
         }
@@ -649,7 +629,7 @@ static bool DeleteMenu( gui_window *wnd, gui_ctl_id id, UIMENUITEM **pmenu, int 
     UIMENUITEM  *sub;
 
     sub = *pmenu;
-    prev_num = GetNumItems( sub );
+    prev_num = uimenucount( sub );
     if( prev_num == 1 ) {
         new_menu = NULL;
     } else {
@@ -707,7 +687,7 @@ bool GUIDeleteToolbarMenuItem( gui_window *wnd, gui_ctl_id id )
     if( wnd->vbarmenu != NULL ) {
         ui_ev = ID2EV( id );
         menu = wnd->vbarmenu->titles;
-        num_menus = GetNumItems( menu );
+        num_menus = uimenucount( menu );
         for( i = 0; i < num_menus; i++ ) {
             if( menu[i].event == ui_ev ) {
                 if( !DeleteMenu( wnd, id, &wnd->vbarmenu->titles, i ) ) {

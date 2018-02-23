@@ -31,11 +31,9 @@
 
 #include "uidef.h"
 
-#if !defined( __NETWARE_386__ )
+#if defined( __NETWARE_386__ ) || defined( __UNIX__ ) || !defined( __WATCOMC__ )
 
-#if defined( __UNIX__ ) || !defined( __WATCOMC__ )
-
-int UIAPI uicharlen( int ch )
+int UIAPI uicharlen( char ch )
 /****************************/
 {
     /* unused parameters */ (void)ch;
@@ -43,7 +41,7 @@ int UIAPI uicharlen( int ch )
     return( 1 );
 }
 
-int UIAPI uiisdbcs( void )
+bool UIAPI uiisdbcs( void )
 /*************************/
 {
     return( false );
@@ -53,33 +51,16 @@ int UIAPI uiisdbcs( void )
 
 #include <mbctype.h>
 
-int UIAPI uicharlen( int ch )
+int UIAPI uicharlen( char ch )
 /****************************/
 {
-    return( _mbislead( ch ) ? 2 : 1 );
+    return( _mbislead( (unsigned char)ch ) ? 2 : 1 );
 }
 
-int UIAPI uiisdbcs( void )
+bool UIAPI uiisdbcs( void )
 /*************************/
 {
-    return( __IsDBCS );
-}
-
-#endif
-
-#else
-
-int UIAPI uicharlen( int ch )
-/****************************/
-{
-    ch=ch;
-    return( 1 ); // this is the stub version.  Real verion in system directories
-}
-
-int UIAPI uiisdbcs( void )
-/*************************/
-{
-    return( 0 );
+    return( __IsDBCS != 0 );
 }
 
 #endif

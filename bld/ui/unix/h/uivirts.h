@@ -33,25 +33,25 @@
 
 /*-
 
- uivirt.h -- interface class for display, mouse, keyboard.
+ uivirts.h -- interface class for display, mouse, keyboard.
         Note the separation of these is notational convenience
         It is unlikely you will ever want an X keyboard with
         a QNX Console.....
 
 */
 
-#ifndef qnx_uivirt_h
-#define qnx_uivirt_h
+#ifndef _UIVIRTS_H_INCLUDED
+#define _UIVIRTS_H_INCLUDED
 
 
 typedef struct Display {
     bool        (*init)( void );            /* setup */
     bool        (*fini)( void );            /* tear down */
-    int         (*update)( SAREA *area );   /* change screen */
-    int         (*refresh)( bool noopt );   /* force redraw of screen */
+    int         (*update)(SAREA *area);     /* change screen */
+    int         (*refresh)(bool noopt);     /* force redraw of screen */
     /*- cursor */
-    int         (*getcur)( ORD *row, ORD *col, CURSOR_TYPE *type, int *attr );
-    int         (*setcur)( ORD row, ORD col, CURSOR_TYPE type, int attr );
+    int         (*getcur)(ORD *row, ORD *col, CURSOR_TYPE *type, CATTR *attr);
+    int         (*setcur)(ORD row, ORD col, CURSOR_TYPE type, CATTR attr);
     ui_event    (*event)( void );
 } Display;
 
@@ -65,7 +65,7 @@ typedef struct Keyboard {
     int     (*flush)( void );               /* clear look-ahead */
     int     (*stop)( void );                /* clear look-ahead, disable keyboard events */
     int     (*shift_state)( void );         /* shift status */
-    int     (*un_event)( ui_event event );  /* allow modify of next event */
+    int     (*un_event)(ui_event event);    /* allow modify of next event */
     int     (*wait_keyb)( int, int );       /* wait for keyboard event */
 } Keyboard;
 
@@ -85,7 +85,7 @@ typedef struct {
 } VirtDisplay;
 
 typedef struct {
-    bool        (*check)( void );
+    bool        (*check)(void);
     VirtDisplay virt;
 } PossibleDisplay;
 
@@ -121,29 +121,5 @@ extern VirtDisplay      UIVirt;
 #define _stopmouse      (*UIVirt.mouse->stop)
 #define _uimousespeed   (*UIVirt.mouse->set_speed)
 #define _uiwaitmouse    (*UIVirt.mouse->wait_mouse)
-
-/*-
- The modules for each type....
-*/
-
-extern  bool    QnxWCheck(void);
-extern  bool    ConsCheck(void);
-extern  bool    TermCheck(void);
-extern  bool    TInfCheck(void);
-
-extern Display  ConsDisplay;
-extern Display  TermDisplay;
-extern Display  TInfDisplay;
-extern Display  QnxWDisplay;
-
-extern Keyboard ConsKeyboard;
-
-extern Mouse    ConsMouse;
-extern Mouse    TermMouse;
-
-extern void     stopmouse(void);
-extern void     stopkeyboard( void );
-extern void     savekeyb(void);
-extern void     restorekeyb(void);
 
 #endif

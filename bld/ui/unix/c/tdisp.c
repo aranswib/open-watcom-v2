@@ -78,7 +78,7 @@
 #include "qdebug.h"
 
 #include "uivirt.h"
-#include "unxuiext.h"
+#include "uiextrn.h"
 #include "ctkeyb.h"
 #include "tixparse.h"
 #include "tixsupp.h"
@@ -753,8 +753,8 @@ static MONITOR ui_data = {
 static LP_PIXEL shadow;
 static int      save_cursor_type;
 
-static bool setupscrnbuff( int srows, int scols )
-/***********************************************/
+static bool setupscrnbuff( uisize srows, uisize scols )
+/*****************************************************/
 {
     LP_PIXEL            scrn;
     size_t              size;
@@ -775,7 +775,7 @@ static bool setupscrnbuff( int srows, int scols )
     if( rows == 0 ) {
         rows = srows;       // what was requested in function call
         if( rows == 0 ) {
-            rows = lines;   // curses no of lines
+            rows = lines;   // CURSES no of lines
             if( rows == 0 ) {
                 rows = 25;
             }
@@ -784,7 +784,7 @@ static bool setupscrnbuff( int srows, int scols )
     if( cols == 0 ) {
         cols = scols;       // what was requested in function call
         if( cols == 0 ) {
-            cols = columns; // curses no of columns
+            cols = columns; // CURSES no of columns
             if( cols == 0 ) {
                 cols = 80;
             }
@@ -934,7 +934,8 @@ static int ti_refresh( bool must );
 static bool ti_init( void )
 /*************************/
 {
-    int         rows, cols;
+    uisize      rows;
+    uisize      cols;
     const char  *tmp;
 
     if( UIData == NULL ) {
@@ -961,14 +962,14 @@ static bool ti_init( void )
     }
 
     // Figure out the number of columns to use
-    cols = columns;             // curses no of columns
+    cols = columns;             // CURSES no of columns
     tmp = getenv( "COLUMNS" );
     if( tmp != NULL ) {
         cols = atoi( tmp );
     }
 
     // Figure out the number of rows to use
-    rows = lines;               // curses no of lines
+    rows = lines;               // CURSES no of lines
     tmp = getenv( "LINES" );
     if( tmp != NULL ) {
         rows = atoi( tmp );
@@ -1188,9 +1189,10 @@ static int ti_refresh( bool must )
         if( !must ) {
             int     r,c;
             int     pos;
-            bool    diff = false;
+            bool    diff;
 
-            while( dirty_area.col0 < dirty_area.col1 ) {
+            diff = false;
+            for( ; dirty_area.col0 < dirty_area.col1; dirty_area.col0++ ) {
                 for( r = dirty_area.row0; r < dirty_area.row1; r++ ) {
                     pos = r * incr + dirty_area.col0;
                     if( !PIXELEQUAL( bufp[pos], sbufp[pos] ) ) {
@@ -1198,13 +1200,13 @@ static int ti_refresh( bool must )
                         break;
                     }
                 }
-                if( diff )
+                if( diff ) {
                     break;
-                dirty_area.col0++;
+                }
             }
 
             diff = false;
-            while( dirty_area.col0 < dirty_area.col1 ) {
+            for( ; dirty_area.col0 < dirty_area.col1; dirty_area.col1-- ) {
                 for( r = dirty_area.row0; r < dirty_area.row1; r++ ) {
                     pos = r * incr + dirty_area.col1 - 1;
                     if( !PIXELEQUAL( bufp[pos], sbufp[pos] ) ) {
@@ -1212,13 +1214,13 @@ static int ti_refresh( bool must )
                         break;
                     }
                 }
-                if( diff )
+                if( diff ) {
                     break;
-                dirty_area.col1--;
+                }
             }
 
             diff = false;
-            while( dirty_area.row0 < dirty_area.row1 ) {
+            for( ; dirty_area.row0 < dirty_area.row1; dirty_area.row0++ ) {
                 for( c = dirty_area.col0; c < dirty_area.col1; c++ ) {
                     pos = dirty_area.row0 * incr + c;
                     if( !PIXELEQUAL( bufp[pos], sbufp[pos] ) ) {
@@ -1226,13 +1228,13 @@ static int ti_refresh( bool must )
                         break;
                     }
                 }
-                if( diff )
+                if( diff ) {
                     break;
-                dirty_area.row0++;
+                }
             }
 
             diff = false;
-            while( dirty_area.row0 < dirty_area.row1 ) {
+            for( ; dirty_area.row0 < dirty_area.row1; dirty_area.row1-- ) {
                 for( c = dirty_area.col0; c < dirty_area.col1; c++ ) {
                     pos = ( dirty_area.row1 - 1 ) * incr + c;
                     if( !PIXELEQUAL( bufp[pos], sbufp[pos] ) ) {
@@ -1240,9 +1242,9 @@ static int ti_refresh( bool must )
                         break;
                     }
                 }
-                if( diff )
+                if( diff ) {
                     break;
-                dirty_area.row1--;
+                }
             }
         }
 
@@ -1387,8 +1389,8 @@ static int ti_refresh( bool must )
     return( 0 );
 }
 
-static int td_getcur( ORD *row, ORD *col, CURSOR_TYPE *type, int *attr )
-/**********************************************************************/
+static int td_getcur( ORD *row, ORD *col, CURSOR_TYPE *type, CATTR *attr )
+/************************************************************************/
 {
     *row = UIData->cursor_row;
     *col = UIData->cursor_col;
@@ -1397,8 +1399,8 @@ static int td_getcur( ORD *row, ORD *col, CURSOR_TYPE *type, int *attr )
     return( 0 );
 }
 
-static int td_setcur( ORD row, ORD col, CURSOR_TYPE typ, int attr )
-/*****************************************************************/
+static int td_setcur( ORD row, ORD col, CURSOR_TYPE typ, CATTR attr )
+/*******************************************************************/
 {
     /* unused parameters */ (void)attr;
 

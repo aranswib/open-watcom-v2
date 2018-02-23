@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -24,35 +25,9 @@
 *
 *  ========================================================================
 *
-* Description:  WHEN YOU FIGURE OUT WHAT THIS FILE DOES, PLEASE
-*               DESCRIBE IT HERE!
+* Description:  Get DOS code page
 *
 ****************************************************************************/
 
 
-#ifndef qnxuiext_h
-#define qnxuiext_h
-
-#ifndef __TYPES_H_INCLUDED
-#include <sys/types.h>
-#endif
-
-
-#define uiwrite(s)      write( UIConHandle, s, strlen( s ) )
-#define uiwritec(c)     write( UIConHandle, c, sizeof( c ) - 1 )
-
-extern int              UIConsole;
-extern int              UIConHandle;
-extern pid_t            UIProxy;
-extern pid_t            UILocalProxy;
-extern pid_t            UIRemProxy;
-extern nid_t            UIConNid;
-extern pid_t            UIPGroup;
-extern bool             UIWantShiftChanges;
-extern bool             UserForcedTermRefresh;
-extern bool             UIDisableShiftChanges;
-
-extern const char       *GetTermType( void );
-extern const char       *SetTermType( const char * );
-
-#endif
+extern unsigned short dos_get_code_page( void );

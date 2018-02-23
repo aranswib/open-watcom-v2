@@ -39,10 +39,10 @@
 #include "wterm.h"
 #include "uidef.h"
 #include "uishift.h"
-#include "unxuiext.h"
+#include "uiextrn.h"
 #include "trie.h"
 #include "tixparse.h"
-#include "uivirt.h"
+#include "uivirts.h"
 #include "qdebug.h"
 #include "ctkeyb.h"
 #include "kbwait.h"
@@ -267,8 +267,8 @@ void intern clear_shift( void )
     shift_state = 0;
 }
 
-static void intern ck_arm( void )
-/*******************************/
+static void ck_arm( void )
+/************************/
 {
 }
 
@@ -445,7 +445,11 @@ ui_event ck_keyboardevent( void )
         #define S_MASK  (S_SHIFT|S_CTRL|S_ALT)
 
         if( shift_state & S_MASK ) {
-            search_ev = tolower( ui_ev );
+            if( iseditchar( ui_ev ) && isupper( (unsigned char)ui_ev ) ) {
+                search_ev = tolower( (unsigned char)ui_ev );
+            } else {
+                search_ev = ui_ev;
+            }
             entry = bsearch( &search_ev, ShiftMap, NUM_ELTS( ShiftMap ), sizeof( ShiftMap[0] ), find_entry );
             if( entry != NULL ) {
                 if( shift_state & S_SHIFT ) {
@@ -617,14 +621,14 @@ static bool ck_init( void )
     }
     SavePGroup = tcgetpgrp( UIConHandle );
     tcsetpgrp( UIConHandle, UIPGroup );
-    restorekeyb();
+    _restorekeyb();
     return( true );
 }
 
 static bool ck_fini( void )
 /*************************/
 {
-    savekeyb();
+    _savekeyb();
     tcsetpgrp( UIConHandle, SavePGroup );
     return( false );
 }

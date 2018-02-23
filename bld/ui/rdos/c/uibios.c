@@ -108,12 +108,12 @@ void intern physupdate( SAREA *area )
     }
 }
 
-int UIAPI uiisdbcs( void )
+bool UIAPI uiisdbcs( void )
 {
     return( false );
 }
 
-int UIAPI uicharlen( int ch )
+int UIAPI uicharlen( char ch )
 {
     return( 1 );
 }

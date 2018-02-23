@@ -31,6 +31,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #ifndef __UNIX__
 #include <process.h>
@@ -38,7 +39,6 @@
 #include "stdui.h"
 #include "uimenu.h"
 #include "uivedit.h"
-#include "uigchar.h"
 
 #define TEST_COLOURS
 #ifdef TEST_COLOURS
@@ -254,7 +254,7 @@ static void open( void )
     }
 }
 
-#define TOP_ROW 8
+#define TOP_ROW         1
 
 void main( void )
 /***************/
@@ -289,7 +289,7 @@ void main( void )
                     mrow++;
                     mcol++;
                     uipushlist( evlist );
-                    ui_ev = uicreatepopup( mrow, mcol, filemenu, false, true, (int)NULL );
+                    ui_ev = uicreatepopup( mrow, mcol, filemenu, false, true, EV_NO_EVENT );
                     uipoplist( /* evlist */ );
                 }
                 switch( ui_ev ) {
@@ -299,7 +299,7 @@ void main( void )
                     uivclose( &mainwin );
                     mainwin.area.height = UIData->height - 7;
                     uivopen( &mainwin );
-                    if( evrow > area.height ) {
+                    if( evrow > mainwin.area.height ) {
                         evrow = TOP_ROW;
                     }
                     break;
@@ -332,8 +332,8 @@ void main( void )
 //                      uibackground( "wf.img" );
                     area.row = 0;
                     area.col = 0;
-                    area.height = 25;
-                    area.width = 80;
+                    area.height = UIData->height;
+                    area.width = UIData->width;
                     uidirty( area );
                     break;
                 case EV_F1:

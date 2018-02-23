@@ -37,7 +37,7 @@
 static void backblank( SAREA area, void *dummy )
 /**********************************************/
 {
-    register    ORD                     row;
+    uisize      row;
 
     /* unused parameters */ (void)dummy;
 
@@ -50,7 +50,7 @@ static void backblank( SAREA area, void *dummy )
 static void backfill( SAREA area, void *dummy )
 /*********************************************/
 {
-    register    ORD                     row;
+    uisize      row;
 
     /* unused parameters */ (void)dummy;
 
@@ -81,7 +81,7 @@ void intern openbackground( void )
     UIData->blank.area.height = UIData->height;
     UIData->blank.area.width = UIData->width;
     UIData->blank.priority = P_BACKGROUND;
-    UIData->blank.update = backblank;
+    UIData->blank.update_proc = backblank;
     UIData->blank.parm = (void *)0xbb;// NULL is reserved for CGUI screens!
     openwindow( &UIData->blank );
 }
@@ -95,7 +95,7 @@ void intern closebackground( void )
 
 
 BUFFER * UIAPI uibackgroundbuffer( void )
-/****************************************/
+/***************************************/
 {
     bool    ok;
 
@@ -105,7 +105,7 @@ BUFFER * UIAPI uibackgroundbuffer( void )
         ok = balloc( &UIData->blank.type.buffer, UIData->height, UIData->width );
     }
     if( ok ) {
-        UIData->blank.update = backfill;
+        UIData->blank.update_proc = backfill;
         UIData->blank.parm = (void *)0xbb;// NULL is reserved for CGUI screens!
         //UIData->blank.parm = NULL;       // ... just put in any old value
         return( &UIData->blank.type.buffer );
@@ -114,30 +114,28 @@ BUFFER * UIAPI uibackgroundbuffer( void )
 }
 
 bool UIAPI uiremovebackground( void )
-/************************************/
+/***********************************/
 {
     if( UIData->blank.type.buffer.origin != NULL ) {
         bfree( &UIData->blank.type.buffer );
         UIData->blank.type.buffer.origin = NULL;
     }
-    UIData->blank.update = backblank;
+    UIData->blank.update_proc = backblank;
     UIData->blank.parm = &UIData->attrs[ATTR_NORMAL];
     return( true );
 }
 
 bool UIAPI uikeepbackground( void )
-/**********************************/
+/*********************************/
 {
-    register    ORD                     row;
-    register    BUFFER                  *buff;
+    uisize      row;
+    BUFFER      *buff;
 
     buff = uibackgroundbuffer();
-    if( buff ) {
+    if( buff != NULL ) {
         for( row = 0; row < UIData->height; ++ row ) {
-            uibcopy( &UIData->screen, row, 0,
-                   buff, row, 0, UIData->width );
+            uibcopy( &UIData->screen, row, 0, buff, row, 0, UIData->width );
         }
     }
     return( buff != NULL );
 }
-

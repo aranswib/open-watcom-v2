@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -30,29 +31,5 @@
 ****************************************************************************/
 
 
-
-#include <sys/types.h>
-#include "uidef.h"
-#include "qnxuiext.h"
-#include "uivirt.h"
-
-        /* console number */
-int              UIConsole = 0;
-        /* filedescriptor */
-int              UIConHandle = 0;
-        /* proxy for all events */
-pid_t            UIProxy;
-        /* remote proxy if nec.. */
-pid_t            UIRemProxy;
-        /* proxy's incoming value (usually same as UIProxy */
-pid_t            UILocalProxy;
-        /* Node of console mgr */
-nid_t            UIConNid;
-        /* process group */
-pid_t            UIPGroup;
-        /* tell keyboard app wants to see shift, alt, ... keys... */
-bool             UIWantShiftChanges = true;
-        /* Disable checking on non console devices */
-bool             UIDisableShiftChanges = false;
-        /* Active virtual console functions */
-VirtDisplay      UIVirt;
+extern void         (intern *DrawCursor)( void );
+extern void         (intern *EraseCursor)( void );

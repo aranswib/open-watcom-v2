@@ -70,27 +70,24 @@ void UIAPI uipushlist( ui_event *list )
 bool UIAPI uiinlist( ui_event ui_ev, ui_event *ui_ev_list )
 /*********************************************************/
 {
-    while( *ui_ev_list != __rend__ ) {
+    for( ; *ui_ev_list != __rend__; ui_ev_list += 2 ) {
         if( ( ui_ev >= *ui_ev_list ) && ( ui_ev <= *( ui_ev_list + 1 ) ) ) {
             return( true );
         }
-        ui_ev_list += 2;
     }
-    ++ui_ev_list;
-    while( *ui_ev_list != __end__ ) {
+    for( ui_ev_list++; *ui_ev_list != __end__; ui_ev_list++ ) {
         if( ui_ev == *ui_ev_list ) {
             return( true );
         }
-        ++ui_ev_list;
     }
     return( false );
 }
 
 
-ui_event *UIAPI uipoplist( void )
-/*******************************/
+ui_event * UIAPI uipoplist( void )
+/********************************/
 {
-    register ui_event   *list;
+    ui_event    *list;
 
     list = NULL;
     if( UIData->events->num_lists > 0 ) {
@@ -105,7 +102,7 @@ ui_event *UIAPI uipoplist( void )
 bool UIAPI uiinlists( ui_event ui_ev )
 /************************************/
 {
-    register int    index;
+    int         index;
 
     // EV_KILL_UI is implicitly pushed as part of every list
     if( ui_ev == EV_KILL_UI )

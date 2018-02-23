@@ -32,6 +32,7 @@
 
 #include <unistd.h>
 #include <string.h>
+#include <ctype.h>
 #include <time.h>
 #if defined( __UNIX__ )
 #ifndef HP
@@ -50,8 +51,8 @@
 #include "uimouse.h"
 #include "trie.h"
 #include "qdebug.h"
-#include "uivirt.h"
-#include "unxuiext.h"
+#include "uivirts.h"
+#include "uiextrn.h"
 #include "ctkeyb.h"
 
 
@@ -162,7 +163,7 @@ static void TryOne( int type, char *test, char *init, const char *input )
     checkmouse( &MouseStatus, &row, &col, &MouseTime );
     MouseRow = row;
     MouseCol = col;
-    stopmouse();
+    _stopmouse();
 }
 
 #ifdef __LINUX__
@@ -283,11 +284,9 @@ static bool gpm_tm_init( void )
         }
         tty_name[len] = '\0';
     }
-    len--;
     mult = 1;
-    while( len && tty_name[len] >= '0' && tty_name[len] <= '9' ) {
+    for( len--; len > 0 && isdigit( tty_name[len] ); len-- ) {
         gpm_conn.vc += ( tty_name[len] - '0' ) * mult;
-        len--;
         mult *= 10;
     }
     write( UIMouseHandle, &gpm_conn, sizeof gpm_conn );

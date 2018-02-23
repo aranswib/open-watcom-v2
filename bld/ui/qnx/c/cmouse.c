@@ -44,14 +44,13 @@
 #include <i86.h>
 #include "uidef.h"
 #include "uimouse.h"
-#include "uivirt.h"
-#include "qnxuiext.h"
+#include "uivirts.h"
+#include "uiextrn.h"
 
 
 #define MOUSE_SCALE         8
 
 extern struct _mouse_ctrl   *MouseCtrl;
-extern struct _timesel      __far *_SysTime;
 
 static int                  ScaledRow;
 static int                  ScaledCol;
@@ -155,7 +154,7 @@ static bool cm_init( init_mode install )
                 checkmouse( &MouseStatus, &row, &col, &MouseTime );
                 MouseRow = row;
                 MouseCol = col;
-                stopmouse();
+                _stopmouse();
             }
         }
     }

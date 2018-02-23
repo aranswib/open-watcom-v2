@@ -44,8 +44,8 @@
 #include "uimouse.h"
 #include "trie.h"
 #include "qdebug.h"
-#include "uivirt.h"
-#include "qnxuiext.h"
+#include "uivirts.h"
+#include "uiextrn.h"
 #include "ctkeyb.h"
 
 
@@ -65,8 +65,6 @@
 
 #define XT_INIT             _ESC "[?1000h"
 #define XT_FINI             _ESC "[?1000l"
-
-extern struct _timesel  __far *_SysTime;
 
 static enum {
     M_NONE,
@@ -203,7 +201,7 @@ static void DoMouseInit( int type, const char *init, const char *input )
     checkmouse( &MouseStatus, &row, &col, &MouseTime );
     MouseRow = row;
     MouseCol = col;
-    stopmouse();
+    _stopmouse();
 }
 
 static bool tm_init( init_mode install )

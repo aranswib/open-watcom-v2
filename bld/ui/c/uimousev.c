@@ -222,25 +222,27 @@ ui_event intern mouseevent( void )
 VSCREEN * UIAPI uimousepos( VSCREEN *vptr, int *rowptr, int *colptr )
 /*******************************************************************/
 {
-    register VSCREEN    *owner;
+    VSCREEN         *owner;
+    int             row;
+    int             col;
 
     owner = findvscreen( MouseRow / UIData->mouse_yscale, MouseCol / UIData->mouse_xscale );
 
     if( vptr != NULL ) {
-        *rowptr = (int)MouseRow - (int)vptr->area.row * UIData->mouse_yscale;
-        *colptr = (int)MouseCol - (int)vptr->area.col * UIData->mouse_xscale;
+        row = MouseRow - (int)vptr->area.row * UIData->mouse_yscale;
+        col = MouseCol - (int)vptr->area.col * UIData->mouse_xscale;
     } else {
-        *rowptr = MouseRow;
-        *colptr = MouseCol;
+        row = MouseRow;
+        col = MouseCol;
     }
-    if( *rowptr < 0 && ( *rowptr % UIData->mouse_yscale ) != 0 ) {
-        *rowptr -= UIData->mouse_yscale;
+    if( row < 0 && ( row % UIData->mouse_yscale ) != 0 ) {
+        row -= UIData->mouse_yscale;
     }
-    if( *colptr < 0 && ( *colptr % UIData->mouse_xscale ) != 0 ) {
-        *colptr -= UIData->mouse_xscale;
+    if( col < 0 && ( col % UIData->mouse_xscale ) != 0 ) {
+        col -= UIData->mouse_xscale;
     }
-    *rowptr /= UIData->mouse_yscale;
-    *colptr /= UIData->mouse_xscale;
+    *rowptr = row / UIData->mouse_yscale;
+    *colptr = col / UIData->mouse_xscale;
 
     return( owner );
 }
@@ -297,8 +299,8 @@ MOUSEORD UIAPI uigetmcol( void )
 }
 #endif
 
-void UIAPI uigetmouse( ORD _FARD *row, ORD _FARD *col, bool _FARD *status )
-/*************************************************************************/
+void UIAPI uigetmouse( ORD *row, ORD *col, bool *status )
+/*******************************************************/
 {
     *row = MouseRow / UIData->mouse_yscale;
     *col = MouseCol / UIData->mouse_xscale;

@@ -33,7 +33,7 @@
 
 #include "uidef.h"
 #ifdef __UNIX__
-#include "uivirt.h"
+#include "uivirts.h"
 #endif
 #include "uiforce.h"
 #include "uigchar.h"
@@ -44,7 +44,7 @@ bool UIAPI uistart( void )
 {
     UIMemOpen();
     if( initbios() ) {
-        DBCSCharacterMap();
+        SetCharacterTables();
         /* need for LUI and DUI apps to avoid divide by zero    */
         /* when no mouse is found                               */
         UIData->mouse_yscale = 1;

@@ -88,7 +88,7 @@ static void echoline( VSCREEN *vptr, VEDITLINE *editline )
             start = editline->index;
             area.width = editline->mark_anchor - editline->index;
         }
-        if( area.width + start >= editline->scroll  &&  area.width > 0 ) {
+        if( area.width + start >= editline->scroll && area.width > 0 ) {
             if( start > editline->scroll ) {
                 area.col = editline->col + start - editline->scroll;
             } else {
@@ -96,7 +96,7 @@ static void echoline( VSCREEN *vptr, VEDITLINE *editline )
                 area.width = area.width - editline->scroll + start;
             }
             if( area.width + area.col > editline->col + editline->fldlen ) {
-                area.width =    editline->fldlen + editline->col - area.col;
+                area.width = editline->fldlen + editline->col - area.col;
             }
             uivattribute( vptr, area, editline->mark_attr );
         }
@@ -107,10 +107,10 @@ static void echoline( VSCREEN *vptr, VEDITLINE *editline )
 ui_event UIAPI uiveditevent( VSCREEN *vptr, VEDITLINE *editline, ui_event ui_ev )
 /*******************************************************************************/
 {
-    register    int                     scroll;
-    register    bool                    scrollable;
-    register    bool                    growing;
-    auto        VBUFFER                 buffer;
+    int                     scroll;
+    bool                    scrollable;
+    bool                    growing;
+    VBUFFER                 buffer;
 
 
     if( editline->update ) {
@@ -178,7 +178,7 @@ ui_event UIAPI uiveditevent( VSCREEN *vptr, VEDITLINE *editline, ui_event ui_ev 
 ui_event UIAPI uiveditline( VSCREEN *vptr, VEDITLINE *editline )
 /**************************************************************/
 {
-    register ui_event       ui_ev;
+    ui_event        ui_ev;
 
     uipushlist( LineEvents );
     ui_ev = uivgetevent( vptr );
@@ -188,8 +188,8 @@ ui_event UIAPI uiveditline( VSCREEN *vptr, VEDITLINE *editline )
 }
 
 bool UIAPI uiveditinit( VSCREEN *vptr, VEDITLINE *editline, char *buffer,
-                                  int bufflen, ORD row, ORD col, int len )
-/************************************************************************/
+                             unsigned bufflen, ORD row, ORD col, unsigned len )
+/*****************************************************************************/
 {
     /* unused parameters */ (void)vptr;
 

@@ -230,7 +230,7 @@ static void open( void )
     }
 }
 
-#define TOP_ROW 8
+#define TOP_ROW         1
 
 int PASCAL WinMain( HANDLE hInstance, HANDLE hPrevInstance,
                     LPSTR lpCmdLine, int nShowCmd ) {
@@ -283,7 +283,7 @@ int PASCAL WinMain( HANDLE hInstance, HANDLE hPrevInstance,
                 mrow++;
                 mcol++;
                 uipushlist( evlist );
-                ui_ev = uicreatepopup( mrow, mcol, &filemenu, false, true, NULL );
+                ui_ev = uicreatepopup( mrow, mcol, filemenu, false, true, EV_NO_EVENT );
                 uipoplist( /* evlist */ );
             }
             switch( ui_ev ) {

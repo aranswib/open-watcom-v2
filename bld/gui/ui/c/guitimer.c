@@ -24,32 +24,27 @@
 *
 *  ========================================================================
 *
-* Description:  WHEN YOU FIGURE OUT WHAT THIS FILE DOES, PLEASE
-*               DESCRIBE IT HERE!
+* Description:  GUI library timer callbacks
 *
 ****************************************************************************/
 
 
-#ifndef unxuiext_h
-#define unxuiext_h
-
-#ifndef __TYPES_H_INCLUDED
-#include <sys/types.h>
-#endif
+#include "guiwind.h"
+#include <stdlib.h>
 #include <stdio.h>
+#include "guixutil.h"
+#include "guitimer.h"
 
 
-#define uiwrite(s)      write( UIConHandle, s, strlen( s ) )
-#define uiwritec(c)     write( UIConHandle, c, sizeof( c ) - 1 )
+#if defined( __RDOS__ )
 
-extern int              UIConHandle;
-extern FILE             *UIConFile;
-extern pid_t            UIPGroup;
-extern bool             UIWantShiftChanges;
-extern bool             UserForcedTermRefresh;
-extern bool             UIDisableShiftChanges;
+void GUIStartTimer( gui_window *wnd, gui_timer_id id, int msec )
+{
+    rdos_uitimer( GUITimer, msec );
+}
 
-extern const char       *GetTermType( void );
-extern const char       *SetTermType( const char * );
-
+void GUIStopTimer( gui_window *wnd, gui_timer_id id )
+{
+    rdos_uitimer( NULL, 0 );
+}
 #endif

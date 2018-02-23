@@ -33,15 +33,13 @@
 #include "uidef.h"
 #include "uidos.h"
 #include "biosui.h"
-#include "charmap.h"
 #include "uimouse.h"
+#include "uibmous.h"
 
 
 #define MOUSE_SCALE     8
 
-extern void             (*DrawCursor)( void );
-
-unsigned short          Points;                 /* Number of lines / char  */
+unsigned short          Points;         /* Number of lines per character */
 
 /* MickeyRow and MickeyCol are accurate under DOS and OS2's DOS */
 static int              MickeyRow;
@@ -50,11 +48,10 @@ static int              MickeyCol;
 void intern checkmouse( MOUSESTAT *status, MOUSEORD *row, MOUSEORD *col, MOUSETIME *time )
 /****************************************************************************************/
 {
-    struct  mouse_data state;
-    char    change;
+    struct mouse_data   state;
+    char                change;
 
-    change = change;
-    MouseDrvState( 3, &state );
+    MouseDrvCallRetState( 3, &state );
 
     *status = state.bx;
 
@@ -62,7 +59,7 @@ void intern checkmouse( MOUSESTAT *status, MOUSEORD *row, MOUSEORD *col, MOUSETI
         *col = state.cx / MOUSE_SCALE;
         *row = state.dx / MOUSE_SCALE;
     } else {
-        MouseDrvState( 0x0B, &state );
+        MouseDrvCallRetState( 0x0B, &state );
         MickeyCol += (short int)state.cx; /* delta of mickeys */
         MickeyRow += (short int)state.dx; /* delta of mickeys */
         if( MickeyRow < 0 ) {
@@ -123,7 +120,7 @@ void intern setupmouse( void )
     if( DrawCursor == NULL ) {
         dx = ( UIData->width - 1 ) * MOUSE_SCALE;
     } else {
-        dx =   UIData->width * MOUSE_SCALE - 1;
+        dx = UIData->width * MOUSE_SCALE - 1;
     }
     MouseDrvCall2( 7, 0, 0, dx );
 

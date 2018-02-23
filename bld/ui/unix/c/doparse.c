@@ -39,13 +39,9 @@
 #include <unistd.h>
 #include "bool.h"
 #include "wterm.h"
-#include "stdui.h"
+#include "uidef.h"
 #include "trie.h"
-#ifdef __QNX__
-#include "qnxuiext.h"
-#else
-#include "unxuiext.h"
-#endif
+#include "uiextrn.h"
 #include "tixparse.h"
 #include "doparse.h"
 
@@ -82,13 +78,14 @@ static const char acs_default[] = "q-x|l+m+k+j+n+w+v+t+u+~o+>,<-^.v0#f\\g#a:h#";
 
 static char find_acs_map( char c, const char *acs )
 {
-    while( acs[0] != '\0' ) {
-        if( acs[0] == c )
-            return( acs[1] );
-        ++acs;
-        if( acs[0] == '\0' )
+    char    ch;
+
+    while( (ch = *acs++) != '\0' ) {
+        if( ch == c )
+            return( *acs );
+        if( *acs++ == '\0' ) {
             break;
-        ++acs;
+        }
     }
     return( '\0' );
 }
@@ -177,7 +174,7 @@ static tix_token get_tix_token( char *buff )
                     c = '\b';
                     break;
                 case 'e':
-                    c = '\x1b';
+                    c = '\x1B';
                     break;
                 case 'f':
                     c = '\f';
@@ -215,13 +212,13 @@ static tix_token get_tix_token( char *buff )
                     break;
                 }
             }
-            *p++ = c;
+            *p++ = (char)c;
         }
         *p = '\0';
     } else {
         /* collect a string or number */
         for( ;; ) {
-            *p++ = c;
+            *p++ = (char)c;
             c = getc( in_file );
             if( c == EOF )
                 break;

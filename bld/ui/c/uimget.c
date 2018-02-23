@@ -33,7 +33,6 @@
 #include "uidef.h"
 #include "uimenu.h"
 
-extern ui_event     Event;
 
 ui_event UIAPI uivget( VSCREEN *vptr )
 /************************************/
@@ -46,7 +45,7 @@ ui_event UIAPI uivget( VSCREEN *vptr )
 ui_event UIAPI uivgetevent( VSCREEN *vptr )
 /*****************************************/
 {
-    register ui_event       ui_ev;
+    ui_event       ui_ev;
 
     ui_ev = uivget( vptr );
 //    switch( ui_ev ) {

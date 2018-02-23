@@ -33,10 +33,10 @@
 #include "uidef.h"
 
 
-void UIAPI uivfill( VSCREEN *vptr, SAREA area, ATTR attr, unsigned char ch )
-/**************************************************************************/
+void UIAPI uivfill( VSCREEN *vptr, SAREA area, ATTR attr, char ch )
+/*****************************************************************/
 {
-    register    ORD                     row;
+    uisize      row;
 
     okopen( vptr );
     oksubarea( area, vptr->area );

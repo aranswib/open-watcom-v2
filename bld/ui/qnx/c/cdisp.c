@@ -49,7 +49,7 @@
 #include <i86.h>
 #include "uidef.h"
 #include "uivirt.h"
-#include "qnxuiext.h"
+#include "uiextrn.h"
 #include "ctkeyb.h"
 
 
@@ -86,7 +86,8 @@ bool QnxWCheck( void )
 static bool setupscrnbuff( void )
 /*******************************/
 {
-    int                 rows, cols;
+    int                 rows;
+    int                 cols;
     LP_PIXEL            scrn;
     size_t              size;
     size_t              i;
@@ -322,8 +323,8 @@ static int cd_refresh( bool must )
     return( 0 );
 }
 
-static int cd_getcur( ORD *row, ORD *col, CURSOR_TYPE *type, int *attr )
-/**********************************************************************/
+static int cd_getcur( ORD *row, ORD *col, CURSOR_TYPE *type, CATTR *attr )
+/************************************************************************/
 {
     *row = UIData->cursor_row;
     *col = UIData->cursor_col;
@@ -333,8 +334,8 @@ static int cd_getcur( ORD *row, ORD *col, CURSOR_TYPE *type, int *attr )
 }
 
 
-static int cd_setcur( ORD row, ORD col, CURSOR_TYPE typ, int attr )
-/*****************************************************************/
+static int cd_setcur( ORD row, ORD col, CURSOR_TYPE typ, CATTR attr )
+/*******************************************************************/
 {
     /* unused parameters */ (void)attr;
 
