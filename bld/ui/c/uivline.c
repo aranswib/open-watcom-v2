@@ -65,8 +65,10 @@ static void echoline( VSCREEN *vptr, VEDITLINE *editline )
         area.height = 1;
         area.width = editline->fldlen;
         uivfill( vptr, area, editline->attr, ' ' );
-        for( trim = editline->length ; trim > editline->index ; --trim ) {
-            if( editline->buffer[trim - 1] != ' ' ) break;
+        for( trim = editline->length; trim > editline->index; --trim ) {
+            if( editline->buffer[trim - 1] != ' ' ) {
+                break;
+            }
         }
         area.width = editline->fldlen;
         if( area.width > trim - editline->scroll )
@@ -122,7 +124,7 @@ ui_event UIAPI uiveditevent( VSCREEN *vptr, VEDITLINE *editline, ui_event ui_ev 
         scroll = editline->scroll;
         if( scroll > editline->index )
             scroll = editline->index;
-        if( scroll < editline->index - editline->fldlen + 1 )
+        if( scroll < (int)( editline->index - editline->fldlen + 1 ) )
             scroll = editline->index - editline->fldlen + 1;
         editline->scroll = scroll;
         vptr->col = editline->col + editline->index - editline->scroll;
@@ -149,7 +151,7 @@ ui_event UIAPI uiveditevent( VSCREEN *vptr, VEDITLINE *editline, ui_event ui_ev 
                 scroll = editline->scroll;
                 if( scroll > editline->index )
                     scroll = editline->index;
-                if( scroll < editline->index - editline->fldlen + 1 ) {
+                if( scroll < (int)( editline->index - editline->fldlen + 1 ) ) {
                     scroll = editline->index - editline->fldlen + 1;
                 }
             } else {

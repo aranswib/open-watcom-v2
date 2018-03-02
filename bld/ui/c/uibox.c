@@ -47,7 +47,7 @@ void intern drawbox( BUFFER *bptr, SAREA area, const char *box, ATTR attr, bool 
     if( area.width > 2 )
         bfill( bptr, area.row, area.col + 1, attr, BOX_CHAR( box, TOP_LINE ), area.width - 2 );
     bpixel( bptr, area.row, area.col + area.width - 1, attr, BOX_CHAR( box, TOP_RIGHT ) );
-    for( row = area.row + 1 ; row < area.row + area.height - 1 ; ++row ) {
+    for( row = area.row + 1; row < area.row + area.height - 1; ++row ) {
         bpixel( bptr, row, area.col, attr, BOX_CHAR( box, LEFT_LINE ) );
         if( fill && area.width > 2 ) {
             bfill( bptr, row, area.col + 1, attr, ' ', area.width - 2 );
@@ -59,50 +59,6 @@ void intern drawbox( BUFFER *bptr, SAREA area, const char *box, ATTR attr, bool 
         bfill( bptr, row, area.col + 1, attr, BOX_CHAR( box, BOTTOM_LINE ), area.width - 2 );
     bpixel( bptr, row, area.col + area.width - 1, attr, BOX_CHAR( box, BOTTOM_RIGHT ) );
     physupdate( &area );
-}
-
-void intern blowup( BUFFER *bptr, SAREA area, const char *box, ATTR attr )
-/************************************************************************/
-{
-    SAREA           grow;
-
-#define INCROW      1
-#define INCCOL      3
-
-    grow.row = area.row + area.height / 2 - 1;
-    grow.col = area.col + area.width / 2 - 1;
-    grow.height = 2;
-    grow.width = 2;
-    while( ( grow.height < area.height ) || ( grow.width < area.width ) ) {
-        /* max */
-        if( grow.row < area.row + INCROW ) {
-            grow.row = area.row;
-        } else {
-            grow.row -= INCROW;
-        }
-        /* max */
-        if( grow.col < area.col + INCCOL ) {
-            grow.col = area.col;
-        } else {
-            grow.col -= INCCOL;
-        }
-        /* min */
-        if( grow.height + 2 * INCROW > area.height ) {
-            grow.height = area.height;
-        } else {
-            grow.height += 2 * INCROW;
-        }
-        /* min */
-        if( grow.width + 2 * INCCOL > area.width ) {
-            grow.width = area.width;
-        } else {
-            grow.width += 2 * INCCOL;
-        }
-        drawbox( bptr, grow, box, attr, true );
-        if( ( grow.height == area.height ) && ( grow.width == area.width ) ) {
-            break;
-        }
-    }
 }
 
 void uidrawbox( VSCREEN *vs, SAREA *area, ATTR attr, const char *title )

@@ -45,8 +45,6 @@
 #define _ESC                "\033"
 #define _ESC_CHAR           '\033'
 
-#define NO_SELECT           -1
-
 typedef enum {
     UI_MOUSE_PRESS          = 1,
     UI_MOUSE_PRESS_RIGHT    = 2,
@@ -95,7 +93,6 @@ extern void             intern  bframe( struct buffer * );
 extern void             intern  bfree( struct buffer * );
 extern void             intern  bfake( BUFFER *, ORD, ORD );
 extern void             intern  bfill( BUFFER *, int, int, ATTR, char, uisize );
-extern void             intern  blowup( BUFFER *, SAREA, const char *, ATTR );
 extern void             intern  bpixel( BUFFER *, ORD, ORD, ATTR, char );
 extern void             intern  braw( BUFFER *, int, int, PIXEL *, uisize );
 extern void             intern  bstring( BUFFER *, int, int, ATTR, LPC_STRING, uisize );
@@ -155,6 +152,7 @@ extern void             intern  waitforevent( void );
 extern void             intern  initeventlists( void );
 
 extern void             intern  SetCharacterTables( void );
+extern int              intern  GetNewPos( int pos, int num );
 
 extern VSCREEN          intern  _FARD *uiopen( SAREA *, const char *, screen_flags );
 extern void             intern  uiclose( VSCREEN _FARD * );

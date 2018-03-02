@@ -226,7 +226,7 @@ extern void             CallResults( void );
 extern void             ProcCall( void );
 extern void             ShowCalls( void );
 extern void             ShowVarDisplay( void );
-extern var_node         *VarGetDisplayPiece( var_info *i, int row, int piece, int *pdepth, int *pinherit );
+//extern var_node         *VarGetDisplayPiece( var_info *i, int row, wnd_piece piece, int *pdepth, int *pinherit );
 
 volatile bool           BrkPending;
 
@@ -602,6 +602,7 @@ static void DisplayDebuggerVarRecursively( var_info *pVarInfoList, var_node *v )
 /*Display a variable value*/
 void DisplayDebuggerVarValue( var_info *pVarInfoList )
 {
+#if 0
     int         row;
     int         depth, inherited;
     var_node    *v;
@@ -637,6 +638,7 @@ void DisplayDebuggerVarValue( var_info *pVarInfoList )
 
         fflush( stdout );
     }
+#endif
 }
 
 /*Display a variable's value we are interested in*/
@@ -1697,10 +1699,11 @@ void DUIRingBell( void )
 {
     // ring ring (error)
 }
-int DUIDisambiguate( const ambig_info *ambig, int count )
+bool DUIDisambiguate( const ambig_info *ambig, int num_items, int *choice )
 {
     // the expression processor detected an ambiguous symbol.  Ask user which one
-    return( 0 );
+    *choice = 0;
+    return( true );
 }
 void ProcAccel( void )
 {
