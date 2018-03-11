@@ -35,22 +35,23 @@
 
 #define NUM_ROWS 50
 
-static int W8NumRows( a_window wnd )
+static wnd_row W8NumRows( a_window wnd )
 {
     wnd=wnd;
     return( NUM_ROWS );
 }
 
-static bool    W8GetLine( a_window wnd, int row, int piece,
-                             wnd_line_piece *line )
+static bool    W8GetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_line_piece *line )
 {
     wnd=wnd;
 
-    if( row >= NUM_ROWS ) return( false );
-    if( piece != 0 ) return( false );
+    if( row >= NUM_ROWS )
+        return( false );
+    if( piece != 0 )
+        return( false );
     line->text = "";
     line->attr = APP_COLOR_SELECTED;
-    line->extent = WND_APPROX_SIZE / (row+1);
+    line->extent = WND_APPROX_SIZE / ( row + 1 );
     line->indent = 1000;
     return( true );
 }

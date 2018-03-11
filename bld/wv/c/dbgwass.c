@@ -316,7 +316,7 @@ static void AsmSetDotAddr( a_window wnd, address addr )
 
 void    AsmMoveDot( a_window wnd, address addr )
 {
-    int         row;
+    wnd_row     row;
     asm_window  *asw;
     DIPHDL( cue, ch1 );
     DIPHDL( cue, ch2 );
@@ -378,7 +378,7 @@ bool    AsmIsTracking( a_window wnd )
 }
 #endif
 
-OVL_EXTERN  void    AsmModify( a_window wnd, int row, int piece )
+OVL_EXTERN  void    AsmModify( a_window wnd, wnd_row row, wnd_piece piece )
 {
     asm_window  *asw;
     address     addr;
@@ -398,7 +398,7 @@ OVL_EXTERN  void    AsmModify( a_window wnd, int row, int piece )
 }
 
 
-OVL_EXTERN void AsmNotify( a_window wnd, wnd_row row, int piece )
+OVL_EXTERN void AsmNotify( a_window wnd, wnd_row row, wnd_piece piece )
 {
     asm_window  *asw;
     address     addr;
@@ -434,7 +434,7 @@ bool AsmOpenGadget( a_window wnd, wnd_line_piece *line, mod_handle mod )
 }
 
 
-OVL_EXTERN void     AsmMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     AsmMenuItem( a_window wnd, gui_ctl_id id, wnd_row row, wnd_piece piece )
 {
     address     addr;
     asm_window  *asw;
@@ -614,7 +614,7 @@ OVL_EXTERN int AsmScroll( a_window wnd, int lines )
 }
 
 
-OVL_EXTERN  void    AsmBegPaint( a_window wnd, int row, int num )
+OVL_EXTERN  void    AsmBegPaint( a_window wnd, wnd_row row, int num )
 {
     asm_window  *asw;
 
@@ -625,9 +625,9 @@ OVL_EXTERN  void    AsmBegPaint( a_window wnd, int row, int num )
 }
 
 
-OVL_EXTERN  void    AsmEndPaint( a_window wnd, int row, int piece )
+OVL_EXTERN  void    AsmEndPaint( a_window wnd, wnd_row row, int num )
 {
-    /* unused parameters */ (void)wnd; (void)row; (void)piece;
+    /* unused parameters */ (void)wnd; (void)row; (void)num;
 
     FiniCache();
 }
@@ -659,7 +659,7 @@ static void AsmNewSource( asm_window *asw, cue_handle *ch )
     }
 }
 
-OVL_EXTERN  bool    AsmGetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
+OVL_EXTERN  bool    AsmGetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_line_piece *line )
 {
     address     addr;
     asm_window  *asw;
@@ -677,8 +677,7 @@ OVL_EXTERN  bool    AsmGetLine( a_window wnd, int row, int piece, wnd_line_piece
     asw = WndAsm( wnd );
     if( row < 0 ) {
         row += TITLE_SIZE;
-        switch( row ) {
-        case 0:
+        if( row == 0 ) {
             old_radix = NewCurrRadix( asw->hex ? 16 : 10 );
             line->text = TxtBuff;
             if( IS_NIL_ADDR( asw->dotaddr ) ) {
@@ -705,13 +704,13 @@ OVL_EXTERN  bool    AsmGetLine( a_window wnd, int row, int piece, wnd_line_piece
             NewCurrRadix( old_radix );
             return( rc );
 #if 0
-        case 1:
+        } else if( row == 1 ) {
             if( piece != 0 )
                 return( false );
             SetUnderLine( wnd, line );
             return( true );
 #endif
-        default:
+        } else {
             return( false );
         }
     }
@@ -841,7 +840,7 @@ static void AsmTrack( a_window wnd, address ip )
     asm_window  *asw;
     address     old_active;
     wnd_row     curr_row;
-    int         curr_piece;
+    wnd_piece   curr_piece;
 
     asw = WndAsm( wnd );
     if( AddrComp( ip, asw->active ) != 0 ) {
@@ -862,7 +861,7 @@ static void AsmTrack( a_window wnd, address ip )
                 slack = 2;
             if( row >= WndRows( wnd ) - slack ) {
                 WndRowDirtyImmed( wnd, AsmAddrRow( wnd, old_active ) );
-                WndScroll( wnd, WndRows( wnd ) - 2*slack );
+                WndScroll( wnd, WndRows( wnd ) - 2 * slack );
             } else {
                 WndRowDirty( wnd, AsmAddrRow( wnd, old_active ) );
             }
@@ -991,7 +990,7 @@ static  void    AsmInit( a_window wnd )
     asw->src_list.mod = NO_MOD;
     asw->src_list.file_id = 0;
     WndFixedThumb( wnd );
-    WndSetIDChars( wnd, WND_ALNUM_STR "_$:[]+-*" );
+    WndSetIDChars( wnd, "@_$:[]+-*" );
     CalcAddrLen( wnd, Context.execution );
     WndZapped( wnd );
 }

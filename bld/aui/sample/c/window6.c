@@ -41,18 +41,20 @@ static char * Stuff[] = {
         "Line 5",
 };
 
-static int W6NumRows( a_window wnd )
+static wnd_row W6NumRows( a_window wnd )
 {
     wnd=wnd;
     return( ArraySize( Stuff ) );
 }
 
-static bool    W6GetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
+static bool    W6GetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_line_piece *line )
 {
     wnd=wnd;
-    if( row >= ArraySize( Stuff ) ) return( false );
-    if( piece != 0 ) return( false );
-    line->text = Stuff[ row ];
+    if( row >= ArraySize( Stuff ) )
+        return( false );
+    if( piece != 0 )
+        return( false );
+    line->text = Stuff[row];
     return( true );
 }
 

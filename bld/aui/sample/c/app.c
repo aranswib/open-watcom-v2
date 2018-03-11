@@ -79,9 +79,9 @@ keymap Key[] = {
 };
 
 static gui_menu_struct PopTart[] = {
-    { "Open &1", MENU_OPEN1, GUI_ENABLED },
-    { "Open &2", MENU_OPEN2, GUI_ENABLED },
-    { "Open &3", MENU_OPEN3, GUI_ENABLED },
+    { "Open &1", MENU_OPEN1, GUI_STYLE_MENU_ENABLED },
+    { "Open &2", MENU_OPEN2, GUI_STYLE_MENU_ENABLED },
+    { "Open &3", MENU_OPEN3, GUI_STYLE_MENU_ENABLED },
 };
 
 bool    WndProcMacro( a_window wnd, unsigned key )
@@ -91,8 +91,8 @@ bool    WndProcMacro( a_window wnd, unsigned key )
 
     WndStatusText( "" );
     for( i = 0; i < ArraySize( Key ); ++i ) {
-        if( Key[ i ].key == key ) {
-            WndStatusText( Key[ i ].name );
+        if( Key[i].key == key ) {
+            WndStatusText( Key[i].name );
             break;
         }
     }
@@ -138,8 +138,8 @@ extern void BIOSSetPage( char pagenb );
         " mov    ah, 5          ",                      \
         " int    10h            ",                      \
         " pop    bp             "                       \
-        parm [ al ]                                     \
-        modify exact [ ah ];
+        parm [al]                                       \
+        modify exact [ah];
 #endif
 
 gui_window_styles WndStyle = GUI_PLAIN+GUI_GMOUSE;
@@ -196,7 +196,7 @@ void GUImain( void )
     }
     WndGadgetInit();
     WndInit( "Sample Application" );
-    WndCreateStatusWindow( &WndColours[ GUI_MENU_STANDOUT ] );
+    WndCreateStatusWindow( &WndColours[GUI_MENU_STANDOUT] );
     GUIGetDialogColours( WndDlgColours );
     WndStatusText( "Hello World!" );
     WndSetIcon( WndMain, &MainIcon );

@@ -52,9 +52,9 @@
 
 #define PIECE_TYPE( x ) ( (x)-MENU_IO_FIRST_TYPE )
 
-static mem_type_walk_data       IOData;
-static gui_menu_struct *IOTypeMenu = NULL;
-static gui_menu_struct DummyMenu[1];
+static mem_type_walk_data   IOData;
+static gui_menu_struct      *IOTypeMenu = NULL;
+static gui_menu_struct      DummyMenu[1];
 
 #include "menudef.h"
 static gui_menu_struct IOMenu[] = {
@@ -79,10 +79,11 @@ typedef struct {
     int         num_rows;
     io_location *list;
 } io_window;
+
 #define WndIO( wnd ) ( (io_window *)WndExtra( wnd ) )
 
 
-OVL_EXTERN int IONumRows( a_window wnd )
+OVL_EXTERN wnd_row IONumRows( a_window wnd )
 {
     return( WndIO( wnd )->num_rows );
 }
@@ -103,7 +104,7 @@ static void IOAddNewAddr( a_window wnd, address *addr, int type )
     curr->value_known = false;
 }
 
-OVL_EXTERN void     IOMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     IOMenuItem( a_window wnd, gui_ctl_id id, wnd_row row, wnd_piece piece )
 {
     io_window   *io = WndIO( wnd );
     address     addr;
@@ -184,7 +185,7 @@ OVL_EXTERN void     IOMenuItem( a_window wnd, gui_ctl_id id, int row, int piece 
 }
 
 
-OVL_EXTERN void     IOModify( a_window wnd, int row, int piece )
+OVL_EXTERN void     IOModify( a_window wnd, wnd_row row, wnd_piece piece )
 {
     if( row < 0 ) {
         IOMenuItem( wnd, MENU_IO_NEW_ADDRESS, row, piece );
@@ -205,7 +206,7 @@ OVL_EXTERN void     IOModify( a_window wnd, int row, int piece )
     }
 }
 
-OVL_EXTERN  bool    IOGetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
+OVL_EXTERN  bool    IOGetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_line_piece *line )
 {
     io_window   *io = WndIO( wnd );
 //    bool        ret;
@@ -275,7 +276,7 @@ void InitIOWindow( void )
     IOTypeMenu = WndMustAlloc( IOData.num_types * sizeof( *IOTypeMenu ) );
     for( i = 0; i < IOData.num_types; ++i ) {
         IOTypeMenu[i].id = MENU_IO_FIRST_TYPE + i;
-        IOTypeMenu[i].style = GUI_ENABLED | WND_MENU_ALLOCATED;
+        IOTypeMenu[i].style = GUI_STYLE_MENU_ENABLED | WND_MENU_ALLOCATED;
         IOTypeMenu[i].label = DupStr( IOData.labels[i] );
         IOTypeMenu[i].hinttext = DupStr( LIT_ENG( Empty ) );
         IOTypeMenu[i].num_child_menus = 0;

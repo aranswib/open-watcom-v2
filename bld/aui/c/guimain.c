@@ -142,7 +142,7 @@ bool WndFini( void )
 
 void WndInitNumRows( a_window wnd )
 {
-    wnd->rows = GUIGetNumRows( wnd->gui );
+    wnd->rows = (wnd_row)GUIGetNumRows( wnd->gui );
 }
 
 static void WndMoveResize( a_window wnd )
@@ -392,9 +392,8 @@ static void DoMainGUIEventProc( spawn_parms *spawnp )
                 break;
             }
         }
-        if( GUI_IS_ASCII( key ) && WndSwitchOn( wnd, WSW_CHOOSING ) &&
-            wnd->keypiece != WND_NO_PIECE && WndKeyChar( key ) ) {
-            if( !WndKeyChoose( wnd, key ) ) {
+        if( WndKeyIsPrintChar( key ) && WndSwitchOn( wnd, WSW_CHOOSING ) && wnd->keypiece != WND_NO_PIECE ) {
+            if( !WndKeyChoose( wnd, UCHAR_VALUE( key ) ) ) {
                 Ring();
             }
             break;

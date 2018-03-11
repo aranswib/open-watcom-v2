@@ -32,18 +32,6 @@
 #include "bool.h"
 #include "guimem.h"
 
-typedef int         gui_ord;
-
-typedef unsigned    gui_ctl_id;
-typedef int         gui_ctl_idx;
-typedef unsigned    gui_res_id;
-typedef unsigned    gui_hlp_id;
-
-#if defined( _M_I86 )
-typedef const char __far    *res_name_or_id;
-#else
-typedef const char          *res_name_or_id;
-#endif
 
 #define GUI_LAST_INTERNAL_MSG 255
 
@@ -110,32 +98,11 @@ typedef enum {
     GUI_TIMER_EVENT
 } gui_event;
 
-typedef struct gui_coord {
-    gui_ord x;
-    gui_ord y;
-} gui_coord;
-
-typedef struct gui_point {
-    int x;
-    int y;
-} gui_point;
-
-typedef struct gui_window gui_window;
-
 typedef enum {
     GUI_BAD_CLASS = -1,
-    GUI_PUSH_BUTTON,
-    GUI_DEFPUSH_BUTTON,
-    GUI_RADIO_BUTTON,
-    GUI_CHECK_BOX,
-    GUI_COMBOBOX,
-    GUI_EDIT,
-    GUI_LISTBOX,
-    GUI_SCROLLBAR,
-    GUI_STATIC,
-    GUI_GROUPBOX,
-    GUI_EDIT_COMBOBOX,
-    GUI_EDIT_MLE,
+    #define pick(enumcls,uitype,classn,classn_os2,style,xstyle_nt) enumcls,
+    #include "_guicont.h"
+    #undef pick
     GUI_NUM_CONTROL_CLASSES
 } gui_control_class;
 
@@ -145,6 +112,7 @@ typedef enum {
     #undef pick
     GUI_FIRST_UNUSED
 } gui_attr;
+
 #define GUI_NUM_ATTRS   GUI_FIRST_UNUSED
 
 typedef enum {
@@ -155,17 +123,15 @@ typedef enum {
 } gui_dlg_attr;
 
 typedef enum {
-    GUI_ENABLED         = 0x00,
-    GUI_MENU_CHECKED    = 0x01,
-    GUI_GRAYED          = 0x02,
-    GUI_SEPARATOR       = 0x04,
-    GUI_IGNORE          = 0x08, // don't display
-    GUI_MDIWINDOW       = 0x10,
-    GUI_UTIL_1          = 0x40, // can be used by the application
-    GUI_UTIL_2          = 0x80
+    GUI_STYLE_MENU_ENABLED      = 0x00,
+    GUI_STYLE_MENU_CHECKED      = 0x01,
+    GUI_STYLE_MENU_GRAYED       = 0x02,
+    GUI_STYLE_MENU_SEPARATOR    = 0x04,
+    GUI_STYLE_MENU_IGNORE       = 0x08, // don't display
+    GUI_STYLE_MENU_MDIWINDOW    = 0x10,
+    GUI_STYLE_MENU_UTIL_1       = 0x40, // can be used by the application
+    GUI_STYLE_MENU_UTIL_2       = 0x80
 } gui_menu_styles ;
-
-typedef void    *gui_help_instance;
 
 typedef enum {
     GUI_HELP_CONTENTS
@@ -174,25 +140,6 @@ typedef enum {
 ,   GUI_HELP_CONTEXT
 ,   GUI_HELP_KEY
 } gui_help_actions;
-
-typedef long gui_bitmap;
-
-typedef struct gui_toolbar_struct {
-    const char          *label;
-    gui_bitmap          bitmap;
-    gui_ctl_id          id;
-    const char          *hinttext;
-    const char          *tip;
-} gui_toolbar_struct;
-
-typedef struct gui_menu_struct {
-    const char                  *label;
-    gui_ctl_id                  id;
-    gui_menu_styles             style;
-    const char                  *hinttext;
-    int                         num_child_menus;
-    struct gui_menu_struct      *child;
-} gui_menu_struct;
 
 typedef enum {
     GUI_BAD_COLOUR = -1,
@@ -219,25 +166,11 @@ typedef enum {
     GUI_NUM_COLOURS,
 } gui_colour;
 
-typedef struct gui_colour_set {
-    gui_colour fore;
-    gui_colour back;
-} gui_colour_set;
-
-typedef unsigned long       gui_rgb;
-
 #define GUIRGB(r,g,b)       ((gui_rgb)(((unsigned char)(r)) | (((unsigned short)(g))<<8) | (((unsigned long)(b))<<16)))
 
 #define GUIGETRVALUE(rgb)   ((rgb) & 0xff)
 #define GUIGETGVALUE(rgb)   (((rgb) & 0xff00 ) >> 8)
 #define GUIGETBVALUE(rgb)   (((rgb) & 0xff0000) >> 16)
-
-typedef struct gui_rect {
-    gui_ord     x;
-    gui_ord     y;
-    gui_ord     width;
-    gui_ord     height;
-} gui_rect;
 
 typedef enum gui_scroll_styles {
     GUI_NOSCROLL        = 0x00,
@@ -281,25 +214,25 @@ typedef enum gui_create_styles {
 } gui_create_styles;
 
 typedef enum gui_control_styles {
-    GUI_NOSTYLE                         = 0x00000000,
-    GUI_CHECKED                         = 0x00000001,
-    GUI_TAB_GROUP                       = 0x00000002,
-    GUI_AUTOMATIC                       = 0x00000004,
-    GUI_GROUP                           = 0x00000008,
-    GUI_FOCUS                           = 0x00000010,
-    GUI_CONTROL_INIT_INVISIBLE          = 0x00000020,
-    GUI_CONTROL_LEFTNOWORDWRAP          = 0x00000040,
-    GUI_CONTROL_NOPREFIX                = 0x00000080,
-    GUI_CONTROL_CENTRE                  = 0x00000100,
-    GUI_CONTROL_NOINTEGRALHEIGHT        = 0x00000200,
-    GUI_CONTROL_SORTED                  = 0x00000400,
-    GUI_CONTROL_MULTILINE               = 0x00000800,
-    GUI_CONTROL_WANTRETURN              = 0x00001000,
-    GUI_EDIT_INVISIBLE                  = 0x00002000,
-    GUI_CONTROL_3STATE                  = 0x00004000,
-    GUI_CONTROL_WANTKEYINPUT            = 0x00008000,
-    GUI_CONTROL_READONLY                = 0x00010000,
-    GUI_CONTROL_BORDER                  = 0x00020000
+    GUI_STYLE_CONTROL_NOSTYLE           = 0x00000000,
+    GUI_STYLE_CONTROL_CHECKED           = 0x00000001,
+    GUI_STYLE_CONTROL_TAB_GROUP         = 0x00000002,
+    GUI_STYLE_CONTROL_AUTOMATIC         = 0x00000004,
+    GUI_STYLE_CONTROL_GROUP             = 0x00000008,
+    GUI_STYLE_CONTROL_FOCUS             = 0x00000010,
+    GUI_STYLE_CONTROL_INIT_INVISIBLE    = 0x00000020,
+    GUI_STYLE_CONTROL_LEFTNOWORDWRAP    = 0x00000040,
+    GUI_STYLE_CONTROL_NOPREFIX          = 0x00000080,
+    GUI_STYLE_CONTROL_CENTRE            = 0x00000100,
+    GUI_STYLE_CONTROL_NOINTEGRALHEIGHT  = 0x00000200,
+    GUI_STYLE_CONTROL_SORTED            = 0x00000400,
+    GUI_STYLE_CONTROL_MULTILINE         = 0x00000800,
+    GUI_STYLE_CONTROL_WANTRETURN        = 0x00001000,
+    GUI_STYLE_CONTROL_EDIT_INVISIBLE    = 0x00002000,
+    GUI_STYLE_CONTROL_3STATE            = 0x00004000,
+    GUI_STYLE_CONTROL_WANTKEYINPUT      = 0x00008000,
+    GUI_STYLE_CONTROL_READONLY          = 0x00010000,
+    GUI_STYLE_CONTROL_BORDER            = 0x00020000
 } gui_control_styles;
 
 typedef enum gui_line_styles {
@@ -317,46 +250,6 @@ typedef enum gui_bar_styles {
     GUI_BAR_3DRECT2     = 0x08,
     GUI_FULL_BAR        = 0x10
 } gui_bar_styles;
-
-typedef struct gui_resource {
-    gui_bitmap          res;
-    char                *chars; /* Character based */
-} gui_resource;
-
-typedef struct gui_control_info {
-    gui_control_class   control_class;
-    const char          *text;
-    gui_rect            rect;
-    gui_window          *parent;
-    gui_scroll_styles   scroll;
-    gui_control_styles  style;
-    gui_ctl_id          id;
-} gui_control_info;
-
-typedef bool (GUICALLBACK)( gui_window *, gui_event gui_ev, void *param );
-typedef void (ENUMCALLBACK)( gui_window *, void *param );
-typedef void (CONTRENUMCALLBACK)( gui_window *parent, gui_ctl_id id, void *param );
-typedef void (GUIPICKCALLBACK)( gui_window *, gui_ctl_id id );
-typedef void (PICKDLGOPEN)( const char *title, int rows, int cols,
-                             gui_control_info *controls_info, int num_controls,
-                             GUICALLBACK *gui_call_back, void *extra );
-typedef const char *(GUIPICKGETTEXT)( const void *data_handle, int item );
-
-typedef struct gui_create_info {
-    const char          *title;
-    gui_rect            rect;
-    gui_scroll_styles   scroll;
-    gui_create_styles   style;
-    gui_window          *parent;
-    int                 num_items;
-    gui_menu_struct     *menu;
-    int                 num_attrs;
-    gui_colour_set      *colours;      /* array of num_attrs gui_attrs */
-    GUICALLBACK         *gui_call_back;
-    void                *extra;
-    gui_resource        *icon;
-    res_name_or_id      resource_menu;
-} gui_create_info;
 
 typedef enum {
     GUI_ABORT_RETRY_IGNORE      = 0x001,
@@ -382,23 +275,6 @@ typedef enum {
     GUI_RET_YES
 } gui_message_return;
 
-typedef struct gui_text_metrics {
-    gui_coord   avg;
-    gui_coord   max;
-} gui_text_metrics;
-
-typedef struct gui_system_metrics {
-    gui_coord   resize_border;
-    bool        colour;
-    bool        mouse;
-    gui_coord   top_left;
-    gui_coord   bottom_right;
-    gui_coord   scrollbar_size;
-    gui_coord   dialog_top_left_size;
-    gui_coord   dialog_bottom_right_size;
-    gui_ord     caption_size;
-} gui_system_metrics;
-
 typedef enum {
     GUI_TRACK_NONE      = 0x00,
     GUI_TRACK_LEFT      = 0x01,
@@ -418,8 +294,6 @@ typedef enum {
     GUI_HOURGLASS_CURSOR,
     GUI_CROSS_CURSOR
 } gui_mcursor_type;
-
-typedef void            *gui_mcursor_handle;
 
 typedef enum {
     GUI_NO_CURSOR,
@@ -501,16 +375,134 @@ typedef enum {
 #define GUI_ALT_STATE( state )      ((state & GUI_KS_ALT) != 0)
 #define GUI_CTRL_STATE( state )     ((state & GUI_KS_CTRL) != 0)
 
-#define GUI_NO_COLUMN           ((gui_ord)-1)
-#define GUI_NO_ROW              ((gui_ord)-1)
+#define GUI_NO_COLUMN       ((gui_ord)-1)
+#define GUI_NO_ROW          ((gui_ord)-1)
 
 // GUIIsChecked and GUISetChecked values
-#define GUI_NOT_CHECKED         0
-#define GUI_CHECKED             1
-#define GUI_INDETERMINANT       2
+#define GUI_NOT_CHECKED     0
+#define GUI_CHECKED         1
+#define GUI_INDETERMINANT   2
+
+typedef int                 gui_ord;
+
+typedef unsigned            gui_ctl_id;
+typedef unsigned            gui_res_id;
+typedef unsigned            gui_hlp_id;
+
+#if defined( _M_I86 )
+typedef const char __far    *res_name_or_id;
+#else
+typedef const char          *res_name_or_id;
+#endif
+
+typedef struct gui_coord {
+    gui_ord x;
+    gui_ord y;
+} gui_coord;
+
+typedef struct gui_point {
+    int x;
+    int y;
+} gui_point;
+
+typedef struct gui_window   gui_window;
+
+typedef void                *gui_help_instance;
+
+typedef long                gui_bitmap;
+
+typedef struct gui_toolbar_struct {
+    const char              *label;
+    gui_bitmap              bitmap;
+    gui_ctl_id              id;
+    const char              *hinttext;
+    const char              *tip;
+} gui_toolbar_struct;
+
+typedef struct gui_menu_struct {
+    const char              *label;
+    gui_ctl_id              id;
+    gui_menu_styles         style;
+    const char              *hinttext;
+    int                     num_child_menus;
+    struct gui_menu_struct  *child;
+} gui_menu_struct;
+
+typedef struct gui_colour_set {
+    gui_colour              fore;
+    gui_colour              back;
+} gui_colour_set;
+
+typedef unsigned long       gui_rgb;
+
+typedef struct gui_rect {
+    gui_ord                 x;
+    gui_ord                 y;
+    gui_ord                 width;
+    gui_ord                 height;
+} gui_rect;
+
+typedef struct gui_resource {
+    gui_bitmap              res;
+    char                    *chars; /* Character based */
+} gui_resource;
+
+typedef struct gui_control_info {
+    gui_control_class       control_class;
+    const char              *text;
+    gui_rect                rect;
+    gui_window              *parent;
+    gui_scroll_styles       scroll;
+    gui_control_styles      style;
+    gui_ctl_id              id;
+} gui_control_info;
+
+typedef bool (GUICALLBACK)( gui_window *, gui_event gui_ev, void *param );
+typedef void (ENUMCALLBACK)( gui_window *, void *param );
+typedef void (CONTRENUMCALLBACK)( gui_window *parent, gui_ctl_id id, void *param );
+typedef void (GUIPICKCALLBACK)( gui_window *, gui_ctl_id id );
+typedef void (PICKDLGOPEN)( const char *title, int rows, int cols,
+                             gui_control_info *controls_info, int num_controls,
+                             GUICALLBACK *gui_call_back, void *extra );
+typedef const char *(GUIPICKGETTEXT)( const void *data_handle, int item );
+
+typedef struct gui_create_info {
+    const char          *title;
+    gui_rect            rect;
+    gui_scroll_styles   scroll;
+    gui_create_styles   style;
+    gui_window          *parent;
+    int                 num_items;
+    gui_menu_struct     *menu;
+    int                 num_attrs;
+    gui_colour_set      *colours;      /* array of num_attrs gui_attrs */
+    GUICALLBACK         *gui_call_back;
+    void                *extra;
+    gui_resource        *icon;
+    res_name_or_id      resource_menu;
+} gui_create_info;
+
+typedef struct gui_text_metrics {
+    gui_coord   avg;
+    gui_coord   max;
+} gui_text_metrics;
+
+typedef struct gui_system_metrics {
+    gui_coord   resize_border;
+    bool        colour;
+    bool        mouse;
+    gui_coord   top_left;
+    gui_coord   bottom_right;
+    gui_coord   scrollbar_size;
+    gui_coord   dialog_top_left_size;
+    gui_coord   dialog_bottom_right_size;
+    gui_ord     caption_size;
+} gui_system_metrics;
+
+typedef void            *gui_mcursor_handle;
 
 /*
- **************************************************************
+ *************************************************************************
  * GUI_MOUSEMOVE :
  * GUI_LBUTTONUDOWN :
  * GUI_LBUTTONUP :
@@ -518,25 +510,25 @@ typedef enum {
  * GUI_RBUTTONUDOWN :
  * GUI_RBUTTONUP :
  * GUI_RBUTTONDBLCLK : 1 parameter - gui_point : GUI_GET_POINT
- **************************************************************
+ *************************************************************************
  * GUI_PAINT : 2 parameters - gui_ord, int : GUI_GET_ROWS
- **************************************************************
+ *************************************************************************
  * GUI_ENDSESSION :
  * GUI_QUERYENDSESSION : 2 parameters - bool, bool : GUI_GET_ENDSESSION
- **************************************************************
+ *************************************************************************
  * GUI_CONTROL_NOT_ACTIVE :
  * GUI_CLICKED :
  * GUI_CONTROL_CLICKED
  * GUI_CONTROL_DCLICKED : 1 parameter - gui_ctl_id : GUI_GETID
- **************************************************************
+ *************************************************************************
  * GUI_RESIZE : 1 parameter - gui_coord : GUI_GET_SIZE
- **************************************************************
+ *************************************************************************
  * GUI_SCROLL_VERTICAL :
  * GUI_SCROLL_HORIZONTAL : 1 parametr - int : GUI_GET_SCROLL
- **************************************************************
+ *************************************************************************
  * GUI_ACTIVATEAPP :
  * GUI_CONTEXTHELP : 1 parametr - bool : GUI_GET_BOOL
- **************************************************************
+ *************************************************************************
  *
  *
  */
@@ -772,14 +764,14 @@ extern bool GUIDeleteMenuItem( gui_window *wnd, gui_ctl_id id, bool floating );
 
 extern bool GUIResetMenus( gui_window *wnd, int num_items, gui_menu_struct *menu );
 
-extern gui_ctl_idx GUIGetMenuPopupCount( gui_window *wnd, gui_ctl_id id );
+extern int GUIGetMenuPopupCount( gui_window *wnd, gui_ctl_id id );
 
-extern bool GUIInsertMenuByIdx( gui_window *wnd, gui_ctl_idx position, gui_menu_struct *menu, bool floating );
+extern bool GUIInsertMenuByIdx( gui_window *wnd, int position, gui_menu_struct *menu, bool floating );
 extern bool GUIInsertMenuByID( gui_window *wnd, gui_ctl_id id, gui_menu_struct *menu );
 extern bool GUIAppendMenu( gui_window *wnd, gui_menu_struct *menu, bool floating );
-extern bool GUIAppendMenuByIdx( gui_window *wnd, gui_ctl_idx position, gui_menu_struct *menu );
+extern bool GUIAppendMenuByIdx( gui_window *wnd, int position, gui_menu_struct *menu );
 extern bool GUIAppendMenuToPopup( gui_window *wnd, gui_ctl_id id, gui_menu_struct *menu, bool floating );
-extern bool GUIInsertMenuToPopup( gui_window *wnd, gui_ctl_id id, gui_ctl_idx position, gui_menu_struct *menu, bool floating );
+extern bool GUIInsertMenuToPopup( gui_window *wnd, gui_ctl_id id, int position, gui_menu_struct *menu, bool floating );
 
 /* Toolbar Functions */
 
@@ -875,8 +867,8 @@ extern gui_ord GUIGetNumRows( gui_window *wnd );
 
 extern gui_message_return GUIDisplayMessage( gui_window *wnd, const char *message, const char *title, gui_message_type type );
 extern gui_message_return GUIGetNewVal( const char *title, const char *old, char **new_val );
-extern bool GUIDlgPick( const char *title, GUIPICKCALLBACK *pickinit, gui_ctl_idx *choice );
-extern bool GUIDlgPickWithRtn( const char *title, GUIPICKCALLBACK *pickinit, PICKDLGOPEN *, gui_ctl_idx *choice );
+extern bool GUIDlgPick( const char *title, GUIPICKCALLBACK *pickinit, int *choice );
+extern bool GUIDlgPickWithRtn( const char *title, GUIPICKCALLBACK *pickinit, PICKDLGOPEN *, int *choice );
 
 /* Dialog Functions */
 
@@ -903,20 +895,20 @@ extern bool GUIIsControlVisible( gui_window *wnd, gui_ctl_id id );
 /* combo/list box functions */
 extern bool GUIControlSetRedraw( gui_window *wnd, gui_ctl_id id, bool redraw );
 extern bool GUIAddText( gui_window *wnd, gui_ctl_id id, const char *text );
-extern bool GUISetListItemData( gui_window *wnd, gui_ctl_id id, gui_ctl_idx choice, void *data );
-extern void *GUIGetListItemData( gui_window *wnd, gui_ctl_id id, gui_ctl_idx choice );
+extern bool GUISetListItemData( gui_window *wnd, gui_ctl_id id, int choice, void *data );
+extern void *GUIGetListItemData( gui_window *wnd, gui_ctl_id id, int choice );
 extern bool GUIAddTextList( gui_window *wnd, gui_ctl_id id, int items,
                             const void *data_handle, GUIPICKGETTEXT *getstring );
-extern bool GUIInsertText( gui_window *wnd, gui_ctl_id id, gui_ctl_idx choice, const char *text );
-extern bool GUISetTopIndex( gui_window *wnd, gui_ctl_id id, gui_ctl_idx choice );
-extern gui_ctl_idx GUIGetTopIndex( gui_window *wnd, gui_ctl_id id );
+extern bool GUIInsertText( gui_window *wnd, gui_ctl_id id, int choice, const char *text );
+extern bool GUISetTopIndex( gui_window *wnd, gui_ctl_id id, int choice );
+extern int GUIGetTopIndex( gui_window *wnd, gui_ctl_id id );
 extern bool GUISetHorizontalExtent( gui_window *wnd, gui_ctl_id id, int extent );
 extern bool GUIClearList( gui_window *wnd, gui_ctl_id id );
-extern bool GUIDeleteItem( gui_window *wnd, gui_ctl_id id, gui_ctl_idx choice );
-extern gui_ctl_idx GUIGetListSize( gui_window *wnd, gui_ctl_id id );
-extern bool GUIGetCurrSelect( gui_window *wnd, gui_ctl_id id, gui_ctl_idx *choice );
-extern bool GUISetCurrSelect( gui_window *wnd, gui_ctl_id id, gui_ctl_idx choice );
-extern char *GUIGetListItem( gui_window *wnd, gui_ctl_id id, gui_ctl_idx choice );
+extern bool GUIDeleteItem( gui_window *wnd, gui_ctl_id id, int choice );
+extern int GUIGetListSize( gui_window *wnd, gui_ctl_id id );
+extern bool GUIGetCurrSelect( gui_window *wnd, gui_ctl_id id, int *choice );
+extern bool GUISetCurrSelect( gui_window *wnd, gui_ctl_id id, int choice );
+extern char *GUIGetListItem( gui_window *wnd, gui_ctl_id id, int choice );
 
 extern bool GUISetText( gui_window *wnd, gui_ctl_id id, const char *text );
 extern bool GUIClearText( gui_window *wnd, gui_ctl_id id );

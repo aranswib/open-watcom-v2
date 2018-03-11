@@ -30,19 +30,19 @@
 ****************************************************************************/
 
 
-#include "_aui.h"//
+#include "_aui.h"
 
 bool    WndSetPoint( a_window wnd, void *parm, bool exact,
                              wnd_coord *spot, wnd_row row,
                              bool doing_select )
 {
     gui_point           point;
-    int                 col;
-    int                 piece;
-    int                 last_piece;
-    int                 last_col;
-    int                 last_extended_tab_piece;
-    int                 last_extended_tab_col;
+    wnd_colidx          colidx;
+    wnd_piece           piece;
+    wnd_piece           last_piece;
+    wnd_colidx          last_colidx;
+    wnd_piece           last_extended_tab_piece;
+    wnd_colidx          last_extended_tab_colidx;
     bool                got;
     bool                allowed_in_tab;
     wnd_line_piece      line;
@@ -50,7 +50,7 @@ bool    WndSetPoint( a_window wnd, void *parm, bool exact,
 
     spot->row = WND_NO_ROW;
     spot->piece = WND_NO_PIECE;
-    spot->col = WND_NO_COL;
+    spot->colidx = WND_NO_COLIDX;
     if( doing_select ) {
         allowed_in_tab = WndSwitchOn( wnd, WSW_SELECT_IN_TABSTOP );
     } else {
@@ -69,9 +69,9 @@ bool    WndSetPoint( a_window wnd, void *parm, bool exact,
         row -= wnd->top;
     }
     last_piece = WND_NO_PIECE;
-    last_col = 0;
+    last_colidx = 0;
     last_extended_tab_piece = WND_NO_PIECE;
-    last_extended_tab_col = 0;
+    last_extended_tab_colidx = 0;
     for( piece = 0; ; ++piece ) {
         got = WndGetLine( wnd, row, piece, &line );
         indent.x = line.indent;
@@ -81,7 +81,7 @@ bool    WndSetPoint( a_window wnd, void *parm, bool exact,
         if( line.tabstop && ( line.extent == WND_MAX_EXTEND || line.master_tabstop ) ) { // nyi ??
             if( last_extended_tab_piece == WND_NO_PIECE ) {
                 last_extended_tab_piece = piece;
-                last_extended_tab_col = WndLastCharCol( &line );
+                last_extended_tab_colidx = WndLastCharColIdx( &line );
             }
         }
         if( !got || line.indent > point.x ) {
@@ -90,28 +90,31 @@ bool    WndSetPoint( a_window wnd, void *parm, bool exact,
             spot->row = row;
             if( !doing_select && last_extended_tab_piece != WND_NO_PIECE ) {
                 spot->piece = last_extended_tab_piece;
-                spot->col = last_extended_tab_col;
+                spot->colidx = last_extended_tab_colidx;
             } else {
                 spot->piece = last_piece;
-                spot->col = last_col;
+                spot->colidx = last_colidx;
             }
             return( true );
         }
         if( line.bitmap ) {
             if( doing_select )
                 continue;
-            if( line.indent <= point.x && line.indent+line.length > point.x ) {
+            if( line.indent <= point.x && line.indent + line.length > point.x ) {
                 spot->row = row;
                 spot->piece = piece;
-                spot->col = 0;
+                spot->colidx = 0;
                 return( true );
             }
         } else {
-            col = GUIGetStringPos( wnd->gui, line.indent, line.text, point.x );
-            if( col != GUI_NO_COLUMN ) { // clicked within this piece
+            gui_ord     guipos;
+
+            guipos = GUIGetStringPos( wnd->gui, line.indent, line.text, point.x );
+            if( guipos != GUI_NO_COLUMN ) { // clicked within this piece
+                colidx = (wnd_colidx)guipos;
                 if( !doing_select && last_extended_tab_piece != WND_NO_PIECE ) {
                     spot->piece = last_extended_tab_piece;
-                    spot->col = last_extended_tab_col;
+                    spot->colidx = last_extended_tab_colidx;
                 } else {
                     if( !allowed_in_tab && line.tabstop )
                         return( false );
@@ -120,38 +123,39 @@ bool    WndSetPoint( a_window wnd, void *parm, bool exact,
                     spot->piece = piece;
                 }
                 spot->row = row;
-                spot->col = WndCharCol( line.text, col );
+                spot->colidx = WndCharColIdx( line.text, colidx );
                 return( true );
             } else if( line.extent == WND_MAX_EXTEND || line.master_tabstop || !exact ) { // nyi ??
                 // clicked to right of this hunk -- remember it
                 last_piece = piece;
-                last_col = WndLastCharCol( &line );
+                last_colidx = WndLastCharColIdx( &line );
             }
         }
     }
 }
 
 
-void    WndGetCurrent( a_window wnd, wnd_row *row, int *piece )
+void    WndGetCurrent( a_window wnd, wnd_row *row, wnd_piece *piece )
 {
     *row = WND_NO_ROW;
-    if( !WndHasCurrent( wnd ) ) return;
+    if( !WndHasCurrent( wnd ) )
+        return;
     *row = WndVirtualRow( wnd, wnd->current.row );
     *piece = wnd->current.piece;
 }
 
 
-void    WndNewCurrent( a_window wnd, wnd_row row, int piece )
+void    WndNewCurrent( a_window wnd, wnd_row row, wnd_piece piece )
 {
     wnd->current.row = WndScreenRow( wnd, row );
     wnd->current.piece = piece;
-    wnd->current.col = 0;
+    wnd->current.colidx = 0;
     WndSetCurrCol( wnd );
     WndDirtyCurr( wnd );
 }
 
 
-void WndMoveCurrent( a_window wnd, wnd_row row, int piece )
+void WndMoveCurrent( a_window wnd, wnd_row row, wnd_piece piece )
 {
     WndDirtyCurr( wnd );
     if( row < WndTop( wnd ) ) {
@@ -173,7 +177,7 @@ void    WndNoCurrent( a_window wnd )
 {
     wnd->current.row = WND_NO_ROW;
     wnd->current.piece = 0;
-    wnd->current.col = 0;
+    wnd->current.colidx = 0;
     WndSetCurrCol( wnd );
 }
 
@@ -187,8 +191,8 @@ wnd_row WndCurrRow( a_window wnd )
 
 bool    WndNextCurrent( a_window wnd, bool wrap )
 {
-    int                 row;
-    int                 piece;
+    wnd_row             row;
+    wnd_piece           piece;
     wnd_line_piece      line;
 
     if( WndHasCurrent( wnd ) ) {
@@ -201,16 +205,17 @@ bool    WndNextCurrent( a_window wnd, bool wrap )
     WndNextRow( wnd, WND_NO_ROW, WND_SAVE_ROW );
     for( ;; ) {
         for( ;; ) {
-            if( !WndGetLine( wnd, row, piece, &line ) ) break;
+            if( !WndGetLine( wnd, row, piece, &line ) )
+                break;
             if( line.tabstop ) {
                 WndDirtyCurr( wnd );
                 if( row >= wnd->rows ) {
-                    WndScroll( wnd, row - wnd->rows+1 );
-                    row = wnd->rows-1;
+                    WndScroll( wnd, row - wnd->rows + 1 );
+                    row = wnd->rows - 1;
                 }
                 wnd->current.row = row;
                 wnd->current.piece = piece;
-                wnd->current.col = 0;
+                wnd->current.colidx = 0;
                 WndSetCurrCol( wnd );
                 WndDirtyCurr( wnd );
                 return( true );
@@ -233,13 +238,14 @@ bool    WndNextCurrent( a_window wnd, bool wrap )
 
 bool WndPrevCurrent( a_window wnd, bool wrap )
 {
-    int                 piece;
-    int                 last_piece;
-    int                 found_piece;
-    int                 row;
+    wnd_piece           piece;
+    wnd_piece           last_piece;
+    wnd_piece           found_piece;
+    wnd_row             row;
     wnd_line_piece      line;
 
-    if( !WndHasCurrent( wnd ) ) return( false );
+    if( !WndHasCurrent( wnd ) )
+        return( false );
     row = wnd->current.row;
     last_piece = wnd->current.piece;
     WndNextRow( wnd, WND_NO_ROW, WND_SAVE_ROW );
@@ -265,7 +271,7 @@ bool WndPrevCurrent( a_window wnd, bool wrap )
             }
             wnd->current.row = row;
             wnd->current.piece = found_piece;
-            wnd->current.col = 0;
+            wnd->current.colidx = 0;
             WndSetCurrCol( wnd );
             WndGetLine( wnd, row, found_piece, &line );
             WndDirtyCurr( wnd );
@@ -299,7 +305,8 @@ void     WndCheckCurrentValid( a_window wnd )
 {
     wnd_line_piece      line;
 
-    if( !WndHasCurrent( wnd ) ) return;
+    if( !WndHasCurrent( wnd ) )
+        return;
     if( !WndGetLine( wnd, wnd->current.row, wnd->current.piece, &line ) ) {
         WndLastCurrent( wnd );
     } else {
@@ -309,15 +316,16 @@ void     WndCheckCurrentValid( a_window wnd )
     }
 }
 
-static void WndAdjustCurrCol( a_window wnd, wnd_line_piece *line )
+static void WndAdjustCurrColIdx( a_window wnd, wnd_line_piece *line )
 {
-    if( !WndHasCurrent( wnd ) ) return;
+    if( !WndHasCurrent( wnd ) )
+        return;
     if( line->length == 0 ) {
-        wnd->current.col = 0;
-    } else if( wnd->current_col >= line->length ) {
-        wnd->current.col = WndLastCharCol( line );
+        wnd->current.colidx = 0;
+    } else if( wnd->current_colidx >= line->length ) {
+        wnd->current.colidx = WndLastCharColIdx( line );
     } else {
-        wnd->current.col = wnd->current_col;
+        wnd->current.colidx = wnd->current_colidx;
     }
 }
 
@@ -325,32 +333,33 @@ static void WndAdjustCurrCol( a_window wnd, wnd_line_piece *line )
 void WndCurrVisible( a_window wnd )
 {
     wnd_line_piece      line;
-    int                 len;
+    size_t              len;
 
     if( !WndHasCurrent( wnd ) )
         return;
     if( wnd != WndFindActive() )
         return;
     if( WndGetLine( wnd, wnd->current.row, wnd->current.piece, &line ) ) {
-        WndAdjustCurrCol( wnd, &line );
+        WndAdjustCurrColIdx( wnd, &line );
         /* try to make whole selection visible for searching */
         if( wnd->sel_start.row == wnd->current.row &&
             wnd->sel_start.piece == wnd->current.piece &&
-            wnd->sel_start.col == wnd->current.col &&
+            wnd->sel_start.colidx == wnd->current.colidx &&
             wnd->sel_end.row == wnd->current.row &&
             wnd->sel_end.piece == wnd->current.piece ) {
-            len = wnd->sel_end.col - wnd->sel_start.col;
-            if( len < 0 )
-                len = -len;
-            ++len;
+            if( wnd->sel_end.colidx < wnd->sel_start.colidx ) {
+                len = wnd->sel_start.colidx - wnd->sel_end.colidx + 1;
+            } else {
+                len = wnd->sel_end.colidx - wnd->sel_start.colidx + 1;
+            }
         } else {
             len = 1;
         }
         WndHScrollToCurr( wnd, len );
         if( line.length == 0 ) {
-            wnd->current.col = 0;
-        } else if( wnd->current.col >= line.length ) {
-            wnd->current.col = WndLastCharCol( &line );
+            wnd->current.colidx = 0;
+        } else if( wnd->current.colidx >= line.length ) {
+            wnd->current.colidx = WndLastCharColIdx( &line );
         }
     }
 }
@@ -384,5 +393,5 @@ void    WndDirtyCurrChar( a_window wnd )
 
 void WndSetCurrCol( a_window wnd )
 {
-    wnd->current_col = wnd->current.col;
+    wnd->current_colidx = wnd->current.colidx;
 }

@@ -63,10 +63,10 @@ enum {
 static char     Indents[PIECE_LAST] = { 0, ID_WIDTH, ID_WIDTH+STATE_WIDTH };
 
 
-static thread_state     *GetThreadRow( int row )
+static thread_state     *GetThreadRow( wnd_row row )
 {
     thread_state    *thd;
-    unsigned        num;
+    wnd_row         num;
 
     num = 0;
     for( thd = HeadThd; thd != NULL; thd = thd->link ) {
@@ -77,10 +77,10 @@ static thread_state     *GetThreadRow( int row )
     return( thd );
 }
 
-OVL_EXTERN int TrdNumRows( a_window wnd )
+OVL_EXTERN wnd_row TrdNumRows( a_window wnd )
 {
     thread_state    *thd;
-    unsigned        num;
+    wnd_row         num;
 
     /* unused parameters */ (void)wnd;
 
@@ -90,7 +90,7 @@ OVL_EXTERN int TrdNumRows( a_window wnd )
     return( num );
 }
 
-OVL_EXTERN void TrdMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void TrdMenuItem( a_window wnd, gui_ctl_id id, wnd_row row, wnd_piece piece )
 {
     thread_state        *thd = GetThreadRow( row );
 
@@ -143,7 +143,7 @@ OVL_EXTERN void TrdMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 OVL_EXTERN void TrdRefresh( a_window wnd )
 {
     thread_state    *thd;
-    int                 row;
+    wnd_row         row;
 
     row = 0;
     for( thd = HeadThd; thd != NULL; thd = thd->link ) {
@@ -158,16 +158,14 @@ OVL_EXTERN void TrdRefresh( a_window wnd )
 }
 
 
-OVL_EXTERN bool    TrdGetLine( a_window wnd, int row, int piece,
-                             wnd_line_piece *line )
+OVL_EXTERN bool    TrdGetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_line_piece *line )
 {
     thread_state        *thd = GetThreadRow( row );
 
     line->indent = Indents[piece] * WndAvgCharX( wnd );
     if( row < 0 ) {
         row += TITLE_SIZE;
-        switch( row ) {
-        case 0:
+        if( row == 0 ) {
             switch( piece ) {
             case PIECE_ID:
                 line->text = LIT_DUI( ID );
@@ -182,12 +180,12 @@ OVL_EXTERN bool    TrdGetLine( a_window wnd, int row, int piece,
             default:
                 return( false );
             }
-        case 1:
+        } else if( row == 1 ) {
             if( piece != 0 )
                 return( false );
             SetUnderLine( wnd, line );
             return( true );
-        default:
+        } else {
             return( false );
         }
     } else {
@@ -268,6 +266,5 @@ wnd_info TrdInfo = {
 
 a_window WndTrdOpen( void )
 {
-    return( DbgTitleWndCreate( LIT_DUI( WindowThreads ), &TrdInfo, WND_THREAD, NULL,
-                               &TrdIcon, TITLE_SIZE, true ) );
+    return( DbgTitleWndCreate( LIT_DUI( WindowThreads ), &TrdInfo, WND_THREAD, NULL, &TrdIcon, TITLE_SIZE, true ) );
 }

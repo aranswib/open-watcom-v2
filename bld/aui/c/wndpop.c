@@ -30,70 +30,72 @@
 ****************************************************************************/
 
 
-#include "_aui.h"////
+#include "_aui.h"
 #include <ctype.h>
 #include <string.h>
 
+
 static gui_ctl_id CalcMenuMaxId( gui_menu_struct *menu, int num_items )
 {
-    int         i;
-    gui_ctl_id  submax;
-    gui_ctl_id  max;
+    gui_ctl_id  submaxid;
+    gui_ctl_id  maxid;
 
-    max = 0;
-    for( i = 0; i < num_items; ++i ) {
-        if( max < menu->id && (menu->style & GUI_SEPARATOR) == 0 )
-            max = menu->id;
-        if( menu->num_child_menus != 0 ) {
-            submax = CalcMenuMaxId( menu->child, menu->num_child_menus );
-            if( max < submax ) {
-                max = submax;
+    maxid = 0;
+    while( num_items-- > 0 ) {
+        if( maxid < menu->id && (menu->style & GUI_STYLE_MENU_SEPARATOR) == 0 )
+            maxid = menu->id;
+        if( menu->num_child_menus > 0 ) {
+            submaxid = CalcMenuMaxId( menu->child, menu->num_child_menus );
+            if( maxid < submaxid ) {
+                maxid = submaxid;
             }
         }
         menu++;
     }
-    return( max );
+    return( maxid );
 }
 
 void NullPopupMenu( gui_menu_struct *menu )
 {
-    int                 i,j;
-    gui_menu_struct     *curr,*sub;
+    int                 item;
+    int                 child_item;
+    gui_menu_struct     *curr;
+    gui_menu_struct     *submenu;
 
-    if( WndMain == NULL )
-        return;
-    curr = WndMainMenuPtr;
-    for( i = 0; i < WndNumMenus; ++i, ++curr ) {
-        if( !( curr->style & WND_MENU_POPUP ) )
-            continue;
-        if( curr->child != menu )
-            continue;
-        sub = curr->child;
-        for( j = 0; j < curr->num_child_menus; ++j ) {
-            GUIDeleteMenuItem( WndMain->gui, sub->id, false );
-            ++sub;
+    if( WndMain != NULL ) {
+        curr = WndMainMenuPtr;
+        for( item = 0; item < WndNumMenus; item++ ) {
+            if( (curr->style & WND_MENU_POPUP) && curr->child == menu ) {
+                submenu = curr->child;
+                for( child_item = 0; child_item < curr->num_child_menus; child_item++ ) {
+                    GUIDeleteMenuItem( WndMain->gui, submenu->id, false );
+                    submenu++;
+                }
+                curr->child = NULL;
+                curr->num_child_menus = 0;
+                break;
+            }
+            curr++;
         }
-        curr->child = NULL;
-        curr->num_child_menus = 0;
-        break;
     }
 }
 
 void    WndAddPopupMenu( a_window wnd )
 {
-    int                 i,j;
+    int                 item;
+    int                 child_item;
     gui_menu_struct     *menu;
     gui_menu_struct     *submenu;
-    gui_ctl_id          max;
+    gui_ctl_id          maxid;
 
     if( WndMain == NULL )
         return;
+    maxid = CalcMenuMaxId( WndMainMenuPtr, WndNumMenus );
     menu = WndMainMenuPtr;
-    max = CalcMenuMaxId( WndMainMenuPtr, WndNumMenus );
-    for( i = 0; i < WndNumMenus; ++i ) {
+    for( item = 0; item < WndNumMenus; item++ ) {
         if( menu->style & WND_MENU_POPUP ) {
             submenu = menu->child;
-            for( j = 0; j < menu->num_child_menus; ++j ) {
+            for( child_item = 0; child_item < menu->num_child_menus; child_item++ ) {
                 GUIDeleteMenuItem( WndMain->gui, submenu->id, false );
                 submenu++;
             }
@@ -106,9 +108,9 @@ void    WndAddPopupMenu( a_window wnd )
             }
             WndPopupMenuPtr = menu;
             submenu = menu->child;
-            for( j = 0; j < menu->num_child_menus; ++j ) {
-                if( ( submenu->style & GUI_SEPARATOR ) && ( submenu->id == 0 ) ) {
-                    submenu->id = ++max;
+            for( child_item = 0; child_item < menu->num_child_menus; child_item++ ) {
+                if( (submenu->style & GUI_STYLE_MENU_SEPARATOR) && ( submenu->id == 0 ) ) {
+                    submenu->id = ++maxid;
                 }
                 GUIAppendMenuToPopup( WndMain->gui, menu->id, submenu, false );
                 submenu++;
@@ -126,40 +128,38 @@ void    WndNullPopItem( a_window wnd )
     wnd->popitem[0] = '\0';
 }
 
-static void GoBackward( a_window wnd, wnd_coord *start,
-                    wnd_line_piece *line )
+static void GoBackward( a_window wnd, wnd_coord *start, wnd_line_piece *line )
 {
-    char        ch;
+    int     ch;
 
-    ch = line->text[ start->col ];
-    if( isspace( ch ) || !WndIDChar( wnd, ch ) ) return;
-    for( ;; ) {
-        if( start->col == 0 ) return;
-        start->col = WndPrevCharCol( line->text, start->col );
-        ch = line->text[ start->col ];
+    ch = UCHAR_VALUE( line->text[start->colidx] );
+    if( isspace( ch ) || !WndIDChar( wnd, ch ) )
+        return;
+    while( start->colidx != 0 ) {
+        start->colidx = WndPrevCharColIdx( line->text, start->colidx );
+        ch = UCHAR_VALUE( line->text[start->colidx] );
         if( isspace( ch ) || !WndIDChar( wnd, ch ) ) {
-            start->col += GUICharLen( ch );
+            start->colidx += GUICharLen( ch );
             return;
         }
     }
 }
 
 
-static void GoForward( a_window wnd, wnd_coord *end,
-                       wnd_line_piece *line )
+static void GoForward( a_window wnd, wnd_coord *end, wnd_line_piece *line )
 {
-    char        ch;
+    int         ch;
 
-    ch = line->text[ end->col ];
+    ch = UCHAR_VALUE( line->text[end->colidx] );
     if( isspace( ch ) || !WndIDChar( wnd, ch ) ) {
-        end->col += GUICharLen( ch ) - 1;
+        end->colidx += GUICharLen( ch ) - 1;
         return;
     }
     for( ;; ) {
-        end->col += GUICharLen( ch );
-        ch = line->text[end->col];
+        end->colidx += GUICharLen( ch );
+        ch = UCHAR_VALUE( line->text[end->colidx] );
         if( isspace( ch ) || !WndIDChar( wnd, ch ) ) {
-            end->col--;
+            end->colidx--;
             return;
         }
     }
@@ -170,18 +170,18 @@ static void    WndSelPopPiece( a_window wnd, bool paint_immed )
     wnd_row             row;
     wnd_coord           *start;
     wnd_coord           *end;
-    int                 piece;
-    int                 buff_size;
+    wnd_piece           piece;
+    size_t              buff_size;
     char                *ptr;
-    int                 first;
-    int                 len;
+    wnd_colidx          first_colidx;
+    size_t              len;
     wnd_line_piece      line;
 
     WndClrSwitches( wnd, WSW_SELECTING | WSW_SELECTING_WITH_KEYBOARD );
     WndSelEnds( wnd, &start, &end );
     if( WndSwitchOff( wnd, WSW_SUBWORD_SELECT ) ||
         ( start->row == end->row &&
-          start->piece == end->piece && start->col == end->col ) ) {
+          start->piece == end->piece && start->colidx == end->colidx ) ) {
         WndGetLine( wnd, start->row, start->piece, &line );
         GoBackward( wnd, start, &line );
         WndGetLine( wnd, end->row, end->piece, &line );
@@ -192,27 +192,30 @@ static void    WndSelPopPiece( a_window wnd, bool paint_immed )
         } else if( paint_immed ) {
             GUIWndDirtyRow( wnd->gui, start->row );
         } else {
-            WndDirtyScreenRange( wnd, start, end->col );
+            WndDirtyScreenRange( wnd, start, end->colidx );
         }
     }
     buff_size = 0;
     for( row = start->row; row <= end->row; ++row ) {
         for( piece = 0; ; ++piece ) {
-            if( !WndGetLine( wnd, row, piece, &line ) ) break;
-            if( WndSelected( wnd, &line, row, piece, &first, &len ) ) {
+            if( !WndGetLine( wnd, row, piece, &line ) )
+                break;
+            if( WndSelected( wnd, &line, row, piece, &first_colidx, &len ) ) {
                 buff_size += len + 1;
             }
         }
     }
     WndFree( wnd->popitem );
-    wnd->popitem = WndMustAlloc( buff_size+2 );
+    wnd->popitem = WndMustAlloc( buff_size + 2 );
     ptr = wnd->popitem;
     for( row = start->row; row <= end->row; ++row ) {
         for( piece = 0; ; ++piece ) {
-            if( !WndGetLine( wnd, row, piece, &line ) ) break;
-            if( WndSelected( wnd, &line, row, piece, &first, &len ) ) {
-                if( ptr != wnd->popitem ) *ptr++ = ' ';
-                memcpy( ptr, line.text+first, len );
+            if( !WndGetLine( wnd, row, piece, &line ) )
+                break;
+            if( WndSelected( wnd, &line, row, piece, &first_colidx, &len ) ) {
+                if( ptr != wnd->popitem )
+                    *ptr++ = ' ';
+                memcpy( ptr, line.text + first_colidx, len );
                 ptr += len;
             }
         }
@@ -263,7 +266,7 @@ void    WndPopUp( a_window wnd, gui_menu_struct *menu )
     }
     if( WndHasCurrent( wnd ) ) {
         WndNoSelect( wnd );
-        wnd->current.col = 0; // just to be sure
+        wnd->current.colidx = 0; // just to be sure
         WndCurrToGUIPoint( wnd, &point );
         wnd->sel_end = wnd->current;
         wnd->sel_start = wnd->current;
@@ -274,20 +277,20 @@ void    WndPopUp( a_window wnd, gui_menu_struct *menu )
 }
 
 
-void WndChangeMenuAll( gui_menu_struct *menu, int num_popups, bool on, int bit )
+void WndChangeMenuAll( gui_menu_struct *menu, int num_items, bool on, int bit )
 {
-    int                 i;
-
-    for( i = 0; i < num_popups; ++i ) {
-        if( menu[i].style & GUI_SEPARATOR ) continue;
-        if( menu[i].num_child_menus != 0 ) {
-            WndChangeMenuAll( menu[i].child, menu[i].num_child_menus, on, bit );
+    while( num_items-- > 0 ) {
+        if( menu->style & GUI_STYLE_MENU_SEPARATOR )
+            continue;
+        if( menu->num_child_menus > 0 ) {
+            WndChangeMenuAll( menu->child, menu->num_child_menus, on, bit );
         }
         if( on ) {
-            menu[i].style |= bit;
+            menu->style |= bit;
         } else {
-            menu[i].style &= ~bit;
+            menu->style &= ~bit;
         }
+        menu++;
     }
 }
 
@@ -299,43 +302,42 @@ static void MenuAll( a_window wnd, bool on, int bit )
 
 void    WndMenuEnableAll( a_window wnd )
 {
-    MenuAll( wnd, false, GUI_GRAYED );
+    MenuAll( wnd, false, GUI_STYLE_MENU_GRAYED );
 }
 
 
 void    WndMenuGrayAll( a_window wnd )
 {
-    MenuAll( wnd, true, GUI_GRAYED );
+    MenuAll( wnd, true, GUI_STYLE_MENU_GRAYED );
 }
 
 
 void    WndMenuIgnoreAll( a_window wnd )
 {
-    MenuAll( wnd, true, GUI_IGNORE );
+    MenuAll( wnd, true, GUI_STYLE_MENU_IGNORE );
 }
 
 
 void    WndMenuRespectAll( a_window wnd )
 {
-    MenuAll( wnd, false, GUI_IGNORE );
+    MenuAll( wnd, false, GUI_STYLE_MENU_IGNORE );
 }
 
 
-static void DoMenuBitOn( gui_menu_struct *menu, int num_popups, gui_ctl_id id, bool on, int bit )
+static void DoMenuBitOn( gui_menu_struct *menu, int num_items, gui_ctl_id id, bool on, int bit )
 {
-    int         i;
-
-    for( i = 0; i < num_popups; ++i ) {
-        if( menu[i].num_child_menus != 0 ) {
-            DoMenuBitOn( menu[i].child, menu[i].num_child_menus, id, on, bit );
+    while( num_items-- > 0 ) {
+        if( menu->num_child_menus > 0 ) {
+            DoMenuBitOn( menu->child, menu->num_child_menus, id, on, bit );
         }
-        if( menu[i].id == id ) {
+        if( menu->id == id ) {
             if( on ) {
-                menu[i].style |= bit;
+                menu->style |= bit;
             } else {
-                menu[i].style &= ~bit;
+                menu->style &= ~bit;
             }
         }
+        menu++;
     }
 }
 
@@ -347,24 +349,22 @@ static void MenuBitOn( a_window wnd, gui_ctl_id id, bool on, int bit )
 
 void    WndMenuCheck( a_window wnd, gui_ctl_id id, bool check )
 {
-    MenuBitOn( wnd, id, check, GUI_MENU_CHECKED );
+    MenuBitOn( wnd, id, check, GUI_STYLE_MENU_CHECKED );
 }
 
 
 void    WndMenuEnable( a_window wnd, gui_ctl_id id, bool enable )
 {
-    MenuBitOn( wnd, id, !enable, GUI_GRAYED );
+    MenuBitOn( wnd, id, !enable, GUI_STYLE_MENU_GRAYED );
 }
 
 void    WndMenuIgnore( a_window wnd, gui_ctl_id id, bool ignore )
 {
-    MenuBitOn( wnd, id, ignore, GUI_IGNORE );
+    MenuBitOn( wnd, id, ignore, GUI_STYLE_MENU_IGNORE );
 }
 
 
-void WndCreateFloatingPopup( a_window wnd, gui_point *point,
-                             char num_popups, gui_menu_struct *menu,
-                             gui_ctl_id *last_popup )
+void WndCreateFloatingPopup( a_window wnd, gui_point *point, int num_items, gui_menu_struct *menu, gui_ctl_id *last_popup )
 {
     gui_point   mouse;
 
@@ -378,7 +378,7 @@ void WndCreateFloatingPopup( a_window wnd, gui_point *point,
         }
         point = &mouse;
     }
-    GUICreateFloatingPopup( wnd->gui, point, num_popups, menu, GUI_TRACK_BOTH, last_popup );
+    GUICreateFloatingPopup( wnd->gui, point, num_items, menu, GUI_TRACK_BOTH, last_popup );
 }
 
 
@@ -390,15 +390,15 @@ void    WndInvokePopUp( a_window wnd, gui_point *point, gui_menu_struct *menu )
         return;
     WndMenuItem( wnd, MENU_INITIALIZE, WndMenuRow, WndMenuPiece );
     if( menu != NULL && wnd->num_popups == 1 ) {
-        if( menu->style & GUI_GRAYED ) {
+        if( menu->style & GUI_STYLE_MENU_GRAYED ) {
             Ring();
         } else {
-            WndMenuItem( wnd, wnd->popupmenu[ 0 ].id, WndMenuRow, WndMenuPiece );
+            WndMenuItem( wnd, wnd->popupmenu[0].id, WndMenuRow, WndMenuPiece );
         }
     } else if( wnd->num_popups != 0 ) {
         if( menu == NULL ) {
             WndCreateFloatingPopup( wnd, point, wnd->num_popups, wnd->popupmenu, &wnd->last_popup );
-        } else if( menu->style & GUI_GRAYED ) {
+        } else if( menu->style & GUI_STYLE_MENU_GRAYED ) {
             Ring();
         } else if( menu->child == NULL ) {
             WndMenuItem( wnd, menu->id, WndMenuRow, WndMenuPiece );
@@ -429,7 +429,7 @@ void    WndKeyPopUp( a_window wnd, gui_menu_struct *menu )
 }
 
 
-void    WndRowPopUp( a_window wnd, gui_menu_struct *menu, int row, int piece )
+void    WndRowPopUp( a_window wnd, gui_menu_struct *menu, wnd_row row, wnd_piece piece )
 {
     gui_point           point;
 
@@ -442,10 +442,11 @@ void    WndRowPopUp( a_window wnd, gui_menu_struct *menu, int row, int piece )
 
 void    WndSetMainMenu( gui_menu_struct *menu, int num_items )
 {
-    if( WndMain == NULL ) return;
-    WndMainMenuPtr = menu;
-    WndNumMenus = num_items;
-    GUIResetMenus( WndMain->gui, WndNumMenus, WndMainMenuPtr );
+    if( WndMain != NULL ) {
+        WndMainMenuPtr = menu;
+        WndNumMenus = num_items;
+        GUIResetMenus( WndMain->gui, WndNumMenus, WndMainMenuPtr );
+    }
 }
 
 void WndClick( a_window wnd, gui_ctl_id id )
@@ -460,17 +461,19 @@ void WndClick( a_window wnd, gui_ctl_id id )
 
 static void WndSetPopupBits( a_window wnd, gui_menu_struct *menu )
 {
-    int                 i;
-    gui_menu_struct     *curr;
+    int                 item;
+    gui_menu_struct     *child;
 
-    curr = menu->child;
-    for( i = 0; i < menu->num_child_menus; ++i ) {
-        if( !( curr->style & GUI_SEPARATOR ) ) {
-            GUIEnableMenuItem( WndMain->gui, curr->id, wnd && (curr->style & GUI_GRAYED) == 0, false );
-            GUICheckMenuItem( WndMain->gui, curr->id, wnd && (curr->style & GUI_CHECKED) != 0, false );
-            if( curr->child ) WndSetPopupBits( wnd, curr );
+    child = menu->child;
+    for( item = 0; item < menu->num_child_menus; item++ ) {
+        if( (child->style & GUI_STYLE_MENU_SEPARATOR) == 0 ) {
+            GUIEnableMenuItem( WndMain->gui, child->id, wnd && (child->style & GUI_STYLE_MENU_GRAYED) == 0, false );
+            GUICheckMenuItem( WndMain->gui, child->id, wnd && (child->style & GUI_STYLE_MENU_CHECKED) != 0, false );
+            if( child->child ) {
+                WndSetPopupBits( wnd, child );
+            }
         }
-        ++curr;
+        child++;
     }
 }
 
@@ -479,40 +482,38 @@ void WndSetPopup( gui_ctl_id id )
 {
     a_window    wnd;
 
-    if( WndMain == NULL )
-        return;
-    if( WndPopupMenuPtr == NULL )
-        return;
-    if( WndPopupMenuPtr->id != id )
-        return;
-    if( WndMouseButtonIsDown() )
-        return;
-    wnd = WndFindActive();
-    if( wnd == WndMain )
-        wnd = NULL;
-    WndMenuRow = WND_NO_ROW;
-    WndMenuPiece = WND_NO_PIECE;
-    if( wnd != NULL ) {
-        SetWndMenuRow( wnd );
-        WndMenuItem( wnd, MENU_INITIALIZE, WndMenuRow, WndMenuPiece );
+    if( WndMain != NULL && WndPopupMenuPtr != NULL ) {
+        if( WndPopupMenuPtr->id != id )
+            return;
+        if( WndMouseButtonIsDown() )
+            return;
+        wnd = WndFindActive();
+        if( wnd == WndMain )
+            wnd = NULL;
+        WndMenuRow = WND_NO_ROW;
+        WndMenuPiece = WND_NO_PIECE;
+        if( wnd != NULL ) {
+            SetWndMenuRow( wnd );
+            WndMenuItem( wnd, MENU_INITIALIZE, WndMenuRow, WndMenuPiece );
+        }
+        WndSetPopupBits( wnd, WndPopupMenuPtr );
     }
-    WndSetPopupBits( wnd, WndPopupMenuPtr );
 }
 
 void WndEnableMainMenu( gui_ctl_id id, bool enable )
 {
-    if( WndMain == NULL || WndMainMenuPtr == NULL )
-        return;
-    DoMenuBitOn( WndMainMenuPtr, WndNumMenus, id, !enable, GUI_GRAYED );
-    GUIEnableMenuItem( WndMain->gui, id, enable, false );
+    if( WndMain != NULL && WndMainMenuPtr != NULL ) {
+        DoMenuBitOn( WndMainMenuPtr, WndNumMenus, id, !enable, GUI_STYLE_MENU_GRAYED );
+        GUIEnableMenuItem( WndMain->gui, id, enable, false );
+    }
 }
 
 void WndCheckMainMenu( gui_ctl_id id, bool check )
 {
-    if( WndMain == NULL || WndMainMenuPtr == NULL )
-        return;
-    DoMenuBitOn( WndMainMenuPtr, WndNumMenus, id, check, GUI_MENU_CHECKED );
-    GUICheckMenuItem( WndMain->gui, id, check, false );
+    if( WndMain != NULL && WndMainMenuPtr != NULL ) {
+        DoMenuBitOn( WndMainMenuPtr, WndNumMenus, id, check, GUI_STYLE_MENU_CHECKED );
+        GUICheckMenuItem( WndMain->gui, id, check, false );
+    }
 }
 
 #if 0

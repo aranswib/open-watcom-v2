@@ -104,9 +104,9 @@ static event_record *RepGetEvent( int row )
 }
 
 
-OVL_EXTERN int RepNumRows( a_window wnd )
+OVL_EXTERN wnd_row RepNumRows( a_window wnd )
 {
-    int                 count;
+    wnd_row             count;
     event_record        *ev;
 
     /* unused parameters */ (void)wnd;
@@ -158,7 +158,7 @@ OVL_EXTERN void RepRefresh( a_window wnd )
 }
 
 
-OVL_EXTERN void RepMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void RepMenuItem( a_window wnd, gui_ctl_id id, wnd_row row, wnd_piece piece )
 {
     event_record        *ev;
 
@@ -189,8 +189,7 @@ OVL_EXTERN void RepMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
 }
 
 
-OVL_EXTERN  bool    RepGetLine( a_window wnd, int row, int piece,
-                            wnd_line_piece *line )
+OVL_EXTERN  bool    RepGetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_line_piece *line )
 {
     event_record        *ev;
 

@@ -54,9 +54,6 @@
 
 
 extern const char       MainTab[];
-extern wnd_info         *WndInfoTab[];
-extern gui_menu_struct  WndMainMenu[];
-extern int              WndNumMenus;
 
 static char **WndDisplayNames[] = {
     #define pick( a,b,c,d,e,f ) LITREF_DUI( f ),
@@ -168,7 +165,7 @@ static void MacChangeMac( a_window wnd, wnd_macro *mac, unsigned key,
     WndNewCurrent( wnd, i, PIECE_KEY );
 }
 
-OVL_EXTERN void     MacModify( a_window wnd, int row, int piece );
+OVL_EXTERN void     MacModify( a_window wnd, wnd_row row, wnd_piece piece );
 
 static bool MacModWhat( a_window wnd, wnd_row row )
 {
@@ -306,7 +303,7 @@ static void MacModMenu( a_window wnd, wnd_row row )
         wndmac->menu = info->popupmenu;
         wndmac->size = info->num_popups;
         wndmac->mac = mac;
-        WndChangeMenuAll( info->popupmenu, info->num_popups, false, GUI_GRAYED );
+        WndChangeMenuAll( info->popupmenu, info->num_popups, false, GUI_STYLE_MENU_GRAYED );
         WndCreateFloatingPopup( wnd, &point, wndmac->size, wndmac->menu, &dummy );
     }
 }
@@ -356,7 +353,7 @@ static void MacModCmd( a_window wnd, wnd_row row )
 }
 
 
-OVL_EXTERN void     MacModify( a_window wnd, int row, int piece )
+OVL_EXTERN void     MacModify( a_window wnd, wnd_row row, wnd_piece piece )
 {
     wnd_macro   *mac;
 
@@ -386,7 +383,7 @@ OVL_EXTERN void     MacModify( a_window wnd, int row, int piece )
 #define TDDBG "tdkeys.dbg"
 #define WDDBG "wdkeys.dbg"
 
-OVL_EXTERN void     MacMenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
+OVL_EXTERN void     MacMenuItem( a_window wnd, gui_ctl_id id, wnd_row row, wnd_piece piece )
 {
     wnd_macro           *mac;
     mac_window          *wndmac;
@@ -441,10 +438,10 @@ OVL_EXTERN void     MacMenuItem( a_window wnd, gui_ctl_id id, int row, int piece
     }
 }
 
-OVL_EXTERN int MacNumRows( a_window wnd )
+OVL_EXTERN wnd_row MacNumRows( a_window wnd )
 {
     wnd_macro   *mac;
-    int         count;
+    wnd_row     count;
 
     /* unused parameters */ (void)wnd;
 
@@ -455,7 +452,7 @@ OVL_EXTERN int MacNumRows( a_window wnd )
     return( count );
 }
 
-OVL_EXTERN  bool MacGetLine( a_window wnd, int row, int piece, wnd_line_piece *line )
+OVL_EXTERN  bool MacGetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_line_piece *line )
 {
     wnd_macro           *mac;
     cmd_list            *cmds;
@@ -482,20 +479,19 @@ OVL_EXTERN  bool MacGetLine( a_window wnd, int row, int piece, wnd_line_piece *l
     }
     if( row < 0 ) {
         row += TITLE_SIZE;
-        switch( row ) {
-        case 0:
+        if( row == 0 ) {
             line->tabstop = false;
             if( piece >= PIECE_LAST )
                 return( false );
             line->indent = Indents[piece];
             line->text = *Titles[piece];
             return( true );
-        case 1:
+        } else if( row == 1 ) {
             if( piece != 0 )
                 return( false );
             SetUnderLine( wnd, line );
             return( true );
-        default:
+        } else {
             return( false );
         }
     } else {
@@ -559,7 +555,7 @@ OVL_EXTERN int MacCompare( void *pa, void *pb )
 static void MacReSize( a_window wnd )
 {
     wnd_macro       *mac;
-    int             piece;
+    wnd_piece       piece;
     gui_ord         size;
     wnd_class_wv    wndclass;
     gui_ord         max_size[PIECE_LAST];

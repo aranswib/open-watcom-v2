@@ -33,6 +33,7 @@
 #include "app.h"
 
 
+
 extern int DlgOptions( void );
 
 extern void Password( const char *, char *, unsigned );
@@ -41,62 +42,58 @@ extern gui_colour_set WndColours[];
 void *SrchHistory;
 
 static gui_menu_struct FirstMenu[] = {
-    { "&Break", MENU_BUG, GUI_ENABLED, "" },
-    { "&Search", MENU_SEARCH, GUI_ENABLED, "This is help text for Search" },
-    { "&Next", MENU_NEXT, GUI_ENABLED, "This is help text for Next" },
-    { "&Prev", MENU_PREV, GUI_ENABLED },
-    { "", 0, GUI_SEPARATOR },
-    { "&Get File", MENU_GET_FILE, GUI_ENABLED },
-    { "&Options", MENU_OPTIONS, GUI_ENABLED },
-    { "&Password", MENU_PASSWORD, GUI_ENABLED },
-    { "&Command", MENU_COMMAND, GUI_ENABLED },
-    { "P&ick One", MENU_PICK, GUI_ENABLED },
-    { "", 0, GUI_SEPARATOR },
-    { "&Tools", MENU_TOOLS, GUI_ENABLED },
-    { "St&atus", MENU_STATUS, GUI_ENABLED },
-    { "", 0, GUI_SEPARATOR },
-    { "&Match", MENU_MATCH, GUI_ENABLED },
-    { "Sc&ramble Menus", MENU_SCRAMBLE_MENUS, GUI_ENABLED },
-    { "", 0, GUI_SEPARATOR },
-    { "Inactive", 0, GUI_GRAYED },
-    { "E&xit", MENU_QUIT, GUI_ENABLED },
+    { "&Break",             MENU_BUG,               GUI_STYLE_MENU_ENABLED, "" },
+    { "&Search",            MENU_SEARCH,            GUI_STYLE_MENU_ENABLED, "This is help text for Search" },
+    { "&Next",              MENU_NEXT,              GUI_STYLE_MENU_ENABLED, "This is help text for Next" },
+    { "&Prev",              MENU_PREV,              GUI_STYLE_MENU_ENABLED },
+    { "",                   0,                      GUI_STYLE_MENU_SEPARATOR },
+    { "&Get File",          MENU_GET_FILE,          GUI_STYLE_MENU_ENABLED },
+    { "&Options",           MENU_OPTIONS,           GUI_STYLE_MENU_ENABLED },
+    { "&Password",          MENU_PASSWORD,          GUI_STYLE_MENU_ENABLED },
+    { "&Command",           MENU_COMMAND,           GUI_STYLE_MENU_ENABLED },
+    { "P&ick One",          MENU_PICK,              GUI_STYLE_MENU_ENABLED },
+    { "",                   0,                      GUI_STYLE_MENU_SEPARATOR },
+    { "&Tools",             MENU_TOOLS,             GUI_STYLE_MENU_ENABLED },
+    { "St&atus",            MENU_STATUS,            GUI_STYLE_MENU_ENABLED },
+    { "",                   0,                      GUI_STYLE_MENU_SEPARATOR },
+    { "&Match",             MENU_MATCH,             GUI_STYLE_MENU_ENABLED },
+    { "Sc&ramble Menus",    MENU_SCRAMBLE_MENUS,    GUI_STYLE_MENU_ENABLED },
+    { "",                   0,                      GUI_STYLE_MENU_SEPARATOR },
+    { "Inactive",           0,                      GUI_STYLE_MENU_GRAYED },
+    { "E&xit",              MENU_QUIT,              GUI_STYLE_MENU_ENABLED },
 };
 static gui_menu_struct SecondSub[] = {
-    { "Open &4", MENU_OPEN4, GUI_ENABLED },
-    { "Open 4&b", MENU_OPEN4B, GUI_ENABLED },
-    { "Open &5", MENU_OPEN5, GUI_ENABLED },
-    { "Open &6", MENU_OPEN6, GUI_ENABLED },
-    { "Open &7", MENU_OPEN7, GUI_ENABLED },
-    { "Open &8", MENU_OPEN8, GUI_ENABLED },
+    { "Open &4",    MENU_OPEN4,     GUI_STYLE_MENU_ENABLED },
+    { "Open 4&b",   MENU_OPEN4B,    GUI_STYLE_MENU_ENABLED },
+    { "Open &5",    MENU_OPEN5,     GUI_STYLE_MENU_ENABLED },
+    { "Open &6",    MENU_OPEN6,     GUI_STYLE_MENU_ENABLED },
+    { "Open &7",    MENU_OPEN7,     GUI_STYLE_MENU_ENABLED },
+    { "Open &8",    MENU_OPEN8,     GUI_STYLE_MENU_ENABLED },
 };
 static gui_menu_struct SecondMenu[] = {
-    { "Open &1", MENU_OPEN1, GUI_ENABLED },
-    { "Open 1&a", MENU_OPEN1A, GUI_ENABLED },
-    { "Open &2", MENU_OPEN2, GUI_ENABLED },
-    { "Open &3", MENU_OPEN3, GUI_ENABLED },
-    { "&More", MENU_MORE, GUI_ENABLED, NULL, ArraySize( SecondSub ), SecondSub },
+    { "Open &1",    MENU_OPEN1,     GUI_STYLE_MENU_ENABLED },
+    { "Open 1&a",   MENU_OPEN1A,    GUI_STYLE_MENU_ENABLED },
+    { "Open &2",    MENU_OPEN2,     GUI_STYLE_MENU_ENABLED },
+    { "Open &3",    MENU_OPEN3,     GUI_STYLE_MENU_ENABLED },
+    { "&More",      MENU_MORE,      GUI_STYLE_MENU_ENABLED, NULL, ArraySize( SecondSub ), SecondSub },
 };
 static gui_menu_struct ThirdMenu[] = {
-    { "Open &1", MENU_OPEN1, GUI_ENABLED },
-    { "Open 1&a", MENU_OPEN1A, GUI_ENABLED },
+    { "Open &1",    MENU_OPEN1,     GUI_STYLE_MENU_ENABLED },
+    { "Open 1&a",   MENU_OPEN1A,    GUI_STYLE_MENU_ENABLED },
 };
 
 static gui_menu_struct ForthMenu[] = {
-    { "Open &1", MENU_OPEN1, GUI_ENABLED },
+    { "Open &1",    MENU_OPEN1,     GUI_STYLE_MENU_ENABLED },
 };
 
 gui_menu_struct WndMainMenu[] = {
-    { "&First",  MENU_FIRST, GUI_ENABLED,
-      "This is help for First", WndMenuFields( FirstMenu ) },
-    { "&Second", MENU_SECOND, GUI_ENABLED,
-      "This is help for Second", WndMenuFields( SecondMenu ) },
-    { "&Windows", MENU_THIRD, GUI_ENABLED+GUI_MDIWINDOW,
-      "This is help for Windows", WndMenuFields( ThirdMenu ) },
-    { "&Popup", MENU_POPUP, GUI_ENABLED+WND_MENU_POPUP,
-      "This is help for Popup", WndMenuFields( ForthMenu ) },
+    { "&First",     MENU_FIRST,     GUI_STYLE_MENU_ENABLED,                             "This is help for First",   WndMenuFields( FirstMenu ) },
+    { "&Second",    MENU_SECOND,    GUI_STYLE_MENU_ENABLED,                             "This is help for Second",  WndMenuFields( SecondMenu ) },
+    { "&Windows",   MENU_THIRD,     GUI_STYLE_MENU_ENABLED | GUI_STYLE_MENU_MDIWINDOW,  "This is help for Windows", WndMenuFields( ThirdMenu ) },
+    { "&Popup",     MENU_POPUP,     GUI_STYLE_MENU_ENABLED | WND_MENU_POPUP,            "This is help for Popup",   WndMenuFields( ForthMenu ) },
 };
 
-int     WndNumMenus = { WndMenuSize( WndMainMenu ) };
+int     WndNumMenus = ArraySize( WndMainMenu );
 
 
 static char *FilterList = {
@@ -123,7 +120,7 @@ static const char *FmtNum( const void *data_handle, int item )
 static void TimeIt( void )
 {
     char                buff[80];
-    int                 len;
+    size_t              len;
     long                iters;
     a_window            wnd;
     gui_text_metrics    dummy;
@@ -273,13 +270,13 @@ bool     WndMainMenuProc( a_window wnd, gui_ctl_id id )
             SecondMenu[0] = ThirdMenu[0];
             ThirdMenu[0] = tmp;
         }
-        WndSetMainMenu( WndMainMenu, ArraySize( WndMainMenu) );
+        WndSetMainMenu( WndMainMenu, ArraySize( WndMainMenu ) );
         break;
     case MENU_STATUS:
         if( WndHaveStatusWindow() ) {
             WndCloseStatusWindow();
         } else {
-            WndCreateStatusWindow( &WndColours[ GUI_BACKGROUND ] );
+            WndCreateStatusWindow( &WndColours[GUI_BACKGROUND] );
             WndStatusText( "Hello World!" );
         }
         break;

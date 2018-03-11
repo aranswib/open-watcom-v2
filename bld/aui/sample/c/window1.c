@@ -36,14 +36,14 @@
 static bool W1Init( a_window wnd );
 
 static gui_menu_struct W1Sub[] = {
-    { "&Align",    MENU_W1_ALIGN, GUI_ENABLED },
-    { "&UnAlign",  MENU_W1_UNALIGN, GUI_ENABLED },
+    { "&Align",    MENU_W1_ALIGN,   GUI_STYLE_MENU_ENABLED },
+    { "&UnAlign",  MENU_W1_UNALIGN, GUI_STYLE_MENU_ENABLED },
 };
 
 static gui_menu_struct W1PopUp[] = {
-    { "&Say",      MENU_W1_SAY, GUI_ENABLED },
-    { "&More",     MENU_W1_MORE, GUI_ENABLED, NULL, ArraySize( W1Sub ), W1Sub },
-    { "&NewWord",  MENU_W1_NEWWORD, GUI_ENABLED },
+    { "&Say",      MENU_W1_SAY,     GUI_STYLE_MENU_ENABLED },
+    { "&More",     MENU_W1_MORE,    GUI_STYLE_MENU_ENABLED, NULL, ArraySize( W1Sub ), W1Sub },
+    { "&NewWord",  MENU_W1_NEWWORD, GUI_STYLE_MENU_ENABLED },
 };
 
 typedef struct {
@@ -57,12 +57,13 @@ typedef struct {
     unsigned    align : 1;
 } w1_window;
 
-static void W1MenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
+static void W1MenuItem( a_window wnd, gui_ctl_id id, wnd_row row, wnd_piece piece )
 {
     w1_window   *w1 = (w1_window *)WndExtra( wnd );
     char        buff[80];
 
-    if( piece == 0 ) return;
+    if( piece == 0 )
+        return;
     --piece;
     switch( id ) {
     case MENU_INITIALIZE:
@@ -82,50 +83,52 @@ static void W1MenuItem( a_window wnd, gui_ctl_id id, int row, int piece )
         WndFlags |= EV_UPDATE_1;
         break;
     case MENU_W1_SAY:
-        Say( w1->rows[row].pieces[ piece ] );
+        Say( w1->rows[row].pieces[piece] );
         break;
     case MENU_W1_NEWWORD:
         buff[0]='\0';
         DlgNew( "Enter New Word", buff, 80 );
-        Word[RandNum( WORD_SIZE )-1] = (char*)strdup( buff ); // nyi - never freed
+        Word[RandNum( WORD_SIZE ) - 1] = (char *)strdup( buff ); // nyi - never freed
         WndFlags |= EV_UPDATE_1;
         W1Init( wnd );
         break;
     }
 }
 
-static int W1NumRows( a_window wnd )
+static wnd_row W1NumRows( a_window wnd )
 {
     w1_window   *w1 = (w1_window *)WndExtra( wnd );
 
     return( w1->num_rows );
 }
 
-static void W1Modify( a_window wnd, int row, int piece )
+static void W1Modify( a_window wnd, wnd_row row, wnd_piece piece )
 {
     w1_window   *w1 = (w1_window *)WndExtra( wnd );
 
-    if( piece == 0 ) return;
+    if( piece == 0 )
+        return;
     --piece;
-    Say2( "Modify", w1->rows[ row ].pieces[ piece ] );
+    Say2( "Modify", w1->rows[row].pieces[piece] );
 }
 
 
-static bool    W1GetLine( a_window wnd, wnd_row row, int piece,
-                             wnd_line_piece *line )
+static bool    W1GetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_line_piece *line )
 {
     w1_window   *w1 = (w1_window *)WndExtra( wnd );
     int         i;
 
-    if( row >= w1->num_rows ) return( false );
+    if( row >= w1->num_rows )
+        return( false );
     if( piece == 0 ) {
         WndSetGadgetLine( wnd, line, row & 1, 500 );
         return( true );
     }
     --piece;
-    if( piece >= w1->rows[ row ].num_pieces ) return( false );
-    line->text = w1->rows[row].pieces[ piece ];
-    line->hint = ((row+1)&1)?"This is help for an even row":"This is help for an odd row";
+    if( piece >= w1->rows[row].num_pieces )
+        return( false );
+    line->text = w1->rows[row].pieces[piece];
+    line->hint = (( row + 1 ) & 1) ? "This is help for an even row" : "This is help for an odd row";
     if( strcmp( line->text, "Censorship" ) == 0 ) {
         line->attr = APP_COLOR_CENSORED;
         line->static_text = true;
@@ -142,7 +145,7 @@ static bool    W1GetLine( a_window wnd, wnd_row row, int piece,
         line->attr = APP_COLOR_HOTSPOT;
     }
     if( w1->align ) {
-        line->indent = (MAX_WORD+1)*piece*WndAvgCharX( wnd );
+        line->indent = ( MAX_WORD + 1 ) * piece * WndAvgCharX( wnd );
     } else {
         line->indent = 0;
         for( i = 0; i < piece; ++i ) {
@@ -167,7 +170,7 @@ static void W1Fini( a_window wnd )
 
     num_rows = w1->num_rows;
     for( i = 0; i < num_rows; ++i ) {
-        WndFree( w1->rows[ i ].pieces );
+        WndFree( w1->rows[i].pieces );
     }
     WndFree( w1->rows );
     WndFree( w1 );
@@ -183,7 +186,7 @@ static bool W1Init( a_window wnd )
 
     num_rows = RandNum( 200 );
     w1->num_rows = num_rows;
-    w1->rows = WndAlloc( num_rows*sizeof(w1_row) );
+    w1->rows = WndAlloc( num_rows * sizeof( w1_row ) );
     w1->align = true;
     if( w1->rows == NULL ) {
         WndClose( wnd );
@@ -192,10 +195,10 @@ static bool W1Init( a_window wnd )
     }
     for( i = 0; i < num_rows; ++i ) {
         pieces = RandNum( 10 );
-        w1->rows[ i ].pieces = WndAlloc( pieces*sizeof(char *) );
-        w1->rows[ i ].num_pieces = pieces;
+        w1->rows[i].pieces = WndAlloc( pieces * sizeof( char * ) );
+        w1->rows[i].num_pieces = pieces;
         for( j = 0; j < pieces; ++j ) {
-            w1->rows[ i ].pieces[ j ] = Word[ RandNum( WORD_SIZE )-1 ];
+            w1->rows[i].pieces[j] = Word[RandNum( WORD_SIZE ) - 1];
         }
     }
     return( true );
