@@ -53,19 +53,19 @@ void uiselectradio( a_dialog *ui_dlg_info, VFIELD * v )
 {
     int     newval = v->u.radio->value;
     int     *oldval = &v->u.radio->group->value;
-    VFIELD  *tmp;
+    VFIELD  *fields;
 
     if( newval == *oldval )
         return; // nothing to do
 
     ui_dlg_info->dirty = true;
-    for( tmp = ui_dlg_info->fields; tmp->u.radio != NULL; tmp++ ) {
-        if( tmp->typ == FLD_RADIO ) {
-            if( tmp->u.radio->value == *oldval ) {
+    for( fields = ui_dlg_info->fields; fields->typ != FLD_NONE; fields++ ) {
+        if( fields->typ == FLD_RADIO ) {
+            if( fields->u.radio->value == *oldval ) {
                 // we have it!
                 *oldval = newval;
                 uiprintfield( ui_dlg_info, v );
-                uiprintfield( ui_dlg_info, tmp );
+                uiprintfield( ui_dlg_info, fields );
                 break;
             }
         }
@@ -75,7 +75,8 @@ void uiselectradio( a_dialog *ui_dlg_info, VFIELD * v )
 void uiselectlist( a_dialog *ui_dlg_info, VFIELD * v, unsigned n )
 {
     unsigned *oldchoice = &v->u.list->choice;
-//    if( *oldchoice == n ) return;
+//    if( *oldchoice == n )
+//        return;
     // This line is commented out because sometimes the selection will not be
     // highlighted, and we change to the same selection.  Result - selection
     // does not get highlighted.

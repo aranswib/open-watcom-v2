@@ -182,7 +182,7 @@ bool GUIProcessControlNotification( gui_ctl_id id, int wNotify, gui_window *wnd 
             // if this dialog was created from a resource then we
             // assume that the creator of said resource set up the
             // tab and cursor groups with a dialog editor
-            if( ( wnd->flags & IS_RES_DIALOG ) == 0 ) {
+            if( (wnd->flags & IS_RES_DIALOG) == 0 ) {
                 if( item->control_class == GUI_RADIO_BUTTON ) {
                     GUICheckRadioButton( wnd, id );
                 } else {
@@ -632,7 +632,7 @@ bool GUIXCreateDialog( gui_create_info *dlg_info, gui_window *wnd,
     wnd->flags |= HAS_CAPTION;
     if( dlg_id != NULL ) {
         wnd->flags |= IS_RES_DIALOG;
-        return( GUIDoCreateResDialog( dlg_id, parent_hwnd, (void *)wnd ) );
+        return( GUICreateDialogFromRes( dlg_id, dlg_info->parent, NULL, (void *)wnd ) );
     }
 
     AdjustForFrame( &parent_pos, &size );

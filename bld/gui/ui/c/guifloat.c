@@ -129,9 +129,8 @@ void GUIProcessMenuCurr( UIMENUITEM *menuitem )
  * GUICreateMenuPopup - create a floating popup menu
  */
 
-ui_event GUICreateMenuPopup( gui_window *wnd, gui_point *location,
-                          UIMENUITEM *menuitems, gui_mouse_track track,
-                          gui_ctl_id *curr_id )
+ui_event GUICreateMenuPopup( gui_window *wnd, gui_point *location, UIMENUITEM *menuitems,
+                                    gui_mouse_track track, gui_ctl_id *curr_id )
 {
     ui_event    ui_ev;
     gui_ctl_id  id;
@@ -231,7 +230,6 @@ static void TrackPopup( gui_window *wnd, gui_point *location,
     uipoplist( /* GUIUserEvents */ );
     uipoplist( /* NULL */ );
     MenuState = MENU_NONE;
-    GUIFreeMenuItems( menuitems );
 }
 
 /*
@@ -239,15 +237,16 @@ static void TrackPopup( gui_window *wnd, gui_point *location,
  */
 
 bool GUIXCreateFloatingPopup( gui_window *wnd, gui_point *location,
-                             int num_menu_items, gui_menu_struct *menu,
+                             int num_items, gui_menu_struct *menu,
                              gui_mouse_track track, gui_ctl_id *curr_id )
 {
     UIMENUITEM  *menuitems;
 
-    if( !GUICreateMenuItems( num_menu_items, menu, &menuitems ) ) {
+    if( !GUICreateMenuItems( num_items, menu, &menuitems ) ) {
         return( false );
     }
     TrackPopup( wnd, location, menuitems, track, curr_id );
+    GUIFreeMenuItems( menuitems );
     return( true );
 }
 
@@ -256,6 +255,7 @@ bool GUITrackFloatingPopup( gui_window *wnd, gui_point *location,
 {
     if( GUIPopupMenu != NULL ) {
         TrackPopup( wnd, location, GUIPopupMenu, track, curr_id );
+        GUIFreeMenuItems( GUIPopupMenu );
         GUIPopupMenu = NULL;
         return( true );
     }

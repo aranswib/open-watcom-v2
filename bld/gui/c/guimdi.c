@@ -109,8 +109,10 @@ static void EnableMDIMenus( gui_window *root, bool enable )
 {
     GUIEnableMDIActions( enable );
     if( enable ) {
-        if( GUIMDIMenuID != 0 && GUIGetMenuPopupCount( root, GUIMDIMenuID ) != 0 ){
-            GUIAppendMenuToPopup( root, GUIMDIMenuID, MDISecondSepMenu, false );
+        if( GUIMDIMenuID != 0 ) {
+            if( GUIGetMenuPopupCount( root, GUIMDIMenuID ) > 0 ) {
+                GUIAppendMenuToPopup( root, GUIMDIMenuID, MDISecondSepMenu, false );
+            }
         }
     } else {
         GUIDeleteMenuItem( root, GUI_MDI_SECOND_SEPARATOR, false );
@@ -131,7 +133,7 @@ static bool AddMenu( gui_window *wnd, gui_window *parent, int num_items, gui_men
             if( menu[item].style & GUI_STYLE_MENU_MDIWINDOW ) {
                 GUIMDIMenuID = menu[item].id;
                 found_flag = true;
-                has_items = ( menu[item].num_child_menus > 0 );
+                has_items = ( menu[item].child_num_items > 0 );
                 break;
             }
         }
@@ -179,7 +181,7 @@ static void InsertMenuForWindow( gui_window *root, int index, int position )
     if( index == CurrMDIWindow ) {
         menu.style |= GUI_STYLE_MENU_CHECKED;
     }
-    menu.num_child_menus = 0;
+    menu.child_num_items = 0;
     menu.child = NULL;
     MakeHintText( index, name );
     menu.hinttext = MenuHint[index];

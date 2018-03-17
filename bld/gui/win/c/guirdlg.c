@@ -102,11 +102,11 @@ gui_control_class GUIGetControlClassFromHWND( HWND cntl )
     control_class = GUI_BAD_CLASS;
 
     for( index = 0; ( index < ARRAY_SIZE( Map ) ) && ( control_class == GUI_BAD_CLASS ); index++ ) {
-        if(( Map[index].classname != NULL ) && !stricmp( Map[index].classname, classname ) ) {
+        if( ( Map[index].classname != NULL ) && stricmp( Map[index].classname, classname ) == 0 ) {
             if( Map[index].mask == 0xffff ) {
                 control_class = Map[index].control_class;
             } else {
-                if( ( style & Map[index].mask ) == Map[index].style ) {
+                if( (style & Map[index].mask) == Map[index].style ) {
                     control_class = Map[index].control_class;
                 }
             }
@@ -200,27 +200,26 @@ bool GUIInsertResDialogControls( gui_window *wnd )
     return( true );
 }
 
-bool GUIDoCreateResDialog( res_name_or_id dlg_id, HWND parent, void *data )
+bool GUICreateDialogFromRes( res_name_or_id dlg_id, gui_window *parent_wnd, GUICALLBACK *gui_call_back, void *extra )
 {
     WPI_DLGPROC     dlgproc;
+    HWND            parent_hwnd;
 
+    /* unused parameters */ (void)gui_call_back;
+
+    parent_hwnd = parent_wnd->hwnd;
+    if( parent_hwnd == NULLHANDLE )
+        parent_hwnd = HWND_DESKTOP;
     dlgproc = _wpi_makedlgprocinstance( GUIDialogDlgProc, GUIMainHInst );
     if( dlgproc == NULL ) {
         return( false );
     }
-    if( _wpi_dialogbox( parent, dlgproc, GUIResHInst, dlg_id, data ) == -1 ) {
+    if( _wpi_dialogbox( parent_hwnd, dlgproc, GUIResHInst, dlg_id, extra ) == -1 ) {
         _wpi_freedlgprocinstance( dlgproc );
         return( false );
     }
     _wpi_freedlgprocinstance( dlgproc );
 
     return( true );
-}
-
-bool GUICreateDialogFromRes( res_name_or_id dlg_id, gui_window *parent, GUICALLBACK *gui_call_back, void *extra )
-{
-    /* unused parameters */ (void)dlg_id; (void)parent; (void)gui_call_back; (void)extra;
-
-    return( false );
 }
 

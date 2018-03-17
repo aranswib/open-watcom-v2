@@ -562,7 +562,7 @@ void ShowModuleList( void )
     ModListInit( &list, NULL );
     ModListAddModules( &list, NO_MOD, false );
     mod_nums = ModListNumRows( &list );
-    for( row = 0; row < mod_nums; ++row ){
+    for( row = 0; row < mod_nums; ++row ) {
         ModListName( &list, row, mod_name );
         ShowDebuggerMsg( mod_name );
     }
@@ -1047,7 +1047,7 @@ bool ProcessCmdDisable( const char *param )
         ShowDebuggerError( "no subcommand specified." );
     }
     free( disable_cmd );
-    if( disable_param != NULL ){
+    if( disable_param != NULL ) {
         free( disable_param );
     }
     return( true );
@@ -1937,13 +1937,17 @@ void DUIFiniLiterals( void )
 {
 }
 
-bool DUIGetSourceLine( cue_handle *ch, char *buff, unsigned len )
+bool DUIGetSourceLine( cue_handle *ch, char *buff, size_t len )
 {
     void        *viewhndl;
 
     viewhndl = OpenSrcFile( ch );
-    if( viewhndl == NULL ) return( false );
-    buff[FReadLine( viewhndl, DIPCueLine( ch ), 0, buff, len )] = NULLCHAR;
+    if( viewhndl == NULL )
+        return( false );
+    len = FReadLine( viewhndl, DIPCueLine( ch ), 0, buff, len );
+    if( len == FREADLINE_ERROR )
+        len = 0;
+    buff[len] = NULLCHAR;
     FDoneSource( viewhndl );
     return( true );
 }

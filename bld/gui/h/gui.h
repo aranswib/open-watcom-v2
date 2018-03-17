@@ -424,7 +424,7 @@ typedef struct gui_menu_struct {
     gui_ctl_id              id;
     gui_menu_styles         style;
     const char              *hinttext;
-    int                     num_child_menus;
+    int                     child_num_items;
     struct gui_menu_struct  *child;
 } gui_menu_struct;
 
@@ -875,7 +875,6 @@ extern bool GUIDlgPickWithRtn( const char *title, GUIPICKCALLBACK *pickinit, PIC
 extern bool GUICreateDialog( gui_create_info *dlg_info, int num_controls, gui_control_info *controls_info );
 extern bool GUICreateSysModalDialog( gui_create_info *dlg_info, int num_controls, gui_control_info *controls_info );
 extern bool GUICreateResDialog( gui_create_info *dlg_info, res_name_or_id dlg_id );
-extern bool GUICreateDialogFromRes( res_name_or_id dlg_id, gui_window *parent, GUICALLBACK *gui_call_back, void *extra );
 extern void GUICloseDialog( gui_window *wnd );
 extern void GUISetModalDlgs( bool );
 
@@ -897,7 +896,7 @@ extern bool GUIControlSetRedraw( gui_window *wnd, gui_ctl_id id, bool redraw );
 extern bool GUIAddText( gui_window *wnd, gui_ctl_id id, const char *text );
 extern bool GUISetListItemData( gui_window *wnd, gui_ctl_id id, int choice, void *data );
 extern void *GUIGetListItemData( gui_window *wnd, gui_ctl_id id, int choice );
-extern bool GUIAddTextList( gui_window *wnd, gui_ctl_id id, int items,
+extern bool GUIAddTextList( gui_window *wnd, gui_ctl_id id, int num_items,
                             const void *data_handle, GUIPICKGETTEXT *getstring );
 extern bool GUIInsertText( gui_window *wnd, gui_ctl_id id, int choice, const char *text );
 extern bool GUISetTopIndex( gui_window *wnd, gui_ctl_id id, int choice );

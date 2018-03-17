@@ -255,7 +255,7 @@ static void DoMainGUIEventProc( spawn_parms *spawnp )
         break;
     case GUI_INIT_WINDOW:
         wnd->gui = gui;
-        WndSetPopUpMenu( wnd, wnd->info->popupmenu, wnd->info->num_popups );
+        WndSetPopUpMenu( wnd, wnd->info->popupmenu, wnd->info->popup_num_items );
         old_cursor = WndHourGlass( NULL );
         WndMoveResize( wnd );
         ret = WNDEVENT( wnd, gui_ev, parm );
@@ -392,7 +392,7 @@ static void DoMainGUIEventProc( spawn_parms *spawnp )
                 break;
             }
         }
-        if( WndKeyIsPrintChar( key ) && WndSwitchOn( wnd, WSW_CHOOSING ) && wnd->keypiece != WND_NO_PIECE ) {
+        if( WndKeyIsPrintChar( key ) && WndSwitchOn( wnd, WSW_CHOOSING ) && WndKeyPiece( wnd ) != WND_NO_PIECE ) {
             if( !WndKeyChoose( wnd, UCHAR_VALUE( key ) ) ) {
                 Ring();
             }

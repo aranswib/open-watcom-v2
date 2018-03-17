@@ -34,7 +34,6 @@
 //#include "stdui.h"
 
 wnd_update_list WndFlags = 0;
-extern gui_colour_set WndColours[];
 
 #if 0
 these are optional
@@ -70,7 +69,7 @@ void WndEndFreshAll( void )
 }
 
 typedef struct {
-    unsigned    key;
+    gui_key     key;
     char        *name;
 } keymap;
 
@@ -84,7 +83,7 @@ static gui_menu_struct PopTart[] = {
     { "Open &3", MENU_OPEN3, GUI_STYLE_MENU_ENABLED },
 };
 
-bool    WndProcMacro( a_window wnd, unsigned key )
+bool    WndProcMacro( a_window wnd, gui_key key )
 {
     gui_ctl_id  menu;
     int         i;
@@ -142,7 +141,7 @@ extern void BIOSSetPage( char pagenb );
         modify exact [ah];
 #endif
 
-gui_window_styles WndStyle = GUI_PLAIN+GUI_GMOUSE;
+gui_window_styles WndStyle = GUI_PLAIN | GUI_GMOUSE;
 char *WndGadgetHint[] =
 {
     "this is help for the folder",

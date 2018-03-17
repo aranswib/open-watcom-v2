@@ -206,8 +206,7 @@ static void copyPart( char *buff, char *p, int len, int maxlen )
 /*
  * splitPath - need because C library will truncate fname and ext too early
  */
-static void splitPath( char *path, char *drive, char *dir, char *fname,
-                        char *ext )
+static void splitPath( char *path, char *drive, char *dir, char *fname, char *ext )
 {
     char        *dotp;
     char        *fnamep;
@@ -218,13 +217,10 @@ static void splitPath( char *path, char *drive, char *dir, char *fname,
     /* process node/drive specification */
     startp = path;
     if( path[0] == FILE_SEP_CHAR && path[1] == FILE_SEP_CHAR ) {
-        path += 2;
-        for( ;; ) {
-            ch = *path;
-            if( ch == '\0' || ch == FILE_SEP_CHAR || ch == '.' ) {
+        for( path += 2; (ch = *path) != '\0'; path++ ) {
+            if( ch == FILE_SEP_CHAR || ch == '.' ) {
                 break;
             }
-            path++;
         }
     }
     copyPart( drive, startp, (int)( path - startp ), _MAX_DRIVE );
@@ -246,23 +242,17 @@ static void splitPath( char *path, char *drive, char *dir, char *fname,
     fnamep = path;
     startp = path;
 
-   for( ;; ) {
-        ch = *path;
-        if( ch == 0 ) {
-            break;
-        }
+    for( ; (ch = *path) != '\0'; path++ ) {
         if( ch == '.' ) {
             dotp = path;
-            path++;
             continue;
         }
-        path++;
 #if defined( __UNIX__ ) || defined( __NETWARE__ )
         if( ch == FILE_SEP_CHAR ) {
 #else
         if( ch == FILE_SEP_CHAR  ||  ch == '/' ) {
 #endif
-            fnamep = path;
+            fnamep = path + 1;
             dotp = NULL;
         }
     }
@@ -397,11 +387,11 @@ static bool hasWild( const char *txt )
 /*
  * addToList - add an item to a list of items
  */
-static bool addToList( const char ***list, int num, const char *data, size_t len )
+static bool addToList( const char ***list, int num_items, const char *data, size_t len )
 {
     char    *str;
 
-    *list = (const char **)GUIMemRealloc( (void *)*list, ( num + 2 ) * sizeof( char * ) );
+    *list = (const char **)GUIMemRealloc( (void *)*list, ( num_items + 2 ) * sizeof( char * ) );
     if( *list == NULL ) {
         return( false );
     }
@@ -411,8 +401,8 @@ static bool addToList( const char ***list, int num, const char *data, size_t len
         return( false );
     }
     memcpy( str, data, len );
-    (*list)[num] = str;
-    (*list)[num + 1] = NULL;
+    (*list)[num_items] = str;
+    (*list)[num_items + 1] = NULL;
     return( true );
 
 } /* addToList */
@@ -442,22 +432,22 @@ static void freeStringList( const char ***list )
 static bool buildDriveList( void )
 {
     char        drv;
-    int         item;
+    int         num_items;
     char        str[_MAX_PATH];
     const char  **list;
 
-    item = 0;
+    num_items = 0;
     list = NULL;
     for( drv = 'A'; drv <= 'Z'; drv++ ) {
         if( getDriveType( drv ) != DRIVE_NONE ) {
             str[0] = drv;
             str[1] = ':';
             str[2] = '\0';
-            if( !addToList( &list, item, str, 2 ) ) {
+            if( !addToList( &list, num_items, str, 2 ) ) {
                 freeStringList( &list );
                 break;
             }
-            item++;
+            num_items++;
         }
     }
     SetDriveTextList( list );
@@ -474,27 +464,27 @@ static bool buildFileTypesExts( dlg_info *dlg, const char *data )
     size_t      len;
     const char  **list1;
     const char  **list2;
-    int         num;
+    int         num_items;
     bool        ok;
 
     list1 = NULL;
     list2 = NULL;
     if( data != NULL ) {
-        num = 0;
+        num_items = 0;
         ok = true;
         for( ; *data != '\0'; data += len + 1 ) {
             len = strlen( data );
-            ok = addToList( &list1, num, data, len );
+            ok = addToList( &list1, num_items, data, len );
             if( !ok ) {
                 break;
             }
             data += len + 1;
             len = strlen( data );
-            ok = addToList( &list2, num, data, len );
+            ok = addToList( &list2, num_items, data, len );
             if( !ok ) {
                 break;
             }
-            num++;
+            num_items++;
         }
         if( !ok ) {
             freeStringList( &list1 );
@@ -582,11 +572,11 @@ static int Compare( const void  *p1, const void *p2 )
         ++s2;
     }
     /* indents compare as chars with infinitely high value */
-    if( *s1 == INDENT_CHAR )
+    if( *s1 == INDENT_CHAR ) {
         return( 1 );
-    else if( *s2 == INDENT_CHAR )
+    } else if( *s2 == INDENT_CHAR ) {
         return( -1 );
-
+    }
     /* use regular string comparison for the rest */
     return( strcasecmp( s1, s2 ) );
 
@@ -597,7 +587,7 @@ static void getstatus( struct dirent *dent, char *path )
 {
     char        fullname[_MAX_PATH];
 
-    if( !(dent->d_stat.st_status & _FILE_USED) ) {
+    if( (dent->d_stat.st_status & _FILE_USED) == 0 ) {
         _makepath( fullname, NULL, path, dent->d_name, NULL );
         stat( fullname, &dent->d_stat );
     }
@@ -627,7 +617,7 @@ static bool isrdonly( struct dirent *dent, char *path )
     } else {
         bit = S_IWOTH;
     }
-    return( !(dent->d_stat.st_mode & bit) );
+    return( (dent->d_stat.st_mode & bit) == 0 );
 }
 #elif defined( __UNIX__ )
 static bool isdir( struct dirent *dent, char *path )
@@ -710,9 +700,9 @@ static bool setFileList( gui_window *gui, const char *ext )
 
         directory = opendir( path );
         if( directory != NULL ) {
-            while( ( dent = readdir( directory ) ) != NULL ) {
+            while( (dent = readdir( directory )) != NULL ) {
                 if( !isdir( dent, path ) ) {
-                    if( ( dlg->currOFN->flags & FN_HIDEREADONLY ) && isrdonly( dent, path ) ) {
+                    if( (dlg->currOFN->flags & FN_HIDEREADONLY) && isrdonly( dent, path ) ) {
                         continue;
                     }
 #if defined( __UNIX__ ) || defined( __NETWARE__ )
@@ -759,14 +749,14 @@ static bool setDirList( gui_window *gui )
 #if !defined( __UNIX__ ) && !defined( __NETWARE__ )
     const char          **drvlist;
 #endif
-    int                 i;
+    int                 item;
     size_t              len;
-    int                 curr;
-    int                 cnt;
+    int                 selected_item;
+    int                 num_items;
     const char          **list;
 
     GUIClearList( gui, CTL_DIR_LIST );
-    cnt = 0;
+    num_items = 0;
     list = NULL;
 
     if( getcwd( path, sizeof( path ) ) == NULL ) {
@@ -794,43 +784,41 @@ static bool setDirList( gui_window *gui )
     drive[0] = OPENED_DIR_CHAR;
 #if !defined( __UNIX__ ) && !defined( __NETWARE__ )
     drvlist = GetDriveTextList();
-    for( i = 0; drvlist[i] != NULL; i++ ) {
-        if( drvlist[i][0] == drive[1] ) {
-            GUISetCurrSelect( gui, CTL_DRIVES, i );
+    for( item = 0; drvlist[item] != NULL; item++ ) {
+        if( drvlist[item][0] == drive[1] ) {
+            GUISetCurrSelect( gui, CTL_DRIVES, item );
             break;
         }
     }
     drive[3] = '\\';
     drive[4] = '\0';
 #endif
-    if( !addToList( &list, cnt, drive, strlen( drive ) ) ) {
+    if( !addToList( &list, num_items, drive, strlen( drive ) ) ) {
         freeStringList( &list );
         return( false );
     }
-    cnt++;
+    num_items++;
     strcpy( indent, INDENT_STR );
 
-    ptr = dir + 1;
-    start = ptr;
-    while( *ptr != 0 ) {
+    start = dir + 1;
+    for( ptr = start; *ptr != '\0'; ptr++ ) {
         if( *ptr == FILE_SEP_CHAR ) {
-            *ptr = 0;
+            *ptr = '\0';
             len = strlen( indent );
             memcpy( tmp, indent, len );
             tmp[len++] = OPENED_DIR_CHAR;
             strcpy( tmp + len, start );
-            if( !addToList( &list, cnt, tmp, strlen( tmp ) ) ) {
+            if( !addToList( &list, num_items, tmp, strlen( tmp ) ) ) {
                 freeStringList( &list );
                 return( false );
             }
-            cnt++;
+            num_items++;
             start = ptr + 1;
             strcat( indent, INDENT_STR );
         }
-        ptr++;
     }
 
-    curr = cnt;
+    selected_item = num_items;
     while( ( dent = readdir( directory ) ) != NULL ) {
         if( isdir( dent, path ) ) {
             if( (dent->d_name[0] == '.') && ((dent->d_name[1] == 0) ||
@@ -841,20 +829,20 @@ static bool setDirList( gui_window *gui )
             memcpy( tmp, indent, len );
             tmp[len++] = UNOPENED_DIR_CHAR;
             strcpy( tmp + len, dent->d_name );
-            if( !addToList( &list, cnt, tmp, strlen( tmp ) ) ) {
+            if( !addToList( &list, num_items, tmp, strlen( tmp ) ) ) {
                 freeStringList( &list );
                 return( false );
             }
-            cnt++;
+            num_items++;
         }
     }
     closedir( directory );
 
-    qsort( (void *)list, cnt, sizeof( char * ), Compare );
-    for( i = 0; i < cnt; i++ ) {
-        GUIAddText( gui, CTL_DIR_LIST, list[i] );
+    qsort( (void *)list, num_items, sizeof( char * ), Compare );
+    for( item = 0; item < num_items; item++ ) {
+        GUIAddText( gui, CTL_DIR_LIST, list[item] );
     }
-    GUISetCurrSelect( gui, CTL_DIR_LIST, curr - 1 );
+    GUISetCurrSelect( gui, CTL_DIR_LIST, selected_item - 1 );
     freeStringList( &list );
 
     return( true );
@@ -1073,21 +1061,20 @@ static void ProcessOKorDClick( gui_window *gui, gui_ctl_id id  )
             GUIMemFree( optr );
         }
         ptr = GUIGetListItem( gui, id, sel );
-        if( ptr == NULL ) {
-            return;
-        }
-        optr = ptr;
-        while( *ptr == INDENT_CHAR ) {
-            ptr++;
-        }
-        strcat( path, ptr+1 );
-        GUIMemFree( optr );
-        goToDir( gui, path );
-        if( !initDialog( gui, NULL, NULL ) ) {
-            dlg->dialogRC = FN_RC_RUNTIME_ERROR;
-            GUICloseDialog( gui );
-        } else {
-            GUISetCurrSelect( gui, id, realsel );
+        if( ptr != NULL ) {
+            optr = ptr;
+            while( *ptr == INDENT_CHAR ) {
+                ptr++;
+            }
+            strcat( path, ptr+1 );
+            GUIMemFree( optr );
+            goToDir( gui, path );
+            if( !initDialog( gui, NULL, NULL ) ) {
+                dlg->dialogRC = FN_RC_RUNTIME_ERROR;
+                GUICloseDialog( gui );
+            } else {
+                GUISetCurrSelect( gui, id, realsel );
+            }
         }
         break;
    }
@@ -1216,7 +1203,7 @@ int GUIGetFileName( gui_window *gui, open_file_name *ofn )
         GUIModalDlgOpen( gui, ofn->title, DLG_FILE_ROWS, DLG_FILE_COLS,
                     dlgControls, ARRAY_SIZE( dlgControls ), &GetFileNameGUIEventProc, &dlg );
 
-        if( !(ofn->flags & FN_CHANGEDIR) ) {
+        if( (ofn->flags & FN_CHANGEDIR) == 0 ) {
             goToDir( gui, olddir );
         }
     }

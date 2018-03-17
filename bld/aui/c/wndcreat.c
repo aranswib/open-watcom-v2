@@ -34,12 +34,12 @@
 #include <string.h>
 
 
-extern char             *StrCopy(char *,char *);
+extern char         *StrCopy(char *,char *);
 
-gui_menu_struct *WndMainMenuPtr = WndMainMenu;
-gui_menu_struct *WndPopupMenuPtr;
+gui_menu_struct     *WndMainMenuPtr = WndMainMenu;
+gui_menu_struct     *WndPopupMenuPtr;
 
-static int              NumWindows;
+static int          NumWindows;
 
 void    WndSetTitleSize( a_window wnd, int size )
 {
@@ -58,8 +58,7 @@ int     WndGetTitle( a_window wnd, char *buff, unsigned buff_len )
     return( GUIGetWindowText( wnd->gui, buff, buff_len ) );
 }
 
-static a_window WndCreateWithStructBody( wnd_create_struct *info,
-                                          gui_create_info *init )
+static a_window WndCreateWithStructBody( wnd_create_struct *info, gui_create_info *init )
 {
     a_window    wnd;
     gui_window  *gui;
@@ -94,7 +93,7 @@ static a_window WndCreateWithStructBody( wnd_create_struct *info,
     wnd->dirtyrects= 0; // wndnoselect changes this!
     wnd->vscroll_pending = 0;
     wnd->hscroll_pending = -1;
-    wnd->keypiece = WND_NO_PIECE;
+    WndSetKeyPiece( wnd, WND_NO_PIECE );
 
     wnd->switches = WSW_SELECT_IN_TABSTOP | WSW_MUST_CLICK_ON_PIECE |
                     WSW_ALLOW_POPUP | WSW_SEARCH_WRAP | WSW_HIGHLIGHT_CURRENT |
@@ -160,8 +159,7 @@ a_window WndCreateWithStruct( wnd_create_struct *info )
     return( WndCreateWithStructBody( info, &init ) );
 }
 
-a_window WndCreateWithStructAndMenuRes( wnd_create_struct *info,
-                                   res_name_or_id resource_menu )
+a_window WndCreateWithStructAndMenuRes( wnd_create_struct *info, res_name_or_id resource_menu )
 {
     gui_create_info init;
     memset( &init, 0, sizeof( init ) );

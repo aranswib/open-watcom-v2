@@ -43,6 +43,9 @@
 #include "guistr.h"
 #include "guikey.h"
 #include "guievent.h"
+#include "watcom.h"
+#include "resdiag.h"
+#include "guirdlg.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -145,16 +148,18 @@ static dialog_node *GetDialog( a_dialog *ui_dlg_info )
     return( NULL );
 }
 
-static bool GetIndexOfField( a_dialog *ui_dlg_info, VFIELD *field, int num_controls,
-                             int *index )
+static bool GetIndexOfField( a_dialog *ui_dlg_info, VFIELD *field, int *index )
 {
-    int i;
+    int     item;
+    VFIELD  *fields;
 
-    for( i = 0; i < num_controls; i++ ) {
-        if( &ui_dlg_info->fields[i] == field ) {
-            *index = i;
+    item = 0;
+    for( fields = ui_dlg_info->fields; fields->typ != FLD_NONE; fields++ ) {
+        if( fields == field ) {
+            *index = item;
             return( true );
         }
+        item++;
     }
     return( false );
 }
@@ -166,15 +171,11 @@ gui_ctl_id GUIGetControlId( gui_window *wnd, VFIELD *field )
     dialog_node *dlg_node;
 
     dlg_node = GUIGetDlgByWnd( wnd );
-    if( dlg_node == NULL ) {
-        return( 0 );
-    }
-    if( !GetIndexOfField( dlg_node->ui_dlg_info, field, dlg_node->num_controls, &index ) ) {
-        return( 0 );
-    }
-    for( control = wnd->controls; control != NULL; control = control->sibling ) {
-        if( control->index == index ) {
-            return( control->id );
+    if( dlg_node != NULL && GetIndexOfField( dlg_node->ui_dlg_info, field, &index ) ) {
+        for( control = wnd->controls; control != NULL; control = control->sibling ) {
+            if( control->index == index ) {
+                return( control->id );
+            }
         }
     }
     return( 0 );
@@ -215,11 +216,10 @@ static bool ResetFieldSize( dialog_node *dlg_node, int new_num )
 {
     VFIELD      *fields;
 
-    fields = (VFIELD *)GUIMemRealloc( dlg_node->ui_dlg_info->fields,
-                                   ( new_num + 1 ) * sizeof( VFIELD ) );
+    fields = (VFIELD *)GUIMemRealloc( dlg_node->ui_dlg_info->fields, ( new_num + 1 ) * sizeof( VFIELD ) );
     if( fields != NULL ) {
+        fields[new_num].typ = FLD_NONE;    /* mark end of list, last item must be FLD_NONE typ */
         dlg_node->ui_dlg_info->fields = fields;
-        memset( &fields[new_num], 0, sizeof( VFIELD ) );
         return( true );
     }
     return( false );
@@ -402,7 +402,7 @@ static void FreeFields( VFIELD *fields )
         return;
     }
     group = NULL;
-    for( i = 0; fields[i].typ != FLD_VOID; i++ ) {
+    for( i = 0; fields[i].typ != FLD_NONE; i++ ) {
         if( fields[i].u.ptr != NULL ) {
             GUIDoFreeField( &fields[i], &group );
         }
@@ -575,10 +575,10 @@ bool GUIDeleteField( gui_window *wnd, gui_ctl_id id )
     }
     ui_dlg_info = dlg_node->ui_dlg_info;
     field = GUIGetField( wnd, id );
-    if( GetIndexOfField( ui_dlg_info, field, dlg_node->num_controls, &index ) ) {
+    if( GetIndexOfField( ui_dlg_info, field, &index ) ) {
         GUIDoFreeField( field, NULL );
         new_fields = (VFIELD *)GUIMemAlloc( sizeof( VFIELD ) * dlg_node->num_controls );
-        for( i=0; i <= dlg_node->num_controls; i++ ) {
+        for( i = 0; i <= dlg_node->num_controls; i++ ) {
             new_index = i;
             if( i != index ) {
                 if( i > index ) {
@@ -789,16 +789,15 @@ bool GUIXCreateDialog( gui_create_info *dlg_info, gui_window *wnd,
     bool        colours_set;
     bool        ok;
 
+    /* unused parameters */ (void)sys;
+
     if( dlg_id != NULL ) {
-        if( !GUICreateDialogFromRes( dlg_id, dlg_info->parent,
-                                     dlg_info->gui_call_back, dlg_info->extra ) ) {
+        if( !GUICreateDialogFromRes( dlg_id, dlg_info->parent, dlg_info->gui_call_back, dlg_info->extra ) ) {
             return( false );
         }
         GUIMemFree( wnd );
         return( true );
     }
-
-    /* unused parameters */ (void)sys;
 
     RadioGroup = NULL;
     Group = false;
@@ -822,7 +821,7 @@ bool GUIXCreateDialog( gui_create_info *dlg_info, gui_window *wnd,
     for( i = 0; i < num_controls; i++ ) {
         uiyield();
         if( !GUIDoAddControl( &controls_info[i], wnd, &fields[i] ) ) {
-            GUIFreeDialog( ui_dlg_info, fields, title, colours_set, true );
+            GUIFreeDialog( ui_dlg_info, fields, title, colours_set );
             return( false );
         } else {
             if( ( focus == NULL ) && (controls_info[i].style & GUI_STYLE_CONTROL_FOCUS) ) {
@@ -831,10 +830,10 @@ bool GUIXCreateDialog( gui_create_info *dlg_info, gui_window *wnd,
         }
     }
     CleanUpRadioGroups();
-    fields[num_controls].typ = FLD_VOID; /* mark end of list */
+    fields[num_controls].typ = FLD_NONE;    /* mark end of list, last item must be FLD_NONE typ */
     title = GUIStrDup( dlg_info->title, &ok );
     if( !ok ) {
-        GUIFreeDialog( ui_dlg_info, fields, title, colours_set, true );
+        GUIFreeDialog( ui_dlg_info, fields, title, colours_set );
         return( false );
     }
     colours_set = GUISetDialColours();
@@ -842,14 +841,14 @@ bool GUIXCreateDialog( gui_create_info *dlg_info, gui_window *wnd,
                              wnd->screen.area.width, wnd->screen.area.row,
                              wnd->screen.area.col );
     if( ui_dlg_info == NULL ) {
-        GUIFreeDialog( ui_dlg_info, fields, title, colours_set, true );
+        GUIFreeDialog( ui_dlg_info, fields, title, colours_set );
         return( false );
     }
     if( focus != NULL ) {
         uidialogsetcurr( ui_dlg_info, focus );
     }
     if( !InsertDialog( wnd, ui_dlg_info, num_controls, title, colours_set ) ) {
-        GUIFreeDialog( ui_dlg_info, fields, title, colours_set, true );
+        GUIFreeDialog( ui_dlg_info, fields, title, colours_set );
         return( false );
     }
     for( i = 0; i < num_controls; i++ ) {
@@ -878,8 +877,7 @@ bool GUIXCreateDialog( gui_create_info *dlg_info, gui_window *wnd,
     return( true );
 }
 
-void GUIFreeDialog( a_dialog *ui_dlg_info, VFIELD *fields, char *title,
-                    bool colours_set, bool is_dialog )
+void GUIFreeDialog( a_dialog *ui_dlg_info, VFIELD *fields, char *title, bool colours_set )
 {
     if( ui_dlg_info != NULL ) {
         GUIDeleteDialog( ui_dlg_info );
