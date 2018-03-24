@@ -71,9 +71,9 @@
 #include "dlgnewp.h"
 #include "dlgcmd.h"
 #include "dlgwind.h"
-
-
 #include "menudef.h"
+
+
 static gui_menu_struct FileMenu[] = {
     #include "mmfile.h"
 };
@@ -110,7 +110,7 @@ static gui_menu_struct HelpMenu[] = {
     #include "mmhelp.h"
 };
 
-static gui_menu_struct DummyMenu;
+static gui_menu_struct DummyMenu[1];
 
 
 gui_menu_struct WndMainMenu[] = {
@@ -122,7 +122,7 @@ gui_menu_struct WndMainMenu[] = {
     MENU_CASCADE( MENU_MAIN_UNDO, MainMenuUndo, UndoMenu )
     MENU_CASCADE( MENU_MAIN_SEARCH, MainMenuSearch, SearchMenu )
     MENU_CASCADE( MENU_MAIN_WINDOW, MainMenuWindow, WindowMenu )
-    MENU_CASCADE( MENU_MAIN_ACTION, MainMenuAction, &DummyMenu )
+    MENU_CASCADE( MENU_MAIN_ACTION, MainMenuAction, DummyMenu )
     MENU_CASCADE( MENU_MAIN_HELP, MainMenuHelp, HelpMenu )
 };
 
@@ -209,13 +209,12 @@ static gui_menu_struct *FindMainMenu( gui_menu_struct *menu, int size )
 }
 
 
-char *GetMenuLabel( unsigned size,
-                    gui_menu_struct *menu, gui_ctl_id id, char *buff, bool strip_amp )
+char *GetMenuLabel( int num_items, gui_menu_struct *menu, gui_ctl_id id, char *buff, bool strip_amp )
 {
     char        *p;
     const char  *cp;
 
-    while( size != 0 ) {
+    while( num_items > 0 ) {
         if( menu->id == id ) {
             for( cp = menu->label; *cp != NULLCHAR; ++cp ) {
                 if( *cp == '&' && strip_amp )
@@ -227,14 +226,14 @@ char *GetMenuLabel( unsigned size,
             *buff = NULLCHAR;
             return( buff );
         }
-        if( menu->child_num_items != 0 ) {
+        if( menu->child_num_items > 0 ) {
             p = GetMenuLabel( menu->child_num_items, menu->child, id, buff, strip_amp );
             if( p != NULL ) {
                 return( p );
             }
         }
-        --size;
-        ++menu;
+        num_items--;
+        menu++;
     }
     return( NULL );
 }
@@ -247,7 +246,7 @@ static gui_menu_struct *FindSubMenu( const char *start, unsigned len, gui_menu_s
         if( StrAmpEqual( start, child->label, len ) ) {
             return( child );
         }
-        if( child->child_num_items != 0 ) {
+        if( child->child_num_items > 0 ) {
             sub = FindSubMenu( start, len, child->child, child->child_num_items );
             if( sub != NULL ) {
                 return( sub );

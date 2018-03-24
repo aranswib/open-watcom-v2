@@ -49,6 +49,7 @@
 #include "dbgreg.h"
 #include "dbgwglob.h"
 #include "dbgwinsp.h"
+#include "menudef.h"
 
 
 enum {
@@ -58,24 +59,22 @@ enum {
     PIECE__LAST
 };
 
-static gui_ord          Indents[PIECE__LAST];
+extern event_record *EventList;
 
+static gui_ord      Indents[PIECE__LAST];
 
-#include "menudef.h"
+static int          LastEventCount;
 
 static gui_menu_struct RepMenu[] = {
     #include "menurep.h"
 };
 
-extern event_record *EventList;
-static int      LastEventCount;
-
 static void RepInitEv( event_record *ev )
 {
-    DIPHDL( cue, ch );
+    DIPHDL( cue, cueh );
     if( ev->cue == NULL ) {
-        if( DeAliasAddrCue( NO_MOD, ev->ip, ch ) != SR_NONE ) {
-            ev->cue = CopySourceLine( ch );
+        if( DeAliasAddrCue( NO_MOD, ev->ip, cueh ) != SR_NONE ) {
+            ev->cue = CopySourceLine( cueh );
         }
         if( ev->cue == NULL ) {
             UnAsm( ev->ip, TxtBuff, TXT_LEN );

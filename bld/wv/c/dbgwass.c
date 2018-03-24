@@ -67,32 +67,24 @@
 #include "dbgwtogl.h"
 #include "dbgmad.h"
 #include "dbgchopt.h"
-
 #include "menudef.h"
 
-
-static gui_menu_struct AsmShowMenu[] = {
-    #include "masmshow.h"
-};
-
-static gui_menu_struct AsmMenu[] = {
-    #include "menuasm.h"
-};
-
-
-enum {
-    PIECE_BREAK,
-    PIECE_ADDRESS,
-    PIECE_CURRENT = PIECE_ADDRESS,
-    PIECE_BRANCH_INDICATOR,
-    PIECE_OPCODE,
-    PIECE_OPERANDS,
-    PIECE_MEMREF
-};
 
 #define AVG_INS_SIZE    7
 
 #define TITLE_SIZE      1
+
+#define WndAsm( wnd ) ( (asm_window *)WndExtra( wnd ) )
+
+enum {
+    PIECE_BREAK,
+    PIECE_ADDRESS,
+    PIECE_BRANCH_INDICATOR,
+    PIECE_OPCODE,
+    PIECE_OPERANDS,
+    PIECE_MEMREF,
+    PIECE_CURRENT = PIECE_ADDRESS
+};
 
 typedef struct {
     address     addr;
@@ -126,20 +118,27 @@ typedef struct {
     bool            source          : 1;
     bool            hex             : 1;
 } asm_window;
-#define WndAsm( wnd ) ( (asm_window *)WndExtra( wnd ) )
 
-static bool ExactCueAt( asm_window *asw, address addr, cue_handle *ch )
+static  void    AsmResize( a_window wnd );
+
+static gui_menu_struct AsmShowMenu[] = {
+    #include "masmshow.h"
+};
+
+static gui_menu_struct AsmMenu[] = {
+    #include "menuasm.h"
+};
+
+static bool ExactCueAt( asm_window *asw, address addr, cue_handle *cueh )
 {
     if( !asw->source )
         return( false );
-    if( DeAliasAddrCue( NO_MOD, addr, ch ) == SR_NONE )
+    if( DeAliasAddrCue( NO_MOD, addr, cueh ) == SR_NONE )
         return( false );
-    if( AddrComp( DIPCueAddr( ch ), addr ) )
+    if( AddrComp( DIPCueAddr( cueh ), addr ) )
         return( false );
     return( true );
 }
-
-static  void    AsmResize( a_window wnd );
 
 static void AsmSetFirst( a_window wnd, address addr, bool use_first_source )
 {
@@ -148,7 +147,7 @@ static void AsmSetFirst( a_window wnd, address addr, bool use_first_source )
     char                chr;
     mad_disasm_data     *dd;
     unsigned            addr_len;
-    DIPHDL( cue, ch );
+    DIPHDL( cue, cueh );
 
     _AllocA( dd, asw->ddsize );
 
@@ -170,10 +169,10 @@ static void AsmSetFirst( a_window wnd, address addr, bool use_first_source )
         asw->ins[row].addr = addr;
         if( IS_NIL_ADDR( addr ) )
             continue;
-        if( ExactCueAt( asw, addr, ch ) ) {
+        if( ExactCueAt( asw, addr, cueh ) ) {
             if( row != 0 || use_first_source ) {
                 asw->ins[row].addr = addr;
-                asw->ins[row].line = DIPCueLine( ch );
+                asw->ins[row].line = DIPCueLine( cueh );
                 ++row;
                 if( row >= rows ) {
                     break;
@@ -318,18 +317,18 @@ void    AsmMoveDot( a_window wnd, address addr )
 {
     wnd_row     row;
     asm_window  *asw;
-    DIPHDL( cue, ch1 );
-    DIPHDL( cue, ch2 );
+    DIPHDL( cue, cueh1 );
+    DIPHDL( cue, cueh2 );
 
     if( wnd == NULL )
         return;
 
     asw = WndAsm( wnd );
-    if( DeAliasAddrCue( asw->mod, addr, ch1 ) != SR_NONE &&
-        DeAliasAddrCue( asw->mod, asw->dotaddr, ch2 ) != SR_NONE ) {
-        if( DIPCueMod( ch1 )    == DIPCueMod( ch2 ) &&
-            DIPCueFileId( ch1 ) == DIPCueFileId( ch2 ) &&
-            DIPCueLine( ch1 )   == DIPCueLine( ch2 ) ) {
+    if( DeAliasAddrCue( asw->mod, addr, cueh1 ) != SR_NONE &&
+        DeAliasAddrCue( asw->mod, asw->dotaddr, cueh2 ) != SR_NONE ) {
+        if( DIPCueMod( cueh1 )    == DIPCueMod( cueh2 ) &&
+            DIPCueFileId( cueh1 ) == DIPCueFileId( cueh2 ) &&
+            DIPCueLine( cueh1 )   == DIPCueLine( cueh2 ) ) {
             return;
         }
     }
@@ -572,13 +571,13 @@ OVL_EXTERN int AsmScroll( a_window wnd, int lines )
     asm_window          *asw;
     bool                use_first_source;
     mad_disasm_data     *dd;
-    DIPHDL( cue, ch );
+    DIPHDL( cue, cueh );
 
     asw = WndAsm( wnd );
     _AllocA( dd, asw->ddsize );
     addr = asw->ins[0].addr;
     if( lines == -1 && asw->ins[0].line == 0 &&
-        ExactCueAt( asw, addr, ch ) ) {
+        ExactCueAt( asw, addr, cueh ) ) {
         moved = -1;
         AsmSetFirst( wnd, addr, true );
     } else if( lines < 0 ) {
@@ -590,7 +589,7 @@ OVL_EXTERN int AsmScroll( a_window wnd, int lines )
             if( MADDisasm( dd, &addr, -1 ) != MS_OK )
                 break;
             addr.mach.offset -= MADDisasmInsSize( dd );
-            if( ExactCueAt( asw, addr, ch ) ) {
+            if( ExactCueAt( asw, addr, cueh ) ) {
                 ++lines;
                 --moved;
                 use_first_source = false;
@@ -643,16 +642,16 @@ static  void    DoDisAsm( asm_window *asw, address addr )
 }
 
 
-static void AsmNewSource( asm_window *asw, cue_handle *ch )
+static void AsmNewSource( asm_window *asw, cue_handle *cueh )
 {
     if( asw->viewhndl != NULL )
         FDoneSource( asw->viewhndl );
     asw->viewhndl = NULL;
-    if( ch != NULL ) {
-        asw->viewhndl = OpenSrcFile( ch );
+    if( cueh != NULL ) {
+        asw->viewhndl = OpenSrcFile( cueh );
         if( asw->viewhndl != NULL ) {
-            asw->src_list.mod = DIPCueMod( ch );
-            asw->src_list.file_id = DIPCueFileId( ch );
+            asw->src_list.mod = DIPCueMod( cueh );
+            asw->src_list.file_id = DIPCueFileId( cueh );
         }
     } else {
         asw->src_list.mod = NO_MOD;
@@ -672,7 +671,7 @@ OVL_EXTERN  bool    AsmGetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_
     mad_radix   old_radix;
     char        buff[TXT_LEN];
     mad_disasm_control  ctrl;
-    DIPHDL( cue, ch );
+    DIPHDL( cue, cueh );
 
     asw = WndAsm( wnd );
     if( row < 0 ) {
@@ -736,10 +735,10 @@ OVL_EXTERN  bool    AsmGetLine( a_window wnd, wnd_row row, wnd_piece piece, wnd_
     case PIECE_ADDRESS:
         if( src_line != 0 ) {
             line->text = TxtBuff;
-            if( DeAliasAddrCue( NO_MOD, addr, ch ) != SR_NONE ) {
-                if( DIPCueMod( ch ) != asw->src_list.mod
-                 || DIPCueFileId( ch ) != asw->src_list.file_id ) {
-                    AsmNewSource( asw, ch );
+            if( DeAliasAddrCue( NO_MOD, addr, cueh ) != SR_NONE ) {
+                if( DIPCueMod( cueh ) != asw->src_list.mod
+                 || DIPCueFileId( cueh ) != asw->src_list.file_id ) {
+                    AsmNewSource( asw, cueh );
                 }
                 Format( TxtBuff, LIT_DUI( No_Source_Line ), src_line );
                 if( asw->viewhndl != NULL ) {
