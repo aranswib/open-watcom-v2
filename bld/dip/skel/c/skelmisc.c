@@ -46,7 +46,7 @@ unsigned DIPIMPENTRY( HandleSize )( handle_kind hk )
         should be OK as given.
 */
     static unsigned_8 Sizes[] = {
-        #define pick(e,h,ih,wih)    ih,
+        #define pick(e,hdl,imphdl,wvimphdl) imphdl,
         #include "diphndls.h"
         #undef pick
     };
@@ -68,7 +68,7 @@ dip_status DIPImp( Startup )( void )
 {
     //TODO:
 /*
-        Return DS_OK if startup initialization when OK, or a DS_ERR|DS_?
+        Return DS_OK if startup initialization when OK, or a DS_ERR | DS_?
         constant if something went wrong.
 */
     return( DS_OK );

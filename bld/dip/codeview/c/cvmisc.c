@@ -40,7 +40,7 @@ const char      DIPImp( Name )[] = "CodeView";
 unsigned DIPIMPENTRY( HandleSize )( handle_kind hk )
 {
     static unsigned_8 Sizes[] = {
-        #define pick(e,h,ih,wih)    ih,
+        #define pick(e,hdl,imphdl,wvimphdl) imphdl,
         #include "diphndls.h"
         #undef pick
     };
@@ -80,7 +80,7 @@ size_t NameCopy( char *buff, const char *src, size_t buff_size, size_t len )
     return( len );
 }
 
-cv_directory_entry *FindDirEntry( imp_image_handle *ii, imp_mod_handle im,
+cv_directory_entry *FindDirEntry( imp_image_handle *iih, imp_mod_handle imh,
                                 unsigned subsection_type )
 {
     unsigned            i;
@@ -89,26 +89,26 @@ cv_directory_entry *FindDirEntry( imp_image_handle *ii, imp_mod_handle im,
     unsigned            remainder;
     cv_directory_entry  *p;
 
-    full_blocks = BLOCK_FACTOR( ii->dir_count, DIRECTORY_BLOCK_ENTRIES ) - 1;
+    full_blocks = BLOCK_FACTOR( iih->dir_count, DIRECTORY_BLOCK_ENTRIES ) - 1;
     for( block = 0; block < full_blocks; ++block ) {
         for( i = 0; i < DIRECTORY_BLOCK_ENTRIES; ++i ) {
-            p = &ii->directory[block][i];
-            if( p->subsection == subsection_type && p->iMod == im ) {
+            p = &iih->directory[block][i];
+            if( p->subsection == subsection_type && p->iMod == imh ) {
                 return( p );
             }
         }
     }
-    remainder = ii->dir_count - (full_blocks * DIRECTORY_BLOCK_ENTRIES);
+    remainder = iih->dir_count - (full_blocks * DIRECTORY_BLOCK_ENTRIES);
     for( i = 0; i < remainder; ++i ) {
-        p = &ii->directory[block][i];
-        if( p->subsection == subsection_type && p->iMod == im ) {
+        p = &iih->directory[block][i];
+        if( p->subsection == subsection_type && p->iMod == imh ) {
             return( p );
         }
     }
     return( NULL );
 }
 
-walk_result WalkDirList( imp_image_handle *ii, DIP_DIR_WALKER *wk, void *d )
+walk_result WalkDirList( imp_image_handle *iih, DIP_DIR_WALKER *wk, void *d )
 {
     unsigned            i;
     unsigned            block;
@@ -117,19 +117,23 @@ walk_result WalkDirList( imp_image_handle *ii, DIP_DIR_WALKER *wk, void *d )
     walk_result         wr;
     cv_directory_entry  *p;
 
-    full_blocks = BLOCK_FACTOR( ii->dir_count, DIRECTORY_BLOCK_ENTRIES ) - 1;
+    full_blocks = BLOCK_FACTOR( iih->dir_count, DIRECTORY_BLOCK_ENTRIES ) - 1;
     for( block = 0; block < full_blocks; ++block ) {
         for( i = 0; i < DIRECTORY_BLOCK_ENTRIES; ++i ) {
-            p = &ii->directory[block][i];
-            wr = wk( ii, p, d );
-            if( wr != WR_CONTINUE ) return( wr );
+            p = &iih->directory[block][i];
+            wr = wk( iih, p, d );
+            if( wr != WR_CONTINUE ) {
+                return( wr );
+            }
         }
     }
-    remainder = ii->dir_count - (full_blocks * DIRECTORY_BLOCK_ENTRIES);
+    remainder = iih->dir_count - (full_blocks * DIRECTORY_BLOCK_ENTRIES);
     for( i = 0; i < remainder; ++i ) {
-        p = &ii->directory[block][i];
-        wr = wk( ii, p, d );
-        if( wr != WR_CONTINUE ) return( wr );
+        p = &iih->directory[block][i];
+        wr = wk( iih, p, d );
+        if( wr != WR_CONTINUE ) {
+            return( wr );
+        }
     }
     return( WR_CONTINUE );
 }
@@ -169,8 +173,8 @@ const void *GetNumLeaf( const void *p, numeric_leaf *v )
         v->int_val = key;
     } else {
         v->valp = (const unsigned_8 *)p + sizeof( unsigned_16 );
-        v->size = LeafInfo[ key - LF_NUMERIC ].size;
-        v->k = LeafInfo[ key - LF_NUMERIC ].k;
+        v->size = LeafInfo[key - LF_NUMERIC].size;
+        v->k = LeafInfo[key - LF_NUMERIC].k;
         switch( key ) {
         case LF_CHAR:
             v->int_val = *(signed_8 *)v->valp;
@@ -195,8 +199,7 @@ const void *GetNumLeaf( const void *p, numeric_leaf *v )
 }
 
 
-dip_status DoIndirection( imp_image_handle *ii, dip_type_info *ti,
-                        location_context *lc, location_list *ll )
+dip_status DoIndirection( imp_image_handle *iih, dip_type_info *ti, location_context *lc, location_list *ll )
 {
     union {
         unsigned_8      u8;
@@ -210,13 +213,15 @@ dip_status DoIndirection( imp_image_handle *ii, dip_type_info *ti,
     location_list       dst;
     dip_status          ds;
 
-    /* unused parameters */ (void)ii;
+    /* unused parameters */ (void)iih;
 
     LocationCreate( &dst, LT_INTERNAL, &tmp );
     ds = DCAssignLocation( &dst, ll, ti->size );
-    if( ds != DS_OK ) return( ds );
+    if( ds != DS_OK )
+        return( ds );
     ds = DCItemLocation( lc, CI_DEF_ADDR_SPACE, ll );
-    if( ds != DS_OK ) return( ds );
+    if( ds != DS_OK )
+        return( ds );
     if( ti->modifier == TM_NEAR ) {
         if( ti->size == sizeof( addr32_off ) ) {
             ll->e[0].u.addr.mach.offset = tmp.ao32;

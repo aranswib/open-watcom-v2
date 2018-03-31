@@ -50,7 +50,7 @@ static void CallCleaners( void )
 /******************************/
 //Call all stacked resource cleanup
 {
-    while( Cleaners != NULL ){
+    while( Cleaners != NULL ) {
         Cleaners->rtn( Cleaners->d );
         Cleaners = Cleaners->prev;
     }
@@ -63,7 +63,7 @@ unsigned DIPIMPENTRY( HandleSize )( handle_kind hk )
         should be OK as given.
 */
     static unsigned_8 Sizes[] = {
-        #define pick(e,h,ih,wih)    ih,
+        #define pick(e,hdl,imphdl,wvimphdl) imphdl,
         #include "diphndls.h"
         #undef pick
     };
@@ -73,19 +73,20 @@ unsigned DIPIMPENTRY( HandleSize )( handle_kind hk )
 
 static imp_image_handle *Images;
 
-extern void DFAddImage( imp_image_handle *ii ){
+void DFAddImage( imp_image_handle *iih )
 /**************************************/
-    ii->next = Images;
-    Images = ii;
+{
+    iih->next = Images;
+    Images = iih;
 }
 
-void DFFreeImage( imp_image_handle *ii )
-/**************************************/
+void DFFreeImage( imp_image_handle *iih )
+/***************************************/
 {
     imp_image_handle *curr, **lnk;
 
     for( lnk = &Images; (curr = *lnk) != NULL; lnk = &curr->next ) {
-       if( curr == ii ) {
+       if( curr == iih ) {
            *lnk = curr->next;
        }
     }
@@ -104,13 +105,13 @@ dip_status DIPIMPENTRY( MoreMem )( size_t size )
 
     ret = DS_FAIL;
     for( curr = Images; curr != NULL; curr = curr->next ) {
-        if( ClearMods( curr ) ){
+        if( ClearMods( curr ) ) {
             ret = DS_OK;
         }
-        if( DRDbgClear( curr->dwarf->handle ) ){
+        if( DRDbgClear( curr->dwarf->handle ) ) {
             ret = DS_OK;
         }
-        if( FiniImpCueInfo( curr ) ){
+        if( FiniImpCueInfo( curr ) ) {
             ret = DS_OK;
         }
     }
@@ -120,7 +121,7 @@ dip_status DIPIMPENTRY( MoreMem )( size_t size )
 dip_status DIPImp( Startup )(void)
 {
 /*
-        Return DS_OK if startup initialization went OK, or a DS_ERR|DS_?
+        Return DS_OK if startup initialization went OK, or a DS_ERR | DS_?
         constant if something went wrong.
 */
     Cleaners = NULL;

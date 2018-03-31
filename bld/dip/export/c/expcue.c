@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -36,90 +37,84 @@
         Stuff for source line cues
 */
 
-walk_result DIPIMPENTRY( WalkFileList )( imp_image_handle *ii,
-                    imp_mod_handle im, DIP_IMP_CUE_WALKER *wk, imp_cue_handle *ic,
-                    void *d )
+walk_result DIPIMPENTRY( WalkFileList )( imp_image_handle *iih, imp_mod_handle imh,
+                          DIP_IMP_CUE_WALKER *wk, imp_cue_handle *icueh, void *d )
 {
-    /* unused parameters */ (void)ii; (void)im; (void)wk; (void)ic; (void)d;
+    /* unused parameters */ (void)iih; (void)imh; (void)wk; (void)icueh; (void)d;
 
     return( WR_CONTINUE );
 }
 
-imp_mod_handle DIPIMPENTRY( CueMod )( imp_image_handle *ii,
-                                imp_cue_handle *ic )
+imp_mod_handle DIPIMPENTRY( CueMod )( imp_image_handle *iih, imp_cue_handle *icueh )
 {
-    /* unused parameters */ (void)ii; (void)ic;
+    /* unused parameters */ (void)iih; (void)icueh;
 
     return( IMH_NOMOD );
 }
 
-size_t DIPIMPENTRY( CueFile )( imp_image_handle *ii,
-                        imp_cue_handle *ic, char *buff, size_t buff_size )
+size_t DIPIMPENTRY( CueFile )( imp_image_handle *iih, imp_cue_handle *icueh, char *buff, size_t buff_size )
 {
-    /* unused parameters */ (void)ii; (void)ic; (void)buff; (void)buff_size;
+    /* unused parameters */ (void)iih; (void)icueh; (void)buff; (void)buff_size;
 
     return( 0 );
 }
 
-cue_fileid DIPIMPENTRY( CueFileId )( imp_image_handle *ii,
-                        imp_cue_handle *ic )
+cue_fileid DIPIMPENTRY( CueFileId )( imp_image_handle *iih, imp_cue_handle *icueh )
 {
-    /* unused parameters */ (void)ii; (void)ic;
+    /* unused parameters */ (void)iih; (void)icueh;
 
     return( 0 );
 }
 
-dip_status DIPIMPENTRY( CueAdjust )( imp_image_handle *ii,
-                imp_cue_handle *src, int adj, imp_cue_handle *dst )
+dip_status DIPIMPENTRY( CueAdjust )( imp_image_handle *iih,
+                imp_cue_handle *src_icueh, int adj, imp_cue_handle *dst_icueh )
 {
-    /* unused parameters */ (void)ii; (void)src; (void)adj; (void)dst;
+    /* unused parameters */ (void)iih; (void)src_icueh; (void)adj; (void)dst_icueh;
 
-    return( DS_ERR|DS_FAIL );
+    return( DS_ERR | DS_FAIL );
 }
 
-unsigned long DIPIMPENTRY( CueLine )( imp_image_handle *ii,
-                        imp_cue_handle *ic )
+unsigned long DIPIMPENTRY( CueLine )( imp_image_handle *iih, imp_cue_handle *icueh )
 {
-    /* unused parameters */ (void)ii; (void)ic;
+    /* unused parameters */ (void)iih; (void)icueh;
 
     return( 0 );
 }
 
-unsigned DIPIMPENTRY( CueColumn )( imp_image_handle *ii, imp_cue_handle *ic )
+unsigned DIPIMPENTRY( CueColumn )( imp_image_handle *iih, imp_cue_handle *icueh )
 {
-    /* unused parameters */ (void)ii; (void)ic;
+    /* unused parameters */ (void)iih; (void)icueh;
 
     return( 0 );
 }
 
-address DIPIMPENTRY( CueAddr )( imp_image_handle *ii,
-                        imp_cue_handle *ic )
+address DIPIMPENTRY( CueAddr )( imp_image_handle *iih, imp_cue_handle *icueh )
 {
-    /* unused parameters */ (void)ii; (void)ic;
+    /* unused parameters */ (void)iih; (void)icueh;
 
     return( NilAddr );
 }
 
-search_result DIPIMPENTRY( LineCue )( imp_image_handle *ii,
-                imp_mod_handle im, cue_fileid file, unsigned long line,
-                unsigned column, imp_cue_handle *ic )
+search_result DIPIMPENTRY( LineCue )( imp_image_handle *iih,
+                imp_mod_handle imh, cue_fileid file, unsigned long line,
+                unsigned column, imp_cue_handle *icueh )
 {
-    /* unused parameters */ (void)ii; (void)im; (void)file; (void)line; (void)column; (void)ic;
+    /* unused parameters */ (void)iih; (void)imh; (void)file; (void)line; (void)column; (void)icueh;
 
     return( SR_NONE );
 }
 
-search_result DIPIMPENTRY( AddrCue )( imp_image_handle *ii,
-                imp_mod_handle im, address addr, imp_cue_handle *ic )
+search_result DIPIMPENTRY( AddrCue )( imp_image_handle *iih,
+                imp_mod_handle imh, address addr, imp_cue_handle *icueh )
 {
-    /* unused parameters */ (void)ii; (void)im; (void)addr; (void)ic;
+    /* unused parameters */ (void)iih; (void)imh; (void)addr; (void)icueh;
 
     return( SR_NONE );
 }
 
-int DIPIMPENTRY( CueCmp )( imp_image_handle *ii, imp_cue_handle *ic1, imp_cue_handle *ic2 )
+int DIPIMPENTRY( CueCmp )( imp_image_handle *iih, imp_cue_handle *icueh1, imp_cue_handle *icueh2 )
 {
-    /* unused parameters */ (void)ii; (void)ic1; (void)ic2;
+    /* unused parameters */ (void)iih; (void)icueh1; (void)icueh2;
 
     return( 0 );
 }

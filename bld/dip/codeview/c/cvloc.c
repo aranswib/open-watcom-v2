@@ -32,7 +32,6 @@
 
 #include "cvinfo.h"
 
-extern address          NilAddr;
 
 void LocationCreate( location_list *ll, location_type lt, void *d )
 {
@@ -80,7 +79,8 @@ void LocationAdd( location_list *ll, long sbits )
     add = bits / 8;
     bits = bits % 8;
     ll->e[0].bit_start += bits;
-    if( ll->e[0].bit_length != 0 ) ll->e[0].bit_length -= bits;
+    if( ll->e[0].bit_length != 0 )
+        ll->e[0].bit_length -= bits;
     if( ll->e[0].type == LT_ADDR ) {
         ll->e[0].u.addr.mach.offset += add;
     } else {
@@ -174,7 +174,7 @@ static const reg_entry AXP_RegTable[] = {
     #include "cv4axp.h"
 };
 
-dip_status LocationManyReg( imp_image_handle *ii,
+dip_status LocationManyReg( imp_image_handle *iih,
                             unsigned count, const unsigned_8 *reg_list,
                             location_context *lc, location_list *ll )
 {
@@ -188,31 +188,31 @@ dip_status LocationManyReg( imp_image_handle *ii,
     j = 0;
     for( i = count; i-- > 0; ) {
         idx = reg_list[i];
-        switch( ii->mad ) {
+        switch( iih->mad ) {
         case MAD_X86:
             if( idx >= CV_X86_AL && idx <= CV_X86_EFLAGS ) {
                 reg = &X86_CPURegTable[idx-CV_X86_AL];
             } else if( idx >= CV_X86_ST0 && idx <= CV_X86_STATUS ) {
                 reg = &X86_FPURegTable[idx-CV_X86_ST0];
             } else {
-                DCStatus( DS_ERR|DS_FAIL );
-                return( DS_ERR|DS_FAIL );
+                DCStatus( DS_ERR | DS_FAIL );
+                return( DS_ERR | DS_FAIL );
             }
             break;
         case MAD_AXP:
             if( !(idx >= CV_AXP_f0 && idx <= CV_AXP_fltfsr) ) {
-                DCStatus( DS_ERR|DS_FAIL );
-                return( DS_ERR|DS_FAIL );
+                DCStatus( DS_ERR | DS_FAIL );
+                return( DS_ERR | DS_FAIL );
             }
             reg = &AXP_RegTable[idx-CV_AXP_f0];
             if( reg->ci == CI_LAST ) {
-                DCStatus( DS_ERR|DS_FAIL );
-                return( DS_ERR|DS_FAIL );
+                DCStatus( DS_ERR | DS_FAIL );
+                return( DS_ERR | DS_FAIL );
             }
             break;
         default:
-            DCStatus( DS_ERR|DS_FAIL );
-            return( DS_ERR|DS_FAIL );
+            DCStatus( DS_ERR | DS_FAIL );
+            return( DS_ERR | DS_FAIL );
         }
         ds = DCItemLocation( lc, reg->ci, &reg_ll );
         if( ds != DS_OK ) {
@@ -229,11 +229,11 @@ dip_status LocationManyReg( imp_image_handle *ii,
     return( DS_OK );
 }
 
-dip_status LocationOneReg( imp_image_handle *ii, unsigned reg,
+dip_status LocationOneReg( imp_image_handle *iih, unsigned reg,
                             location_context *lc, location_list *ll )
 {
     unsigned_8  reg_list;
 
     reg_list = reg;
-    return( LocationManyReg( ii, 1, &reg_list, lc, ll ) );
+    return( LocationManyReg( iih, 1, &reg_list, lc, ll ) );
 }

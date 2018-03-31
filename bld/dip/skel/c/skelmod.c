@@ -36,23 +36,25 @@
 /*
         Stuff dealing with module handles
 */
-walk_result DIPIMPENTRY( WalkModList )( imp_image_handle *ii,
+walk_result DIPIMPENTRY( WalkModList )( imp_image_handle *iih,
                         DIP_IMP_MOD_WALKER *wk, void *d )
 {
     //TODO:
     /* PSEUDO-CODE:
 
-       for( each module in 'ii' ) {
+       for( each module in 'iih' ) {
            im = implementation module handle for module;
-           wr = wk( ii, im, d );
-           if( wr != WR_CONTINUE ) return( wr );
+           wr = wk( iih, im, d );
+           if( wr != WR_CONTINUE ) {
+               return( wr );
+           }
        }
    */
    return( WR_CONTINUE );
 }
 
-size_t DIPIMPENTRY( ModName )( imp_image_handle *ii,
-                        imp_mod_handle im, char *buff, size_t buff_size )
+size_t DIPIMPENTRY( ModName )( imp_image_handle *iih,
+                        imp_mod_handle imh, char *buff, size_t buff_size )
 {
     //TODO:
     /*
@@ -69,7 +71,7 @@ size_t DIPIMPENTRY( ModName )( imp_image_handle *ii,
     return( 0 );
 }
 
-char *DIPIMPENTRY( ModSrcLang )( imp_image_handle *ii, imp_mod_handle im )
+char *DIPIMPENTRY( ModSrcLang )( imp_image_handle *iih, imp_mod_handle imh )
 {
     //TODO:
     /*
@@ -79,8 +81,8 @@ char *DIPIMPENTRY( ModSrcLang )( imp_image_handle *ii, imp_mod_handle im )
     return( "c" );
 }
 
-dip_status DIPIMPENTRY( ModInfo )( imp_image_handle *ii,
-                                imp_mod_handle im, handle_kind hk )
+dip_status DIPIMPENTRY( ModInfo )( imp_image_handle *iih,
+                                imp_mod_handle imh, handle_kind hk )
 {
     //TODO:
     /*
@@ -90,21 +92,20 @@ dip_status DIPIMPENTRY( ModInfo )( imp_image_handle *ii,
     return( DS_FAIL );
 }
 
-search_result DIPIMPENTRY( AddrMod )( imp_image_handle *ii, address a,
-                imp_mod_handle *im )
+search_result DIPIMPENTRY( AddrMod )( imp_image_handle *iih, address a,
+                imp_mod_handle *imh )
 {
     //TODO:
     /*
         Given an address, find the module which defines that address and
-        assign the implemenation module handle to '*im'. Return SR_EXACT
+        assign the implemenation module handle to '*imh'. Return SR_EXACT
         or SR_CLOSEST. If no module for the image defines the address,
         return SR_NONE.
     */
     return( SR_NONE );
 }
 
-address DIPIMPENTRY( ModAddr )( imp_image_handle *ii,
-                                imp_mod_handle im )
+address DIPIMPENTRY( ModAddr )( imp_image_handle *iih, imp_mod_handle imh )
 {
     //TODO:
     /*
@@ -115,8 +116,8 @@ address DIPIMPENTRY( ModAddr )( imp_image_handle *ii,
     return( NilAddr );
 }
 
-dip_status DIPIMPENTRY( ModDefault )( imp_image_handle *ii,
-                imp_mod_handle im, default_kind dk, dip_type_info *ti )
+dip_status DIPIMPENTRY( ModDefault )( imp_image_handle *iih,
+                imp_mod_handle imh, default_kind dk, dip_type_info *ti )
 {
     //TODO:
     /*

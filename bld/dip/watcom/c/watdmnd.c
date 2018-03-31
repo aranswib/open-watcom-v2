@@ -79,18 +79,17 @@ static unsigned         TimeStamp;
 /*
  * InfoSize -- return size of demand info section
  */
-unsigned InfoSize( imp_image_handle *ii, imp_mod_handle im,
-                        demand_kind dk, word entry )
+unsigned InfoSize( imp_image_handle *iih, imp_mod_handle imh, demand_kind dk, word entry )
 {
     demand_info         *dmnd;
     section_info        *inf;
     dword               real_entry;
 
-    dmnd = ModPointer( ii, im )->di + dk;
+    dmnd = ModPointer( iih, imh )->di + dk;
     if( entry >= dmnd->u.entries )
         return( 0 );
     real_entry = dmnd->info_off + entry;
-    inf = FindInfo( ii, im );
+    inf = FindInfo( iih, imh );
     return( (unsigned)DMND_SIZE( inf, real_entry ) );
 }
 
@@ -103,7 +102,7 @@ struct walk_demand {
     unsigned long       max_size;
 };
 
-static walk_result WlkDmnd( imp_image_handle *ii, imp_mod_handle im, void *d )
+static walk_result WlkDmnd( imp_image_handle *iih, imp_mod_handle imh, void *d )
 {
     struct walk_demand  *wdd = d;
     unsigned long       size;
@@ -113,7 +112,7 @@ static walk_result WlkDmnd( imp_image_handle *ii, imp_mod_handle im, void *d )
     for( dk = 0; dk < MAX_DMND; ++dk ) {
         i = 0;
         for( ;; ) {
-            size = InfoSize( ii, im, dk, i );
+            size = InfoSize( iih, imh, dk, i );
             if( size == 0 )
                 break;
             if( size > wdd->max_size )
@@ -149,15 +148,15 @@ static void Unload( demand_ctrl *section )
     DCFree( section );
 }
 
-dip_status InitDemand( imp_image_handle *ii )
+dip_status InitDemand( imp_image_handle *iih )
 {
     struct walk_demand  d;
 
     d.max_size = 0;
-    MyWalkModList( ii, WlkDmnd, &d );
+    MyWalkModList( iih, WlkDmnd, &d );
     if( d.max_size >= ( 0x10000UL - sizeof( demand_ctrl ) ) ) {
-        DCStatus( DS_ERR|DS_INFO_INVALID );
-        return( DS_ERR|DS_INFO_INVALID );
+        DCStatus( DS_ERR | DS_INFO_INVALID );
+        return( DS_ERR | DS_INFO_INVALID );
     }
     if( d.max_size <= LastDmndSize )
         return( DS_OK );
@@ -168,8 +167,8 @@ dip_status InitDemand( imp_image_handle *ii )
     LastDmndSize = d.max_size;
     LastDemand = DCAlloc( _demand_size( d.max_size ) );
     if( LastDemand == NULL ) {
-        DCStatus( DS_ERR|DS_NO_MEM );
-        return( DS_ERR|DS_NO_MEM );
+        DCStatus( DS_ERR | DS_NO_MEM );
+        return( DS_ERR | DS_NO_MEM );
     }
     LastDemand->link = NULL;
     LastDemand->owner = NULL;
@@ -186,7 +185,7 @@ void FiniDemand( void )
     TimeStamp = 0;
 }
 
-static walk_result WlkClear( imp_image_handle *ii, imp_mod_handle im, void *d )
+static walk_result WlkClear( imp_image_handle *iih, imp_mod_handle imh, void *d )
 {
     demand_kind         dk;
     mod_dbg_info        *mp;
@@ -197,8 +196,8 @@ static walk_result WlkClear( imp_image_handle *ii, imp_mod_handle im, void *d )
 
     /* unused parameters */ (void)d;
 
-    mp = ModPointer( ii, im );
-    sect = FindInfo( ii, im );
+    mp = ModPointer( iih, imh );
+    sect = FindInfo( iih, imh );
     for( dk = 0; dk < MAX_DMND; ++dk ) {
         for( entry = mp->di[dk].u.entries; entry-- > 0; ) {
             real_entry = mp->di[dk].info_off + entry;
@@ -211,9 +210,9 @@ static walk_result WlkClear( imp_image_handle *ii, imp_mod_handle im, void *d )
     return( WR_CONTINUE );
 }
 
-void InfoClear( imp_image_handle *ii )
+void InfoClear( imp_image_handle *iih )
 {
-    MyWalkModList( ii, WlkClear, NULL );
+    MyWalkModList( iih, WlkClear, NULL );
 }
 
 /*
@@ -237,7 +236,7 @@ void InfoUnlock( void )
  * InfoLoad -- load demand info
  */
 
-void *InfoLoad( imp_image_handle *ii, imp_mod_handle im, demand_kind dk,
+void *InfoLoad( imp_image_handle *iih, imp_mod_handle imh, demand_kind dk,
                 word entry, void (*clear)(void *, void *) )
 {
     demand_ctrl         *section;
@@ -255,11 +254,11 @@ void *InfoLoad( imp_image_handle *ii, imp_mod_handle im, demand_kind dk,
             section->time_stamp = 0;
         }
     }
-    info = ModPointer( ii, im )->di + dk;
+    info = ModPointer( iih, imh )->di + dk;
     if( entry >= info->u.entries )
         return( NULL );
     real_entry = info->info_off + entry;
-    sect = FindInfo( ii, im );
+    sect = FindInfo( iih, imh );
     lnk = &GET_LINK( sect, real_entry );
     if( IS_RESIDENT( *lnk ) ) {
         section = MK_DMND_PTR( *lnk );
@@ -282,7 +281,7 @@ void *InfoLoad( imp_image_handle *ii, imp_mod_handle im, demand_kind dk,
             }
         }
         tmpoff = (unsigned long)MK_DMND_OFFSET( *lnk );
-        if( InfoRead( ii->sym_fp, tmpoff, size, section->buff ) != DS_OK ) {
+        if( InfoRead( iih->sym_fp, tmpoff, size, section->buff ) != DS_OK ) {
             if( section != LastDemand )
                 DCFree( section );
             return( NULL );
