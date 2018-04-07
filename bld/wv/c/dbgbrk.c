@@ -1478,7 +1478,7 @@ OVL_EXTERN brkp *SetPoint( memory_expr def_seg, mad_type_handle mth )
             NewCurrRadix( old_radix );
             ReqComma();
             break;
-            /* fall thru */
+            /* fall through */
         default:
             Error( ERR_LOC, LIT_ENG( ERR_BAD_OPTION ), GetCmdName( CMD_BREAK ) );
             break;
@@ -1593,9 +1593,9 @@ bool BreakWrite( address addr, mad_type_handle mth, const char *comment )
 
 typedef struct tmp_break_struct
 {
-    address     addr;
-    int         size;
-    const char  *comment;
+    address         addr;
+    dig_type_size   size;
+    const char      *comment;
 } tmp_break_struct;
 
 OVL_EXTERN void BreakOnAddress( void *_s )
@@ -1604,18 +1604,17 @@ OVL_EXTERN void BreakOnAddress( void *_s )
     tmp_break_struct *s = _s;
 
     if( IS_NIL_ADDR( s->addr )
-     || !BreakWrite( s->addr,
-                    FindMADTypeHandle( MAS_MEMORY|MTK_INTEGER, s->size ),
-                     s->comment ) ) {
+     || !BreakWrite( s->addr, FindMADTypeHandle( MAS_MEMORY|MTK_INTEGER, s->size ), s->comment ) ) {
         Error( ERR_NONE, LIT_ENG( ERR_NOT_WATCH_SIZE ) );
     }
 }
 
 
-bool BreakOnRawMemory( address addr, const char *comment, int size )
-/******************************************************************/
+bool BreakOnRawMemory( address addr, const char *comment, dig_type_size size )
+/****************************************************************************/
 {
     tmp_break_struct s;
+
     s.addr = addr;
     s.comment = comment;
     s.size = size;
@@ -1625,13 +1624,13 @@ bool BreakOnRawMemory( address addr, const char *comment, int size )
 void BreakOnExprSP( const char *comment )
 {
     address             addr;
-    dip_type_info       tinfo;
+    dig_type_info       ti;
     tmp_break_struct    s;
 
     LValue( ExprSP );
-    tinfo.size = ExprSP->info.size;
-    if( !( ExprSP->flags & SF_LOCATION ) ) {
-        tinfo.size = DefaultSize( DK_INT );
+    ti.size = ExprSP->ti.size;
+    if( (ExprSP->flags & SF_LOCATION) == 0 ) {
+        ti.size = DefaultSize( DK_INT );
     }
     switch( WndGetExprSPInspectType( &addr ) ) {
     case INSP_CODE:
@@ -1640,7 +1639,7 @@ void BreakOnExprSP( const char *comment )
     case INSP_DATA:
     case INSP_RAW_DATA:
         s.addr = addr;
-        s.size = tinfo.size;
+        s.size = ti.size;
         s.comment = comment;
         BreakOnAddress( &s );
         break;

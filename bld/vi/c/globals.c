@@ -52,14 +52,6 @@ const char _NEAR    * _NEAR BoolStr[] = {
     (const char _NEAR *)"TRUE"
 };
 
-/* edit options */
-const char _NEAR * _NEAR EditOpts[] = {
-    (const char _NEAR *)"<F1> Go To",
-    (const char _NEAR *)"<F2> Edit",
-    (const char _NEAR *)"<F3> Get All"
-};
-int NumEditOpts = sizeof( EditOpts ) / sizeof( EditOpts[0] );
-
 /* event data */
 event _NEAR EventList[] = {
     #define vi_pick( enum, modeless, insert, command, nm_bits, bits ) \
@@ -67,6 +59,15 @@ event _NEAR EventList[] = {
     #include "events.h"
     #undef vi_pick
 };
+
+#ifndef __WIN__
+const vi_key    opts_evlist[] = {
+    VI_KEY( F1 ),
+    VI_KEY( F2 ),
+    VI_KEY( F3 ),
+    VI_KEY( DUMMY )
+};
+#endif
 
 /* mouse data */
 #if !defined( __UNIX__ )
@@ -124,12 +125,18 @@ key_map         *InputKeyMaps;
 /*
  * savebuf data
  */
-vi_key          _NEAR SavebufBound[MAX_SAVEBUFS] =
-                        { VI_KEY( CTRL_F1 ), VI_KEY( CTRL_F2 ),
-                          VI_KEY( CTRL_F3 ), VI_KEY( CTRL_F4 ),
-                          VI_KEY( CTRL_F5 ), VI_KEY( CTRL_F6 ),
-                          VI_KEY( CTRL_F7 ), VI_KEY( CTRL_F8 ),
-                          VI_KEY( CTRL_F9 ) };
+vi_key          _NEAR SavebufBound[MAX_SAVEBUFS] = {
+    VI_KEY( CTRL_F1 ),
+    VI_KEY( CTRL_F2 ),
+    VI_KEY( CTRL_F3 ),
+    VI_KEY( CTRL_F4 ),
+    VI_KEY( CTRL_F5 ),
+    VI_KEY( CTRL_F6 ),
+    VI_KEY( CTRL_F7 ),
+    VI_KEY( CTRL_F8 ),
+    VI_KEY( CTRL_F9 )
+};
+
 int             CurrentSavebuf = 0;     /* this is 0 based */
 char            LastSavebuf;    /* this is 1 based - users see it */
 savebuf         _NEAR Savebufs[MAX_SAVEBUFS];

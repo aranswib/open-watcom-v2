@@ -394,9 +394,8 @@ static unsigned Demangle( char *name, unsigned len, ji_ptr sig_ptr )
     return( len );
 }
 
-size_t DIPIMPENTRY( SymName )( imp_image_handle *iih,
-                    imp_sym_handle *ish, location_context *lc,
-                    symbol_name sn, char *buff, size_t buff_size )
+size_t DIPIMPENTRY( SymName )( imp_image_handle *iih, imp_sym_handle *ish,
+    location_context *lc, symbol_name_type snt, char *buff, size_t buff_size )
 {
     size_t      len;
     ji_ptr      sig;
@@ -404,7 +403,7 @@ size_t DIPIMPENTRY( SymName )( imp_image_handle *iih,
     len = GetName( iih, ish );
     switch( ish->kind ) {
     case JS_METHOD:
-        if( sn == SN_DEMANGLED ) {
+        if( snt == SNT_DEMANGLED ) {
             sig = GetSignature( iih, ish );
             if( sig != 0 ) {
                 len = Demangle( NameBuff, len, sig );
@@ -626,7 +625,7 @@ dip_status DIPIMPENTRY( SymParmLocation )( imp_image_handle *iih,
 }
 
 dip_status DIPIMPENTRY( SymObjType )( imp_image_handle *iih,
-                    imp_sym_handle *ish, imp_type_handle *ith, dip_type_info *ti )
+                    imp_sym_handle *ish, imp_type_handle *ith, dig_type_info *ti )
 {
     struct methodblock  method;
     dip_status          ds;
@@ -641,13 +640,15 @@ dip_status DIPIMPENTRY( SymObjType )( imp_image_handle *iih,
     if( ti != NULL ) {
         if( method.fb.access & ACC_STATIC ) {
             ti->kind = TK_NONE;
+            ti->size = 0;
         } else {
             ti->kind = TK_POINTER;
             ti->size = sizeof( ji_ptr );
         }
+        ti->modifier = TM_NONE;
+        ti->deref = false;
     }
-    ith->sig = GetPointer( GetPointer( (ji_ptr)method.fb.clazz )
-                                + offsetof( ClassClass, name ) );
+    ith->sig = GetPointer( GetPointer( (ji_ptr)method.fb.clazz ) + offsetof( ClassClass, name ) );
     ith->kind = JT_RAWNAME;
     return( DS_FAIL );
 }

@@ -67,7 +67,7 @@ imp_mod_handle DIPIMPENTRY( TypeMod )( imp_image_handle *iih, imp_type_handle *i
 }
 
 dip_status DIPIMPENTRY( TypeInfo )( imp_image_handle *iih,
-                imp_type_handle *ith, location_context *lc, dip_type_info *ti )
+                imp_type_handle *ith, location_context *lc, dig_type_info *ti )
 {
     //TODO:
     /*
@@ -76,8 +76,9 @@ dip_status DIPIMPENTRY( TypeInfo )( imp_image_handle *iih,
         the size of the type (variable dimensioned arrays and the like).
     */
     ti->kind = TK_NONE;
-    ti->modifier = TM_NONE;
     ti->size = 0;
+    ti->modifier = TM_NONE;
+    ti->deref = false;
     return( DS_FAIL );
 }
 

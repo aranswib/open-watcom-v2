@@ -502,7 +502,7 @@ static const char *FindAName( struct name_state *state, const char *p,
     int         (*comp)(void const*,void const*,size_t);
     unsigned    index;
     unsigned    i;
-    unsigned    type;
+    symbol_type type;
 
     if( li->case_sensitive ) {
         comp = memcmp;
@@ -736,7 +736,7 @@ done:
     return( WR_CONTINUE );
 }
 
-static void ScalarInfo( unsigned info, dip_type_info *ti )
+static void ScalarInfo( unsigned info, dig_type_info *ti )
 {
     ti->size = (info & SCLR_LEN_MASK) + 1;
     switch( info & SCLR_CLASS_MASK ) {
@@ -762,7 +762,7 @@ static void ScalarInfo( unsigned info, dip_type_info *ti )
 
 
 static dip_status GetTypeInfo(imp_image_handle *iih, imp_type_handle *ith,
-                    location_context *lc, dip_type_info *ti, unsigned *ndims )
+                    location_context *lc, dig_type_info *ti, unsigned *ndims )
 {
     const char          *p;
     byte                subkind;
@@ -782,8 +782,9 @@ static dip_status GetTypeInfo(imp_image_handle *iih, imp_type_handle *ith,
 
     PushLoad( &typeld );
     ti->kind = TK_NONE;
-    ti->modifier = TM_NONE;
     ti->size = 0;
+    ti->modifier = TM_NONE;
+    ti->deref = false;
     if( ith->f.s.gbl ) {
         ti->kind = GblTypeClassify( ith->t.offset );
     } else if( ith->f.s.sclr ) {
@@ -820,9 +821,10 @@ static dip_status GetTypeInfo(imp_image_handle *iih, imp_type_handle *ith,
             ith->f.s.col_major = save_major;
             if( ndims != NULL )
                 ++*ndims;
+            ti->kind = TK_ARRAY;
             ti->size *= info.num_elts;
             ti->modifier = TM_NONE;
-            ti->kind = TK_ARRAY;
+            ti->deref = false;
             Type->start = NULL;
             break;
         case SUBRANGE_TYPE:
@@ -831,16 +833,40 @@ static dip_status GetTypeInfo(imp_image_handle *iih, imp_type_handle *ith,
             break;
         case POINTER_TYPE:
             {
-                static const char PSize[] = {2,4,4,2,4,4,4,6,4,6};
-                #define N TM_NEAR
-                #define F TM_FAR
-                #define H TM_HUGE
-                #define D TM_FLAG_DEREF
-                static const char PMods[] = {N,F,H,N|D,F|D,H|D,N,F,N|D,F|D};
+#define POINTER_INFO() \
+    pick( 2, TM_NEAR,   false ) \
+    pick( 4, TM_FAR,    false ) \
+    pick( 4, TM_HUGE,   false ) \
+    pick( 2, TM_NEAR,   true ) \
+    pick( 4, TM_FAR,    true ) \
+    pick( 4, TM_HUGE,   true ) \
+    pick( 4, TM_NEAR,   false ) \
+    pick( 6, TM_FAR,    false ) \
+    pick( 4, TM_NEAR,   true ) \
+    pick( 6, TM_FAR,    true )
 
+                static const unsigned char PSize[] = {
+                    #define pick(s,m,d)     s,
+                    POINTER_INFO()
+                    #undef pick
+                };
+                static const type_modifier PMods[] = {
+                    #define pick(s,m,d)     m,
+                    POINTER_INFO()
+                    #undef pick
+                };
+                static const bool PDeref[] = {
+                    #define pick(s,m,d)     d,
+                    POINTER_INFO()
+                    #undef pick
+                };
+
+                ti->kind = TK_POINTER;
                 ti->size = PSize[subkind];
                 ti->modifier = PMods[subkind];
-                ti->kind = TK_POINTER;
+                if( PDeref[subkind] ) {
+                    ti->deref = true;
+                }
             }
             break;
         case ENUM_TYPE:
@@ -943,7 +969,7 @@ static dip_status GetTypeInfo(imp_image_handle *iih, imp_type_handle *ith,
 }
 
 dip_status DIPIMPENTRY( TypeInfo )(imp_image_handle *iih, imp_type_handle *ith,
-                        location_context *lc, dip_type_info *ti )
+                        location_context *lc, dig_type_info *ti )
 {
     return( GetTypeInfo( iih, ith, lc, ti, NULL ) );
 }
@@ -1005,7 +1031,7 @@ dip_status DIPIMPENTRY( TypeArrayInfo )(imp_image_handle *iih, imp_type_handle *
     address             addr;
     byte                is_32;
     long                hi = 0;
-    dip_type_info       info;
+    dig_type_info       ti;
     unsigned            count;
     dip_status          ret;
     typeinfo            typeld;
@@ -1087,10 +1113,10 @@ dip_status DIPIMPENTRY( TypeArrayInfo )(imp_image_handle *iih, imp_type_handle *
     PopLoad();
     ImpInterface.TypeBase( iih, ith, &tmp_ith, NULL, NULL );
     ai->num_dims = 1;
-    ret = GetTypeInfo( iih, &tmp_ith, lc, &info, &ai->num_dims );
+    ret = GetTypeInfo( iih, &tmp_ith, lc, &ti, &ai->num_dims );
     if( ret != DS_OK )
         return( ret );
-    ai->stride = info.size;
+    ai->stride = ti.size;
     ai->column_major = 0;
     if( index_ith != NULL ) {
         if( index_idx != 0 ) {

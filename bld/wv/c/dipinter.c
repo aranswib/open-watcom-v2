@@ -94,7 +94,7 @@ imp_sym_handle *DIPCLIENTRY( SymCreate )( imp_image_handle *iih, void *d )
     return( DoSymCreate( iih, (sym_list **)d ) );
 }
 
-void MadTypeToDipTypeInfo( mad_type_handle mth, dip_type_info *ti )
+void MadTypeToDipTypeInfo( mad_type_handle mth, dig_type_info *ti )
 {
     mad_type_info       mti;
 
@@ -363,7 +363,7 @@ OVL_EXTERN dip_status WVIMPENTRY( ModInfo )( imp_image_handle *iih, imp_mod_hand
 }
 
 OVL_EXTERN dip_status WVIMPENTRY( ModDefault )( imp_image_handle *iih, imp_mod_handle imh,
-                        default_kind dk, dip_type_info *ti )
+                        default_kind dk, dig_type_info *ti )
 {
     /* unused parameters */ (void)iih; (void)imh; (void)dk; (void)ti;
 
@@ -402,16 +402,14 @@ OVL_EXTERN imp_mod_handle WVIMPENTRY( TypeMod )( imp_image_handle *iih, imp_type
 }
 
 OVL_EXTERN dip_status WVIMPENTRY( TypeInfo )( imp_image_handle *iih, imp_type_handle *ith,
-                        location_context *lc, dip_type_info *ti )
+                        location_context *lc, dig_type_info *ti )
 {
     /* unused parameters */ (void)iih; (void)lc;
 
     if( ith->ri != NULL ) {
         MadTypeToDipTypeInfo( ith->ri->mth, ti );
     } else {
-        ti->kind = ith->t.k;
-        ti->modifier = ith->t.m;
-        ti->size = ith->t.s;
+        *ti = ith->ti;
     }
     return( DS_OK );
 }
@@ -494,14 +492,14 @@ OVL_EXTERN imp_mod_handle WVIMPENTRY( SymMod )( imp_image_handle *iih, imp_sym_h
 }
 
 OVL_EXTERN size_t WVIMPENTRY( SymName )( imp_image_handle *iih, imp_sym_handle *ish,
-                        location_context *lc, symbol_name sn, char *name, size_t max )
+    location_context *lc, symbol_name_type snt, char *name, size_t max )
 {
     size_t      len;
     char  const *p;
 
     /* unused parameters */ (void)iih; (void)lc;
 
-    if( sn == SN_DEMANGLED )
+    if( snt == SNT_DEMANGLED )
         return( 0 );
     if( ish->ri != NULL ) {
         p   = ish->ri->name;
@@ -525,10 +523,10 @@ OVL_EXTERN dip_status WVIMPENTRY( SymType )( imp_image_handle *iih, imp_sym_hand
     /* unused parameters */ (void)iih;
 
     if( ish->ri != NULL ) {
-        ith->t.k = TK_NONE;
+        ith->ti.kind = TK_NONE;
         ith->ri = ish->ri;
     } else {
-        ith->t  = ish->p->info.t;
+        ith->ti = ish->p->info.ti;
         ith->ri = NULL;
     }
     return( DS_OK );
@@ -548,7 +546,7 @@ OVL_EXTERN dip_status WVIMPENTRY( SymLocation )( imp_image_handle *iih, imp_sym_
     }
     switch( se->info.sc ) {
     case SC_USER:
-        if( se->info.t.k == TK_STRING ) {
+        if( se->info.ti.kind == TK_STRING ) {
             d = se->info.v.string;
         } else {
             d = (void *)&se->info.v;
@@ -607,7 +605,7 @@ OVL_EXTERN dip_status WVIMPENTRY( SymParmLocation )( imp_image_handle *iih, imp_
 }
 
 OVL_EXTERN dip_status WVIMPENTRY( SymObjType )( imp_image_handle *iih, imp_sym_handle *proc_ish,
-                    imp_type_handle *ith, dip_type_info *ti )
+                    imp_type_handle *ith, dig_type_info *ti )
 {
     /* unused parameters */ (void)iih; (void)proc_ish; (void)ith; (void)ti;
 

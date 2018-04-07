@@ -62,7 +62,7 @@ static int              Line_postfix=LPOSTFIX_NONE;
 // Some characters we use for graphics
 #define CHR_BULLET              0x07
 #define BOX_VBAR                0xB3
-#define BOX_HBAR                0xC4
+#define BOX_HBAR                CH_BOX_HBAR
 #define BOX_CORNER_TOP_LEFT     0xDA
 #define BOX_CORNER_TOP_RIGHT    0xBF
 #define BOX_CORNER_BOTOM_LEFT   0xC0
@@ -655,10 +655,7 @@ int ib_trans_line(
 
     // indent properly if the first char is not white-space
     if( ch != '\0' && ch != ' ' && ch != '\t') {
-        ctr = ( ch == CH_LIST_ITEM && !Box_Mode &&
-                        Curr_list->type != LIST_TYPE_SIMPLE )
-                ? Text_Indent
-                : 0;
+        ctr = ( ch == CH_LIST_ITEM && !Box_Mode && Curr_list->type != LIST_TYPE_SIMPLE ) ? Text_Indent : 0;
         while( ctr < Curr_indent ) {
             ctr++;
             trans_add_char_wrap( ' ', section, &alloc_size);
@@ -673,7 +670,7 @@ int ib_trans_line(
     Blank_line = true;
     for( ;; ) {
         ch = *(unsigned char *)ptr;
-        if( ch != '\0' && ( ch != ' ' || ch != '\t' ) ) {
+        if( ch != '\0' && ch != ' ' && ch != '\t' ) {
             Blank_line = false;
         }
         if( ch == '\0' ) {

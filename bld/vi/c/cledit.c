@@ -343,13 +343,12 @@ vi_rc EditFile( const char *name, bool dammit )
 } /* EditFile */
 
 #ifndef __WIN__
+
 static const char _NEAR *_NEAR fileOpts[] =  {
     (const char _NEAR *)"<F1> Go To",
     (const char _NEAR *)"<F2> Quit",
     (const char _NEAR *)"<F3> Save & Quit"
 };
-
-#define NUM_OPTS sizeof( fileOpts ) / sizeof( fileOpts[0] )
 
 /*
  * EditFileFromList - edit from file in current active list
@@ -361,7 +360,6 @@ vi_rc EditFileFromList( void )
     bool        repeat = true;
     info        *cinfo;
     char        **list, modchar;
-    vi_key      evlist[4] = { VI_KEY( F1 ), VI_KEY( F2 ), VI_KEY( F3 ), VI_KEY( DUMMY ) };
     bool        show_lineno;
     window_info wi;
     selectitem  si;
@@ -373,7 +371,7 @@ vi_rc EditFileFromList( void )
     memcpy( &wi, &extraw_info, sizeof( window_info ) );
     wi.area.x1 = 2;
     wi.area.x2 = 19;
-    rc = DisplayExtraInfo( &wi, &wid, fileOpts, NUM_OPTS );
+    rc = DisplayExtraInfo( &wi, &wid, fileOpts, sizeof( fileOpts ) / sizeof( fileOpts[0] ) );
     if( rc != ERR_NO_ERR ) {
         return( rc );
     }
@@ -423,7 +421,7 @@ vi_rc EditFileFromList( void )
         si.list = list;
         si.maxlist = j;
         si.num = n;
-        si.retevents = evlist;
+        si.retevents = opts_evlist;
         si.event = VI_KEY( DUMMY );
         si.show_lineno = show_lineno;
         si.cln = n + 1;

@@ -135,14 +135,14 @@ static bool GetStrLen( imp_image_handle *iih,
 /* Walk array dims     */
 /***********************/
 typedef struct {
-    int_32           low;
-    uint_32          count;
-    imp_image_handle *iih;
-    imp_type_handle  *ith;
-    location_context *lc;
-    uint_32          num_elts;
-    int              dim;
-    bool             cont;
+    dig_type_bound      low;
+    dig_type_size       count;
+    imp_image_handle    *iih;
+    imp_type_handle     *ith;
+    location_context    *lc;
+    uint_32             num_elts;
+    int                 dim;
+    bool                cont;
 } array_wlk_wlk;
 
 static bool ArraySubRange( drmem_hdl tsub, int index, void *df );
@@ -372,14 +372,13 @@ imp_mod_handle DIPIMPENTRY( TypeMod )( imp_image_handle *iih, imp_type_handle *i
     return( ith->imh );
 }
 
-void MapImpTypeInfo( dr_typeinfo *typeinfo, dip_type_info *ti )
+void MapImpTypeInfo( dr_typeinfo *typeinfo, dig_type_info *ti )
 {
     /*
         Map dwarf info to dip imp
     */
-    type_kind   kind = TK_NONE;
+    type_kind   kind;
 
-    ti->modifier = TM_NONE;
     switch( typeinfo->kind ) {
     case DR_TYPEK_NONE:
         kind = TK_NONE;
@@ -434,10 +433,14 @@ void MapImpTypeInfo( dr_typeinfo *typeinfo, dip_type_info *ti )
     case DR_TYPEK_FUNCTION:
         kind = TK_FUNCTION;
         break;
+    default:
+        kind = TK_NONE;
+        break;
     }
     ti->kind = kind;
     ti->size = typeinfo->size;
     ti->modifier = TM_NONE;
+    ti->deref = false;
     switch( typeinfo->mclass ) {
     case DR_MOD_BASE:
         if( (ti->kind == TK_INTEGER) || (ti->kind == TK_CHAR)) {
@@ -466,14 +469,14 @@ void MapImpTypeInfo( dr_typeinfo *typeinfo, dip_type_info *ti )
             break;
         }
         if( typeinfo->kind == DR_TYPEK_REF ) {
-            ti->modifier |= TM_FLAG_DEREF;
+            ti->deref = true;
         }
         break;
     }
 }
 
 dip_status DIPIMPENTRY( TypeInfo )( imp_image_handle *iih,
-                imp_type_handle *ith, location_context *lc, dip_type_info *ti )
+                imp_type_handle *ith, location_context *lc, dig_type_info *ti )
 {
     /*
         Fill in the type information for the type handle. The location
@@ -551,7 +554,7 @@ static bool AEnum( drmem_hdl var, int index, void *_de )
     }
     if( value < de->low ) {
         de->low = value;
-    }else if( value > de->high ) {
+    } else if( value > de->high ) {
         de->high = value;
     }
     return( true );

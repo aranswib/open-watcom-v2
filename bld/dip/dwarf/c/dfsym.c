@@ -55,30 +55,29 @@ imp_mod_handle DIPIMPENTRY( SymMod )( imp_image_handle *iih, imp_sym_handle *ish
 }
 
 
-size_t DIPIMPENTRY( SymName )( imp_image_handle *iih,
-                    imp_sym_handle *ish, location_context *lc,
-                    symbol_name sn, char *buff, size_t buff_size )
-/****************************************************************/
+size_t DIPIMPENTRY( SymName )( imp_image_handle *iih, imp_sym_handle *ish,
+    location_context *lc, symbol_name_type snt, char *buff, size_t buff_size )
+/****************************************************************************/
 {
     /*
-        SN_SOURCE:
+        SNT_SOURCE:
                 The name of the symbol as it appears in the source code.
 
-        SN_OBJECT:
+        SNT_OBJECT:
                 The name of the symbol as it appeared to the linker.
 
-        SN_DEMANGLED:
+        SNT_DEMANGLED:
                 C++ names, with full typing (essentially it looks like
                 a function prototype). If the symbol is not a C++ symbol
                 (not mangled), return zero for the length.
 
-        SN_EXPRESSION:
+        SNT_EXPRESSION:
                 Return whatever character string is necessary such that
                 when scanned in an expression, the symbol handle can
                 be reconstructed.
 
-        SS_BLOCK:
-                Not possible. Will never happen.
+        SNT_SCOPED:
+                The scoped name of the symbol as it appears in the source code.
     */
     char        *name;
     size_t      demangled_len;
@@ -88,9 +87,9 @@ size_t DIPIMPENTRY( SymName )( imp_image_handle *iih,
 
 //TODO: what's lc for?
     DRSetDebug( iih->dwarf->handle ); /* must do at each call into dwarf */
-    switch( sn ) {
-    case SN_SOURCE:
-    case SN_OBJECT:
+    switch( snt ) {
+    case SNT_SOURCE:
+    case SNT_OBJECT:
         len = DRGetNameBuff( ish->sym, buff, buff_size );
         if( len == 0 ) {
             DCStatus( DS_FAIL );
@@ -101,7 +100,7 @@ size_t DIPIMPENTRY( SymName )( imp_image_handle *iih,
             buff[buff_size - 1] = '\0';
         }
         break;
-    case SN_SCOPED:
+    case SNT_SCOPED:
         len =  DRGetScopedNameBuff( ish->sym, buff, buff_size );
         if( len == 0 ) {
             DCStatus( DS_FAIL );
@@ -112,7 +111,7 @@ size_t DIPIMPENTRY( SymName )( imp_image_handle *iih,
            buff[buff_size - 1] = '\0';
         }
         break;
-    case SN_DEMANGLED:
+    case SNT_DEMANGLED:
         if( IMH2MODI( iih, ish->imh )->lang == DR_LANG_CPLUSPLUS ) {
             name = DRDecoratedName( ish->sym, 0 );
             if( name == NULL ) {
@@ -140,7 +139,7 @@ size_t DIPIMPENTRY( SymName )( imp_image_handle *iih,
             }
         }
         break;
-    case SN_EXPRESSION:
+    case SNT_EXPRESSION:
         return( 0 );
     }
     return( len );
@@ -685,12 +684,12 @@ static drmem_hdl GetThis( imp_image_handle *iih, drmem_hdl proc )
 
 
 dip_status DIPIMPENTRY( SymObjType )( imp_image_handle *iih,
-                    imp_sym_handle *ish, imp_type_handle *ith, dip_type_info *ti )
+                    imp_sym_handle *ish, imp_type_handle *ith, dig_type_info *ti )
 /********************************************************************************/
 {
     /* Fill in the imp_type_handle with the type of the 'this' object
      * for a C++ member function.
-     * If 'ti' is not NULL, fill in the dip_type_info with the kind of 'this'
+     * If 'ti' is not NULL, fill in the dig_type_info with the kind of 'this'
      * pointer that the routine is expecting (near/far, 16/32). If the
      * routine is a static member, set ti->kind to TK_NONE.
      */
@@ -715,7 +714,12 @@ dip_status DIPIMPENTRY( SymObjType )( imp_image_handle *iih,
             ret = DS_FAIL;
         }
     } else {
-        ti->kind = TK_NONE;
+        if( ti != NULL ) {
+            ti->kind = TK_NONE;
+            ti->size = 0;
+            ti->modifier = TM_NONE;
+            ti->deref = false;
+        }
         ret = DS_FAIL;
     }
     return( ret );

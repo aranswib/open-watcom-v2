@@ -121,16 +121,12 @@ static const char *GetTypeKind(type_kind kind)
  * @param   modifier    The type modifier.
  * @param   kind        The type kind (needed to understand the modifier).
  */
-static const char *GetTypeModifier(type_modifier modifier, type_kind kind)
+static const char *GetTypeModifier( dig_type_info *ti )
 {
-    if( modifier == TM_NONE ) {
-        return( "TM_NONE" );
+    if( ti->modifier == TM_NONE ) {
+        return( ( ti->deref ) ? "TM_NONE|TM_FLAG_DEREF" : "TM_NONE" );
     }
-    if( modifier == TM_NONE|TM_FLAG_DEREF ) {
-        return( "TM_NONE|TM_FLAG_DEREF" );
-    }
-
-    switch( kind ) {
+    switch( ti->kind ) {
     case TK_NONE:
     case TK_DATA:
     case TK_CODE:
@@ -144,54 +140,35 @@ static const char *GetTypeModifier(type_modifier modifier, type_kind kind)
     case TK_NAMESPACE:
     default:
         return( "!unknown modifier+kind!" );
-
     case TK_ADDRESS: //??
     case TK_POINTER:
-        switch( modifier ) {
-        case TM_NEAR:                       return( "TM_NEAR" );
-        case TM_NEAR|TM_FLAG_DEREF:         return( "TM_NEAR|TM_FLAG_DEREF" );
-        case TM_FAR:                        return( "TM_FAR" );
-        case TM_FAR|TM_FLAG_DEREF:          return( "TM_FAR|TM_FLAG_DEREF" );
-        case TM_HUGE:                       return( "TM_HUGE" );
-        case TM_HUGE|TM_FLAG_DEREF:         return( "TM_HUGE|TM_FLAG_DEREF" );
-        default:
-            return( "!unknown pointer modifier!" );
+        switch( ti->modifier ) {
+        case TM_NEAR:       return( ( ti->deref ) ? "TM_NEAR|TM_FLAG_DEREF" : "TM_NEAR" );
+        case TM_FAR:        return( ( ti->deref ) ? "TM_FAR|TM_FLAG_DEREF" : "TM_FAR" );
+        case TM_HUGE:       return( ( ti->deref ) ? "TM_HUGE|TM_FLAG_DEREF" : "TM_HUGE" );
         }
-
+        return( "!unknown pointer modifier!" );
     case TK_INTEGER:
-        switch( modifier ) {
-        case TM_SIGNED:                     return( "TM_SIGNED" );
-        case TM_SIGNED|TM_FLAG_DEREF:       return( "TM_SIGNED|TM_FLAG_DEREF" );
-        case TM_UNSIGNED:                   return( "TM_UNSIGNED" );
-        case TM_UNSIGNED|TM_FLAG_DEREF:     return( "TM_UNSIGNED|TM_FLAG_DEREF" );
-        default:
-            return( "!unknown integer modifier!" );
+        switch( ti->modifier ) {
+        case TM_SIGNED:     return( ( ti->deref ) ? "TM_SIGNED|TM_FLAG_DEREF" : "TM_SIGNED" );
+        case TM_UNSIGNED:   return( ( ti->deref ) ? "TM_UNSIGNED|TM_FLAG_DEREF" : "TM_UNSIGNED" );
         }
-
+        return( "!unknown integer modifier!" );
     case TK_REAL:
     case TK_COMPLEX: //??
-        switch( modifier ) {
-        case TM_IEEE:                       return( "TM_IEEE" );
-        case TM_IEEE|TM_FLAG_DEREF:         return( "TM_IEEE|TM_FLAG_DEREF" );
-        case TM_VAX1:                       return( "TM_VAX1" );
-        case TM_VAX1|TM_FLAG_DEREF:         return( "TM_VAX1|TM_FLAG_DEREF" );
-        case TM_VAX2:                       return( "TM_VAX2" );
-        case TM_VAX2|TM_FLAG_DEREF:         return( "TM_VAX2|TM_FLAG_DEREF" );
-        default:
-            return( "!unknown floating point modifier!" );
+        switch( ti->modifier ) {
+        case TM_IEEE:       return( ( ti->deref ) ? "TM_IEEE|TM_FLAG_DEREF" : "TM_IEEE" );
+        case TM_VAX1:       return( ( ti->deref ) ? "TM_VAX1|TM_FLAG_DEREF" : "TM_VAX1" );
+        case TM_VAX2:       return( ( ti->deref ) ? "TM_VAX2|TM_FLAG_DEREF" : "TM_VAX2" );
         }
-
+        return( "!unknown floating point modifier!" );
     case TK_STRING:
-        switch( modifier ) {
-        case TM_ASCII:                      return( "TM_ASCII" );
-        case TM_ASCII|TM_FLAG_DEREF:        return( "TM_ASCII|TM_FLAG_DEREF" );
-        case TM_EBCIDIC:                    return( "TM_EBCIDIC" );
-        case TM_EBCIDIC|TM_FLAG_DEREF:      return( "TM_EBCIDIC|TM_FLAG_DEREF" );
-        case TM_UNICODE:                    return( "TM_UNICODE" );
-        case TM_UNICODE|TM_FLAG_DEREF:      return( "TM_UNICODE|TM_FLAG_DEREF" );
-        default:
-            return( "!unknown string modifier!" );
+        switch( ti->modifier ) {
+        case TM_ASCII:      return( ( ti->deref ) ? "TM_ASCII|TM_FLAG_DEREF" : "TM_ASCII" );
+        case TM_EBCIDIC:    return( ( ti->deref ) ? "TM_EBCIDIC|TM_FLAG_DEREF" : "TM_EBCIDIC" );
+        case TM_UNICODE:    return( ( ti->deref ) ? "TM_UNICODE|TM_FLAG_DEREF" : "TM_UNICODE" );
         }
+        return( "!unknown string modifier!" );
     }
 }
 
@@ -221,11 +198,11 @@ static const char *GetTypeTag( symbol_type tag )
  * WalkSymList callback, the module pass.
  *
  * @returns WR_CONTINUE;
- * @param   info    Symbol walk info.
+ * @param   swi     Symbol walk info.
  * @param   sym     The Symbol.
  * @param   _idx    Pointer to the symbol index number.
  */
-static walk_result Sym2Callback( sym_walk_info info, sym_handle *sym, void *_idx )
+static walk_result Sym2Callback( sym_walk_info swi, sym_handle *sym, void *_idx )
 {
     int             *idx = (int *)_idx;
     char            buff[2048];
@@ -290,31 +267,31 @@ static walk_result Sym2Callback( sym_walk_info info, sym_handle *sym, void *_idx
         ll.num = 0;
     }
 
-    /* info */
-    switch( info ) {
-        case SWI_SYMBOL:
-            printf( "SYMBOL    " );
-            break;
-        case SWI_INHERIT_START:
-            printf( "INH-STRT  " );
-            break;
-        case SWI_INHERIT_END:
-            printf( "INH-END   " );
-            break;
-        default:
-            printf( "%#d  ", info );
-            break;
+    /* swi */
+    switch( swi ) {
+    case SWI_SYMBOL:
+        printf( "SYMBOL    " );
+        break;
+    case SWI_INHERIT_START:
+        printf( "INH-STRT  " );
+        break;
+    case SWI_INHERIT_END:
+        printf( "INH-END   " );
+        break;
+    default:
+        printf( "%#d  ", swi );
+        break;
     }
 
     /* finally, the name. */
     /* try get the name */
     buff[0] = '\0';
-    len = DIPSymName( sym, NULL, SN_DEMANGLED, buff, sizeof( buff ) );
+    len = DIPSymName( sym, NULL, SNT_DEMANGLED, buff, sizeof( buff ) );
     if( len == 0 ) {
-        len = DIPSymName( sym, NULL, SN_OBJECT, buff, sizeof( buff ) );
+        len = DIPSymName( sym, NULL, SNT_OBJECT, buff, sizeof( buff ) );
     }
     if( len == 0 ) {
-        len = DIPSymName( sym, NULL, SN_SOURCE, buff, sizeof( buff ) );
+        len = DIPSymName( sym, NULL, SNT_SOURCE, buff, sizeof( buff ) );
     }
     if( len > 0 ) {
         printf( "%s\n", buff );
@@ -363,7 +340,7 @@ static walk_result Type2Callback( type_handle *th, void *_idx )
     char            buff[2048];
     unsigned        len;
     symbol_type     tag;
-    dip_type_info   tinfo;
+    dig_type_info   ti;
     dip_status      rc;
 
     printf( "%5d  ", ++*idx );
@@ -379,14 +356,14 @@ static walk_result Type2Callback( type_handle *th, void *_idx )
     }
 
     /* type info */
-    rc = DIPTypeInfo( th, NULL, &tinfo );
+    rc = DIPTypeInfo( th, NULL, &ti );
     if( rc == DS_OK ) {
-        printf( "size=%#06lx  kind=%2d %-12s  modifier=%#04x %s\n",
-                tinfo.size,
-                tinfo.kind, GetTypeKind( tinfo.kind ),
-                tinfo.modifier, GetTypeModifier( tinfo.modifier, tinfo.kind ) );
+        printf( "size=%#06lx  kind=%2d %-12s  modifier=%#04x deref=%d %s\n",
+                ti.size,
+                ti.kind, GetTypeKind( ti.kind ),
+                ti.modifier, ti.deref, GetTypeModifier( &ti ) );
 
-        switch( tinfo.kind ) {
+        switch( ti.kind ) {
         case TK_ARRAY: {
                 array_info ainfo;
                 rc = DIPTypeArrayInfo( th, NULL, &ainfo, NULL );
@@ -618,14 +595,14 @@ static walk_result Mod2Callback( mod_handle mh, void *_idx )
  * WalkSymList callback.
  *
  * @returns WR_CONTINUE;
- * @param   info    Symbol walk info.
+ * @param   swi     Symbol walk info.
  * @param   sym     The Symbol.
  * @param   _idx    Pointer to the symbol index number.
  */
-static walk_result SymCallback( sym_walk_info info, sym_handle *sym, void *_idx )
+static walk_result SymCallback( sym_walk_info swi, sym_handle *sym, void *_idx )
 {
 #if 1
-    return( Sym2Callback( info, sym, _idx ) );
+    return( Sym2Callback( swi, sym, _idx ) );
 #else
     int             *idx = (int *)_idx;
     char            buff[2048];
@@ -655,31 +632,31 @@ static walk_result SymCallback( sym_walk_info info, sym_handle *sym, void *_idx 
         ll.num = 0;
     }
 
-    /* info */
-    switch( info ) {
-        case SWI_SYMBOL:
-            printf("SYMBOL    ");
-            break;
-        case SWI_INHERIT_START:
-            printf("INH-STRT  ");
-            break;
-        case SWI_INHERIT_END:
-            printf("INH-END   ");
-            break;
-        default:
-            printf("%#d  ", info);
-            break;
+    /* swi */
+    switch( swi ) {
+    case SWI_SYMBOL:
+        printf("SYMBOL    ");
+        break;
+    case SWI_INHERIT_START:
+        printf("INH-STRT  ");
+        break;
+    case SWI_INHERIT_END:
+        printf("INH-END   ");
+        break;
+    default:
+        printf("%#d  ", swi);
+        break;
     }
 
     /* finally, the name. */
     /* try get the name */
     buff[0] = '\0';
-    len = DIPSymName( sym, NULL, SN_DEMANGLED, buff, sizeof( buff ) );
+    len = DIPSymName( sym, NULL, SNT_DEMANGLED, buff, sizeof( buff ) );
     if( len == 0 ) {
-        len = DIPSymName( sym, NULL, SN_OBJECT, buff, sizeof( buff ) );
+        len = DIPSymName( sym, NULL, SNT_OBJECT, buff, sizeof( buff ) );
     }
     if( len == 0 ) {
-        len = DIPSymName( sym, NULL, SN_SOURCE, buff, sizeof( buff ) );
+        len = DIPSymName( sym, NULL, SNT_SOURCE, buff, sizeof( buff ) );
     }
     if( len > 0 ) {
         printf( "%s\n", buff );

@@ -39,7 +39,6 @@
 #elif defined( __OS2__ )
 #include <os2.h>
 #endif
-#include "bool.h"
 #include "walloca.h"
 #include "dip.h"
 #include "dipimp.h"
@@ -823,7 +822,7 @@ dip_status DIPModHasInfo( mod_handle mh, handle_kind hk )
     return( ih->dip->ModInfo( IH2IIH( ih ), MH2IMH( mh ), hk ) );
 }
 
-dip_status DIPModDefault( mod_handle mh, default_kind dk, dip_type_info *ti )
+dip_status DIPModDefault( mod_handle mh, default_kind dk, dig_type_info *ti )
 {
     image_handle        *ih;
 
@@ -854,7 +853,7 @@ mod_handle DIPTypeMod( type_handle *th )
     return( MK_MH( ih->ii, ih->dip->TypeMod( IH2IIH( ih ), TH2ITH( th ) ) ) );
 }
 
-dip_status DIPTypeInfo( type_handle *th, location_context *lc, dip_type_info *ti )
+dip_status DIPTypeInfo( type_handle *th, location_context *lc, dig_type_info *ti )
 {
     image_handle        *ih;
 
@@ -878,6 +877,7 @@ dip_status DIPTypeInfo( type_handle *th, location_context *lc, dip_type_info *ti
             ti->size = 6;
             break;
         }
+        ti->deref = false;
         return( DS_OK );
     }
     ih = II2IH( th->ii );
@@ -1077,14 +1077,14 @@ mod_handle DIPSymMod( sym_handle *sh )
 }
 
 //NYI: needs to do something for expression names
-size_t DIPSymName( sym_handle *sh, location_context *lc, symbol_name sn, char *buff, size_t buff_size )
+size_t DIPSymName( sym_handle *sh, location_context *lc, symbol_name_type snt, char *buff, size_t buff_size )
 {
     image_handle        *ih;
 
     ih = II2IH( sh->ii );
     if( ih == NULL )
         return( 0 );
-    return( ih->dip->SymName( IH2IIH( ih ), SH2ISH( sh ), lc, sn, buff, buff_size ) );
+    return( ih->dip->SymName( IH2IIH( ih ), SH2ISH( sh ), lc, snt, buff, buff_size ) );
 }
 
 dip_status DIPSymType( sym_handle *sh, type_handle *th )
@@ -1148,7 +1148,7 @@ dip_status DIPSymParmLocation( sym_handle *sh, location_context *lc, location_li
     return( ih->dip->SymParmLocation( IH2IIH( ih ), SH2ISH( sh ), lc, ll, parm ) );
 }
 
-dip_status DIPSymObjType( sym_handle *sh, type_handle *th, dip_type_info *ti )
+dip_status DIPSymObjType( sym_handle *sh, type_handle *th, dig_type_info *ti )
 {
     image_handle        *ih;
 

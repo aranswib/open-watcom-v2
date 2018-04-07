@@ -899,7 +899,7 @@ static unsigned long CalcHash( const char *name, size_t len )
 typedef search_result   SEARCH_CREATOR( imp_image_handle *, s_all *, imp_sym_handle *, void * );
 
 static search_result TableSearchForName( imp_image_handle *iih,
-                int case_sense, const char *name, size_t name_len,
+                bool case_sense, const char *name, size_t name_len,
                 unsigned long hash, imp_sym_handle *ish,
                 SEARCH_CREATOR *create, void *d, unsigned tbl_type )
 {
@@ -1008,14 +1008,14 @@ dip_status SymFindMatchingSym( imp_image_handle *iih, const char *name, size_t n
 
     data.idx = idx;
     hash = CalcHash( name, name_len );
-    sr = TableSearchForName( iih, 1, name, name_len, hash, ish, MatchSym, &data, sstStaticSym );
+    sr = TableSearchForName( iih, true, name, name_len, hash, ish, MatchSym, &data, sstStaticSym );
     switch( sr ) {
     case SR_FAIL:
         return( DS_ERR | DS_FAIL );
     case SR_EXACT:
         return( DS_OK );
     }
-    sr = TableSearchForName( iih, 1, name, name_len, hash, ish, MatchSym, &data, sstGlobalSym );
+    sr = TableSearchForName( iih, true, name, name_len, hash, ish, MatchSym, &data, sstGlobalSym );
     switch( sr ) {
     case SR_FAIL:
         return( DS_ERR | DS_FAIL );
@@ -1210,7 +1210,7 @@ imp_mod_handle DIPIMPENTRY( SymMod )( imp_image_handle *iih, imp_sym_handle *ish
 }
 
 static size_t ImpSymName( imp_image_handle *iih, imp_sym_handle *ish, location_context *lc,
-                                            symbol_name sn, char *buff, size_t buff_size )
+                                            symbol_name_type snt, char *buff, size_t buff_size )
 {
     const char          *name;
     size_t              len;
@@ -1220,11 +1220,11 @@ static size_t ImpSymName( imp_image_handle *iih, imp_sym_handle *ish, location_c
     addr_off            dummy_off;
     search_result       sr;
 
-    switch( sn ) {
-    case SN_EXPRESSION:
+    switch( snt ) {
+    case SNT_EXPRESSION:
         return( 0 );
-    case SN_OBJECT:
-    case SN_DEMANGLED:
+    case SNT_OBJECT:
+    case SNT_DEMANGLED:
         ds = ImpSymLocation( iih, ish, lc, &ll );
         if( ds != DS_OK )
             break;
@@ -1238,16 +1238,16 @@ static size_t ImpSymName( imp_image_handle *iih, imp_sym_handle *ish, location_c
             break;
         if( SymGetName( iih, &global_ish, &name, &len, NULL ) != DS_OK )
             break;
-        if( sn == SN_OBJECT ) {
+        if( snt == SNT_OBJECT ) {
             return( NameCopy( buff, name, buff_size, len ) );
         }
         if( !__is_mangled( name, len ) )
             return( 0 );
         return( __demangle_l( name, len, buff, buff_size ) );
     }
-    if( sn == SN_DEMANGLED )
+    if( snt == SNT_DEMANGLED )
         return( 0 );
-    /* SN_SOURCE: */
+    /* SNT_SOURCE: */
     if( SymGetName( iih, ish, &name, &len, NULL ) != DS_OK )
         return( 0 );
     return( NameCopy( buff, name, buff_size, len ) );
@@ -1255,9 +1255,9 @@ static size_t ImpSymName( imp_image_handle *iih, imp_sym_handle *ish, location_c
 
 size_t DIPIMPENTRY( SymName )( imp_image_handle *iih,
                         imp_sym_handle *ish, location_context *lc,
-                        symbol_name sn, char *buff, size_t buff_size )
+                        symbol_name_type snt, char *buff, size_t buff_size )
 {
-    return( ImpSymName( iih, ish, lc, sn, buff, buff_size ) );
+    return( ImpSymName( iih, ish, lc, snt, buff, buff_size ) );
 }
 
 dip_status ImpSymType( imp_image_handle *iih, imp_sym_handle *ish, imp_type_handle *ith )
@@ -1291,7 +1291,7 @@ dip_status      ImpSymValue( imp_image_handle *iih,
     numeric_leaf        val;
     dip_status          ds;
     imp_type_handle     ith;
-    dip_type_info       ti;
+    dig_type_info       ti;
 
     if( ish->containing_type != 0 ) {
         return( TypeSymGetValue( iih, ish, lc, buff ) );
@@ -1435,7 +1435,7 @@ dip_status DIPIMPENTRY( SymParmLocation )( imp_image_handle *iih,
     dip_status          ds;
     unsigned_8          *reg_list;
     imp_type_handle     ith;
-    dip_type_info       ti;
+    dig_type_info       ti;
 
     p = VMBlock( iih, ish->handle, ish->len );
     switch( p->common.code ) {
@@ -1566,7 +1566,7 @@ dip_status DIPIMPENTRY( SymParmLocation )( imp_image_handle *iih,
 }
 
 dip_status DIPIMPENTRY( SymObjType )( imp_image_handle *iih,
-                    imp_sym_handle *ish, imp_type_handle *ith, dip_type_info *ti )
+                    imp_sym_handle *ish, imp_type_handle *ith, dig_type_info *ti )
 {
     dip_status          ds;
     imp_type_handle     func_ith;
@@ -1599,7 +1599,7 @@ dip_status DIPIMPENTRY( SymObjLocation )( imp_image_handle *iih,
     s_all               *p;
     imp_sym_handle      parm;
     imp_type_handle     ith;
-    dip_type_info       ti;
+    dig_type_info       ti;
     unsigned long       adjust;
 
     ds = ImpSymType( iih, ish, &ith );
@@ -1782,9 +1782,9 @@ static search_result    DoLookupSym( imp_image_handle *iih,
     if( ss == SS_SCOPESYM ) {
         char    *scope_name;
         scope_ish = source;
-        len = ImpSymName( iih, scope_ish, NULL, SN_SOURCE, NULL, 0 );
+        len = ImpSymName( iih, scope_ish, NULL, SNT_SOURCE, NULL, 0 );
         scope_name = walloca( len + 1 );
-        ImpSymName( iih, scope_ish, NULL, SN_SOURCE, scope_name, len + 1 );
+        ImpSymName( iih, scope_ish, NULL, SNT_SOURCE, scope_name, len + 1 );
         data.li.scope.start = scope_name;
         data.li.scope.len = len;
         ss = SS_MODULE;

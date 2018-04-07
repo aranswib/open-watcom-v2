@@ -33,6 +33,7 @@
 #define DIGTYPES_H_INCLUDED
 
 #include <stddef.h>
+#include "bool.h"
 #include "machtype.h"
 
 #if defined( __WINDOWS__ )
@@ -343,7 +344,7 @@ typedef unsigned_8 type_kind; enum {
     TK_LAST
 };
 
-typedef unsigned_8 type_modifier; enum {
+typedef enum {
     TM_NONE = 0,
 
     /* for pointer/address types */
@@ -364,10 +365,7 @@ typedef unsigned_8 type_modifier; enum {
     TM_ASCII = 1,
     TM_EBCIDIC,
     TM_UNICODE,
-
-    TM_MOD_MASK         = 0x0f,
-    TM_FLAG_DEREF       = 0x10
-};
+} type_modifier;
 
 typedef unsigned_8  dig_seek; enum {
     DIG_ORG,
@@ -413,13 +411,18 @@ typedef unsigned_16     dig_size_bits;
 
 typedef unsigned_16     dig_mad;
 
+/* these must be unsigned/signed type pair */
+typedef unsigned_32     dig_type_size;
+typedef signed_32       dig_type_bound;
+
 #include "digpck.h"
 
-typedef struct dip_type_info {
-    unsigned long       size;
+typedef struct dig_type_info {
+    dig_type_size       size;
     type_kind           kind;
     type_modifier       modifier;
-} dip_type_info;
+    bool                deref;
+} dig_type_info;
 
 typedef struct {                //NYI: redo this for PIL
     unsigned_8          cpu;

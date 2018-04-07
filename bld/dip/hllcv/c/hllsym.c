@@ -1110,7 +1110,7 @@ static unsigned long CalcHash( const char *name, size_t len )
 typedef search_result   SEARCH_CREATOR( imp_image_handle *, s_all *, imp_sym_handle *, void * );
 
 static search_result TableSearchForName( imp_image_handle *iih,
-                int case_sense, const char *name, unsigned name_len,
+                bool case_sense, const char *name, unsigned name_len,
                 unsigned long hash, imp_sym_handle *ish,
                 SEARCH_CREATOR *create, void *d, unsigned tbl_type )
 {
@@ -1225,13 +1225,13 @@ dip_status hllSymFindMatchingSym( imp_image_handle *iih,
 
     data.idx = idx;
     hash = CalcHash( name, len );
-    sr = TableSearchForName( iih, 1, name, len, hash, ish, MatchSym, &data,
+    sr = TableSearchForName( iih, true, name, len, hash, ish, MatchSym, &data,
                 sstStaticSym );
     switch( sr ) {
     case SR_FAIL:       return( DS_ERR | DS_FAIL );
     case SR_EXACT:      return( DS_OK );
     }
-    sr = TableSearchForName( iih, 1, name, len, hash, ish, MatchSym, &data,
+    sr = TableSearchForName( iih, true, name, len, hash, ish, MatchSym, &data,
                 sstGlobalSym );
     switch( sr ) {
     case SR_FAIL:       return( DS_ERR | DS_FAIL );
@@ -1531,25 +1531,24 @@ imp_mod_handle DIPIMPENTRY( SymMod )( imp_image_handle *iih, imp_sym_handle *ish
  * The 'sn' parameter indicates what type of symbol name the client
  * is interested in. It can have the following values:
  *
- * SN_SOURCE:
+ * SNT_SOURCE:
  *         The name of the symbol as it appears in the source code.
  *
- * SN_OBJECT:
+ * SNT_OBJECT:
  *         The name of the symbol as it appeared to the linker.
  *
- * SN_DEMANGLED:
+ * SNT_DEMANGLED:
  *         C++ names, with full typing (essentially it looks like
  *         a function prototype). If the symbol is not a C++ symbol
  *         (not mangled), return zero for the length.
  *
- * SN_EXPRESSION:
+ * SNT_EXPRESSION:
  *         Return whatever character string is necessary such that
  *         when scanned in an expression, the symbol handle can
  *         be reconstructed. Deprecated - never used.
  */
 static size_t hllSymName( imp_image_handle *iih, imp_sym_handle *ish,
-                            location_context *lc, symbol_name sn,
-                            char *buff, size_t buff_size )
+    location_context *lc, symbol_name_type snt, char *buff, size_t buff_size )
 {
     const char  *name = NULL;
     size_t      name_len;
@@ -1560,7 +1559,7 @@ static size_t hllSymName( imp_image_handle *iih, imp_sym_handle *ish,
     if( ish->type == HLL_SYM_TYPE_PUB ) {
         unsigned off_name;
 
-        if( sn != SN_OBJECT && sn != SN_DEMANGLED ) {
+        if( snt != SNT_OBJECT && snt != SNT_DEMANGLED ) {
             return( 0 );
         }
 
@@ -1574,7 +1573,7 @@ static size_t hllSymName( imp_image_handle *iih, imp_sym_handle *ish,
         name = VMBlock( iih, ish->handle + off_name, name_len);
 
         /* demangle... */
-        if( sn == SN_DEMANGLED && name != NULL ) {
+        if( snt == SNT_DEMANGLED && name != NULL ) {
             if( __is_mangled( name, name_len ) ) {
                 return( __demangle_l( name, name_len, buff, buff_size ) );
             }
@@ -1587,12 +1586,12 @@ static size_t hllSymName( imp_image_handle *iih, imp_sym_handle *ish,
         //addr_off            dummy_off;
         //search_result       sr;
 
-        switch( sn ) {
-        case SN_EXPRESSION:
+        switch( snt ) {
+        case SNT_EXPRESSION:
             return( 0 );
 /*
-        case SN_OBJECT:
-        case SN_DEMANGLED:
+        case SNT_OBJECT:
+        case SNT_DEMANGLED:
             ds = hllSymLocation( iih, ish, lc, &ll );
             if( ds != DS_OK )
                 break;
@@ -1606,14 +1605,14 @@ static size_t hllSymName( imp_image_handle *iih, imp_sym_handle *ish,
                 break;
             if( hllSymGetName( iih, &global_ish, &name, &len, NULL ) != DS_OK )
                 break;
-            if( sn == SN_OBJECT ) {
+            if( snt == SNT_OBJECT ) {
                 return( hllNameCopy( buff, name, buff_size, len ) );
             }
             if( !__is_mangled( name, len ) )
                 return( 0 );
             return( __demangle_l( name, len, buff, buff_size ) );
 */
-        case SN_SOURCE:
+        case SNT_SOURCE:
             if( hllSymGetName( iih, ish, &name, &name_len ) != DS_OK ) {
                 return( 0 );
             }
@@ -1622,7 +1621,7 @@ static size_t hllSymName( imp_image_handle *iih, imp_sym_handle *ish,
             break;
         }
 
-        if( sn == SN_DEMANGLED ) {
+        if( snt == SNT_DEMANGLED ) {
             return( 0 );
         }
     }
@@ -1637,10 +1636,9 @@ static size_t hllSymName( imp_image_handle *iih, imp_sym_handle *ish,
  * Get the symbol name.
  */
 size_t DIPIMPENTRY( SymName )( imp_image_handle *iih, imp_sym_handle *ish,
-                                 location_context *lc, symbol_name sn,
-                                 char *buff, size_t buff_size )
+    location_context *lc, symbol_name_type snt, char *buff, size_t buff_size )
 {
-    return( hllSymName( iih, ish, lc, sn, buff, buff_size ) );
+    return( hllSymName( iih, ish, lc, snt, buff, buff_size ) );
 }
 
 /*
@@ -1736,7 +1734,7 @@ dip_status hllSymValue( imp_image_handle *iih, imp_sym_handle *ish,
     numeric_leaf        val;
     dip_status          ds;
     imp_type_handle     ith;
-    dip_type_info       ti;
+    dig_type_info       ti;
 
     if( ish->containing_type != 0 ) {
         return( TypeSymGetValue( iih, ish, lc, buff ) );
@@ -1846,7 +1844,7 @@ dip_status DIPIMPENTRY( SymInfo )( imp_image_handle *iih, imp_sym_handle *ish,
         case HLL_SSR_STATIC:
         case HLL_SSR_STATIC2:
             si->is_global = 1; //??
-            /* fall thru */
+            /* fall through */
         case HLL_SSR_STATIC_SCOPED:
             si->kind = SK_DATA;
             si->is_static = 1;
@@ -1998,7 +1996,7 @@ dip_status DIPIMPENTRY( SymParmLocation )( imp_image_handle *iih,
     dip_status          ds;
     unsigned_8          *reg_list;
     imp_type_handle     ith;
-    dip_type_info       ti;
+    dig_type_info       ti;
 
     p = VMBlock( iih, ish->handle, ish->len );
     switch( p->common.code ) {
@@ -2132,7 +2130,7 @@ dip_status DIPIMPENTRY( SymParmLocation )( imp_image_handle *iih,
 }
 
 dip_status DIPIMPENTRY( SymObjType )( imp_image_handle *iih,
-                    imp_sym_handle *ish, imp_type_handle *ith, dip_type_info *ti )
+                    imp_sym_handle *ish, imp_type_handle *ith, dig_type_info *ti )
 {
     /* unused parameters */ (void)iih; (void)ish; (void)ith; (void)ti;
 
@@ -2174,7 +2172,7 @@ dip_status DIPIMPENTRY( SymObjLocation )( imp_image_handle *iih,
     s_all               *p;
     imp_sym_handle      parm;
     imp_type_handle     ith;
-    dip_type_info       ti;
+    dig_type_info       ti;
     unsigned long       adjust;
 
     ds = ImpSymType( iih, ish, &ith );
@@ -2365,9 +2363,9 @@ static search_result    DoLookupSym( imp_image_handle *iih,
     if( ss == SS_SCOPESYM ) {
         char    *scope_name;
         scope_ish = source;
-        len = hllSymName( iih, scope_ish, NULL, SN_SOURCE, NULL, 0 );
+        len = hllSymName( iih, scope_ish, NULL, SNT_SOURCE, NULL, 0 );
         scope_name = walloca( len + 1 );
-        hllSymName( iih, scope_ish, NULL, SN_SOURCE, scope_name, len + 1 );
+        hllSymName( iih, scope_ish, NULL, SNT_SOURCE, scope_name, len + 1 );
         data.li.scope.start = scope_name;
         data.li.scope.len = len;
         ss = SS_MODULE;

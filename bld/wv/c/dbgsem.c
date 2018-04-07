@@ -133,7 +133,7 @@ static struct {
 #define MAX_SCANSAVE_PTRS 20
 static  const char      *CurrScan[MAX_SCANSAVE_PTRS];
 
-static stack_class TypeInfoToClass( dip_type_info *ti )
+static stack_class TypeInfoToClass( dig_type_info *ti )
 {
     stack_class         c;
 
@@ -169,7 +169,7 @@ static stack_class TypeInfoToClass( dip_type_info *ti )
     return( c );
 }
 
-static void ClassToTypeInfo( stack_class c, dip_type_info *ti )
+static void ClassToTypeInfo( stack_class c, dig_type_info *ti )
 {
     switch( c ) {
     case STK_INT | STK_UNSIGNED:
@@ -225,43 +225,43 @@ static void ClassToTypeInfo( stack_class c, dip_type_info *ti )
 
 //NYI: end temp
 
-static void FillInDefaults( dip_type_info *info )
+static void FillInDefaults( dig_type_info *ti )
 {
     mad_type_info       mti;
 
-    switch( info->kind ) {
+    switch( ti->kind ) {
     case TK_INTEGER:
-        if( info->modifier == TM_NONE )
-            info->modifier = TM_SIGNED;
-        if( info->size == 0 ) {
-            if( DIPModDefault( CodeAddrMod, DK_INT, info ) != DS_OK ) {
+        if( ti->modifier == TM_NONE )
+            ti->modifier = TM_SIGNED;
+        if( ti->size == 0 ) {
+            if( DIPModDefault( CodeAddrMod, DK_INT, ti ) != DS_OK ) {
                 GetMADTypeDefault( MTK_INTEGER, &mti );
-                info->size = BITS2BYTES( mti.b.bits );
+                ti->size = BITS2BYTES( mti.b.bits );
             }
         }
         break;
     case TK_POINTER:
     case TK_CODE:
     case TK_DATA:
-        if( info->modifier == TM_NONE ) {
-            if( DIPModDefault( CodeAddrMod, (info->kind == TK_CODE) ? DK_CODE_PTR : DK_DATA_PTR, info ) != DS_OK ) {
-                info->modifier = TM_NONE;
-                info->size = 0;
+        if( ti->modifier == TM_NONE ) {
+            if( DIPModDefault( CodeAddrMod, (ti->kind == TK_CODE) ? DK_CODE_PTR : DK_DATA_PTR, ti ) != DS_OK ) {
+                ti->modifier = TM_NONE;
+                ti->size = 0;
             }
         }
-        if( info->modifier == TM_NONE || info->size == 0 ) {
+        if( ti->modifier == TM_NONE || ti->size == 0 ) {
             GetMADTypeDefault( MTK_ADDRESS, &mti );
-            if( info->modifier == TM_NONE ) {
+            if( ti->modifier == TM_NONE ) {
                 if( mti.a.seg.bits != 0 ) {
-                    info->modifier = TM_FAR;
+                    ti->modifier = TM_FAR;
                 } else {
-                    info->modifier = TM_NEAR;
+                    ti->modifier = TM_NEAR;
                 }
             }
-            if( info->size == 0 ) {
-                if( info->modifier == TM_NEAR )
+            if( ti->size == 0 ) {
+                if( ti->modifier == TM_NEAR )
                     mti.b.bits -= mti.a.seg.bits;
-                info->size = BITS2BYTES( mti.b.bits );
+                ti->size = BITS2BYTES( mti.b.bits );
             }
         }
         break;
@@ -338,12 +338,12 @@ static ssl_value MechMisc( unsigned select, ssl_value parm )
         ConvertTo( ExprSP, TK_INTEGER, TM_SIGNED, 4 );
         value = U32FetchTrunc( ExprSP->v.uint ) - 1;
         PopEntry();
-        if( ExprSP->info.kind == TK_STRING ) {
-            if( value < 0 || value >= ExprSP->info.size ) {
+        if( ExprSP->ti.kind == TK_STRING ) {
+            if( value < 0 || value >= ExprSP->ti.size ) {
                 Error( ERR_NONE, LIT_ENG( ERR_BAD_SUBSTRING_INDEX ) );
             }
             LocationAdd( &ExprSP->v.string.loc, value * 8 );
-            ExprSP->info.size -= value;
+            ExprSP->ti.size -= value;
             ExprSP->v.string.ss_offset = value;
         } else {
             Error( ERR_NONE, LIT_ENG( ERR_ILL_TYPE ) );
@@ -354,12 +354,12 @@ static ssl_value MechMisc( unsigned select, ssl_value parm )
         ConvertTo( ExprSP, TK_INTEGER, TM_SIGNED, 4 );
         value = U32FetchTrunc( ExprSP->v.sint ) - 1;
         PopEntry();
-        if( ExprSP->info.kind == TK_STRING ) {
+        if( ExprSP->ti.kind == TK_STRING ) {
             value -= ExprSP->v.string.ss_offset;
-            if( value < 0 || value >= ExprSP->info.size ) {
+            if( value < 0 || value >= ExprSP->ti.size ) {
                 Error( ERR_NONE, LIT_ENG( ERR_BAD_SUBSTRING_INDEX ) );
             }
-            ExprSP->info.size = value;
+            ExprSP->ti.size = value;
         } else {
             Error( ERR_NONE, LIT_ENG( ERR_ILL_TYPE ) );
         }
@@ -469,7 +469,7 @@ static bool UserType( type_handle *th )
 static void PushBaseSize( void )
 {
     DIPHDL( type, th );
-    dip_type_info   ti;
+    dig_type_info   ti;
 
     DIPTypeBase( ExprSP->th, th, NULL, NULL );
     DIPTypeInfo( th, ExprSP->lc, &ti );
@@ -491,12 +491,12 @@ static void DoPlusScaled( void )
     left = StkEntry( 1 );
     LRValue( left );
     RValue( ExprSP );
-    switch( left->info.kind ) {
+    switch( left->ti.kind ) {
     case TK_POINTER:
         ScaleInt();
         break;
     default:
-        switch( ExprSP->info.kind ) {
+        switch( ExprSP->ti.kind ) {
         case TK_POINTER:
             SwapStack( 1 );
             ScaleInt();
@@ -513,9 +513,9 @@ static void DoMinusScaled( void )
     left = StkEntry( 1 );
     LRValue( left );
     RValue( ExprSP );
-    switch( left->info.kind ) {
+    switch( left->ti.kind ) {
     case TK_POINTER:
-        switch( ExprSP->info.kind ) {
+        switch( ExprSP->ti.kind ) {
         case TK_POINTER:
             /* Have to check if base type sizes are the same */
             PushBaseSize();
@@ -540,7 +540,7 @@ static void DoMinusScaled( void )
         }
         break;
     default:
-        switch( ExprSP->info.kind ) {
+        switch( ExprSP->ti.kind ) {
         case TK_POINTER:
             Error( ERR_NONE, LIT_ENG( ERR_ILL_TYPE ) );
             break;
@@ -554,7 +554,7 @@ static ssl_value MechDo( unsigned select, ssl_value parm )
     unsigned long       size;
     ssl_value           result;
     DIPHDL( type, th );
-    dip_type_info       info;
+    dig_type_info       ti;
     mad_type_info       mti;
 
     result = 0;
@@ -590,8 +590,8 @@ static ssl_value MechDo( unsigned select, ssl_value parm )
         DoAddr();
         break;
     case 10:
-        ClassToTypeInfo( parm, &info );
-        DoPoints( info.kind );
+        ClassToTypeInfo( parm, &ti );
+        DoPoints( ti.kind );
         break;
     case 11:
         DoField();
@@ -621,7 +621,7 @@ static ssl_value MechDo( unsigned select, ssl_value parm )
         result = ( TstExist( SSL2INT( parm ) ) != 0 );
         break;
     case 20:
-        size = ExprSP->info.size;
+        size = ExprSP->ti.size;
         PopEntry();
         PushNum( size );
         break;
@@ -668,11 +668,12 @@ static ssl_value MechDo( unsigned select, ssl_value parm )
         DoPoints( TI_KIND_EXTRACT( parm ) );
         break;
     case 30:
-        info.kind = TK_POINTER;
-        info.size = TI_SIZE_EXTRACT( parm );
-        info.modifier = TI_MOD_EXTRACT( parm );
-        FillInDefaults( &info );
-        DIPTypePointer( ExprSP->th, info.modifier, info.size, th );
+        ti.kind = TK_POINTER;
+        ti.size = TI_SIZE_EXTRACT( parm );
+        ti.modifier = TI_MOD_EXTRACT( parm );
+        ti.deref = false;
+        FillInDefaults( &ti );
+        DIPTypePointer( ExprSP->th, ti.modifier, ti.size, th );
         PopEntry();
         PushType( th );
         break;
@@ -706,19 +707,18 @@ static void BasicType( unsigned basic_type )
 {
     internal_mod        mod_srch;
     imp_type_handle     *ith;
-    dip_type_info       info;
+    dig_type_info       ti;
     DIPHDL( type, th );
 
     DIPWalkModList( NO_MOD, FindInternalMod, &mod_srch );
     DIPTypeInit( th, mod_srch.mh );
-    info.kind = TI_KIND_EXTRACT( basic_type );
-    info.modifier = TI_MOD_EXTRACT( basic_type );
-    info.size = TI_SIZE_EXTRACT( basic_type );
-    FillInDefaults( &info );
+    ti.kind = TI_KIND_EXTRACT( basic_type );
+    ti.size = TI_SIZE_EXTRACT( basic_type );
+    ti.modifier = TI_MOD_EXTRACT( basic_type );
+    ti.deref = false;
+    FillInDefaults( &ti );
     ith = TH2ITH( th );
-    ith->t.k = info.kind;
-    ith->t.m = info.modifier;
-    ith->t.s = info.size;
+    ith->ti = ti;
     ith->ri = NULL;
     PushType( th );
 }
@@ -726,7 +726,7 @@ static void BasicType( unsigned basic_type )
 static ssl_value MechPush_n_Pop( unsigned select, ssl_value parm )
 {
     location_list           ll;
-    dip_type_info           ti;
+    dig_type_info           ti;
     ssl_value               result;
     static const unsigned   TypeTbl[] = {
         TI_CREATE( TK_VOID,     TM_NONE,         0 ),
@@ -818,7 +818,7 @@ static ssl_value MechStack( unsigned select, ssl_value parm )
     case 2:
         entry = StkEntry( SSL2INT( parm ) );
         LValue( entry );
-        result = TypeInfoToClass( &entry->info ) & (BASE_TYPE | STK_UNSIGNED);
+        result = TypeInfoToClass( &entry->ti ) & (BASE_TYPE | STK_UNSIGNED);
         break;
     case 3:
         ExprValue( StkEntry( SSL2INT( parm ) ) );
@@ -835,7 +835,7 @@ static ssl_value MechStack( unsigned select, ssl_value parm )
     case 7:
         entry = StkEntry( SSL2INT( parm ) );
         LValue( entry );
-        result = TI_CREATE( entry->info.kind, TM_NONE, 0 );
+        result = TI_CREATE( entry->ti.kind, TM_NONE, 0 );
         break;
     case 8:
         entry = StkEntry( SSL2INT( parm ) );
