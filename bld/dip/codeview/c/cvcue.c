@@ -52,38 +52,42 @@ walk_result DIPIMPENTRY( WalkFileList )( imp_image_handle *iih, imp_mod_handle i
     unsigned                            i;
     walk_result                         wr;
 
-    if( imh == IMH_GBL )
-        return( WR_CONTINUE );
-
-    cde = FindDirEntry( iih, imh, sstSrcModule );
-    if( cde == NULL )
-        return(  WR_CONTINUE );
-    hdr = VMBlock( iih, cde->lfo, sizeof( *hdr ) );
-    if( hdr == NULL )
-        return( WR_FAIL );
-    file_tab_count = hdr->cFile;
-    file_tab_size = file_tab_count * sizeof( unsigned_32 );
-    hdr = VMBlock( iih, cde->lfo, sizeof( *hdr ) + file_tab_size );
-    /*
-        Make a copy of the file table offset so that we don't have to worry
-        about the VM system throwing it out.
-    */
-    file_off = walloca( file_tab_size );
-    memcpy( file_off, &hdr->baseSrcFile[0], file_tab_size );
-    icueh->imh = imh;
-    for( i = 0; i < file_tab_count; ++i ) {
-        icueh->pair = 0;
-        icueh->file = cde->lfo + file_off[i];
-        fp = VMBlock( iih, icueh->file, sizeof( *fp ) );
-        if( fp == NULL )
-            return( WR_FAIL );
-        icueh->line = cde->lfo + fp->baseSrcLn[0];
-        wr = wk( iih, icueh, d );
-        if( wr != WR_CONTINUE ) {
-            return( wr );
+    wr = WR_CONTINUE;
+    if( imh != IMH_GBL ) {
+        cde = FindDirEntry( iih, imh, sstSrcModule );
+        if( cde != NULL ) {
+            hdr = VMBlock( iih, cde->lfo, sizeof( *hdr ) );
+            if( hdr == NULL ) {
+                wr = WR_FAIL;
+            } else {
+                file_tab_count = hdr->cFile;
+                file_tab_size = file_tab_count * sizeof( unsigned_32 );
+                hdr = VMBlock( iih, cde->lfo, sizeof( *hdr ) + file_tab_size );
+                /*
+                    Make a copy of the file table offset so that we don't have to worry
+                    about the VM system throwing it out.
+                */
+                file_off = walloca( file_tab_size );
+                memcpy( file_off, &hdr->baseSrcFile[0], file_tab_size );
+                icueh->imh = imh;
+                for( i = 0; i < file_tab_count; ++i ) {
+                    icueh->pair = 0;
+                    icueh->file = cde->lfo + file_off[i];
+                    fp = VMBlock( iih, icueh->file, sizeof( *fp ) );
+                    if( fp == NULL ) {
+                        wr = WR_FAIL;
+                        break;
+                    }
+                    icueh->line = cde->lfo + fp->baseSrcLn[0];
+                    wr = wk( iih, icueh, d );
+                    if( wr != WR_CONTINUE ) {
+                        break;
+                    }
+                }
+            }
         }
     }
-    return( WR_CONTINUE );
+    return( wr );
 }
 
 imp_mod_handle DIPIMPENTRY( CueMod )( imp_image_handle *iih, imp_cue_handle *icueh )
@@ -255,8 +259,8 @@ dip_status DIPIMPENTRY( CueAdjust )( imp_image_handle *iih, imp_cue_handle *src_
                                                 int adj, imp_cue_handle *dst_icueh )
 {
     cv_directory_entry  *cde;
-    dip_status          status;
-    dip_status          ok;
+    dip_status          ds;
+    dip_status          ret_ds;
 
     cde = FindDirEntry( iih, src_icueh->imh, sstSrcModule );
     if( cde == NULL ) {
@@ -264,24 +268,24 @@ dip_status DIPIMPENTRY( CueAdjust )( imp_image_handle *iih, imp_cue_handle *src_
         return( DS_ERR | DS_INFO_INVALID );
     }
     *dst_icueh = *src_icueh;
-    ok = DS_OK;
+    ret_ds = DS_OK;
     while( adj > 0 ) {
-        status = AdjForward( iih, cde->lfo, dst_icueh );
-        if( status & DS_ERR )
-            return( status );
-        if( status != DS_OK )
-            ok = status;
+        ds = AdjForward( iih, cde->lfo, dst_icueh );
+        if( ds & DS_ERR )
+            return( ds );
+        if( ds != DS_OK )
+            ret_ds = ds;
         --adj;
     }
     while( adj < 0 ) {
-        status = AdjBackward( iih, cde->lfo, dst_icueh );
-        if( status & DS_ERR )
-            return( status );
-        if( status != DS_OK )
-            ok = status;
+        ds = AdjBackward( iih, cde->lfo, dst_icueh );
+        if( ds & DS_ERR )
+            return( ds );
+        if( ds != DS_OK )
+            ret_ds = ds;
         ++adj;
     }
-    return( ok );
+    return( ret_ds );
 }
 
 search_result DIPIMPENTRY( LineCue )( imp_image_handle *iih, imp_mod_handle imh, cue_fileid file,

@@ -491,8 +491,7 @@ dip_status DIPIMPENTRY( TypeInfo )( imp_image_handle *iih,
 
         name =  DRGetName( ith->type );
         if( name != NULL ) {
-            if( strcmp( name, "char" ) == 0
-             || strcmp( name, "unsigned char" ) == 0 ) {
+            if( strcmp( name, "char" ) == 0 || strcmp( name, "unsigned char" ) == 0 ) {
                 ti->kind = TK_CHAR;
             }
             DCFree( name );
@@ -768,8 +767,8 @@ drmem_hdl GetParmN( imp_image_handle *iih, drmem_hdl proc, int count )
     return( ret );
 }
 
-int GetParmCount(  imp_image_handle *iih, drmem_hdl proc )
-/********************************************************/
+int GetParmCount( imp_image_handle *iih, drmem_hdl proc )
+/*******************************************************/
 // return handle of the n parm
 {
     parm_wlk df;
@@ -786,7 +785,7 @@ dip_status DIPIMPENTRY( TypeProcInfo )( imp_image_handle *iih,
 {
     drmem_hdl       btype;
     drmem_hdl       parm_type = DRMEM_HDL_NULL;
-    dip_status      ret;
+    dip_status      ds;
 
     DRSetDebug( iih->dwarf->handle ); /* must do at each call into dwarf */
     btype = DRSkipTypeChain( proc_ith->type ); /* skip modifiers and typedefs */
@@ -800,11 +799,11 @@ dip_status DIPIMPENTRY( TypeProcInfo )( imp_image_handle *iih,
         parm_ith->state = DF_NOT;
         parm_ith->type = parm_type;
         parm_ith->imh = proc_ith->imh;
-        ret = DS_OK;
+        ds = DS_OK;
     }else{
-        ret = DS_FAIL;
+        ds = DS_FAIL;
     }
-    return( ret );
+    return( ds );
 }
 
 dip_status DIPIMPENTRY( TypePtrAddrSpace )( imp_image_handle *iih,
@@ -817,10 +816,10 @@ dip_status DIPIMPENTRY( TypePtrAddrSpace )( imp_image_handle *iih,
         the pointer, fill in *a with the information and return DS_OK.
         Otherwise return DS_FAIL.
     */
-    dip_status ret;
+    dip_status ds;
 
-    ret = EvalBasedPtr( iih, lc, ith->type, a );
-    return( ret );
+    ds = EvalBasedPtr( iih, lc, ith->type, a );
+    return( ds );
 }
 
 
@@ -1156,7 +1155,7 @@ walk_result WalkTypeSymList( imp_image_handle *iih, imp_type_handle *ith,
 
     DRSetDebug( iih->dwarf->handle ); /* must do at each call into dwarf */
     if( ith->state == DF_NOT ) {
-        if(  DRGetTypeInfo( ith->type, &ith->typeinfo ) ) {
+        if( DRGetTypeInfo( ith->type, &ith->typeinfo ) ) {
             ith->state = DF_SET;
         }
     }
@@ -1269,9 +1268,9 @@ typedef struct type_wlk_inherit {
     address          *addr;
     inh_path         *head;
     inh_path         **lnk;
-    dip_status       wr;
+    dip_status       ds;
     bool             cont;
-}type_wlk_inherit;
+} type_wlk_inherit;
 
 static bool AInhFind( drmem_hdl inh, int index, void *df );
 
@@ -1302,8 +1301,8 @@ static bool AInhFind( drmem_hdl inh, int index, void *_df )
     dr_derived = DRGetTypeAT( inh );        /* get base type */
     if( dr_derived == df->dr_derived ) {
         for( curr = df->head; curr != NULL; curr = curr->next ) {
-            df->wr = EvalLocAdj( df->iih, df->lc, curr->inh, df->addr );
-            if( df->wr != DS_OK ) {
+            df->ds = EvalLocAdj( df->iih, df->lc, curr->inh, df->addr );
+            if( df->ds != DS_OK ) {
                 break;
             }
         }
@@ -1328,11 +1327,11 @@ dip_status  DFBaseAdjust( imp_image_handle *iih, drmem_hdl base, drmem_hdl deriv
     df.addr = addr;
     df.head = NULL;
     df.lnk  = &df.head;
-    df.wr = DS_FAIL;
+    df.ds = DS_FAIL;
     df.cont = true;
     dr_base =  DRSkipTypeChain( base );   /* skip modifiers and typedefs */
     DRWalkStruct( dr_base, InheritWlk, &df ); /* walk struct looking for inheritance */
-    return( df.wr );
+    return( df.ds );
 }
 
 dip_status DIPIMPENTRY( TypeThunkAdjust )( imp_image_handle *iih,
@@ -1419,19 +1418,19 @@ dip_status DIPIMPENTRY( TypeAddRef )( imp_image_handle *iih, imp_type_handle *it
 {
     /* unused parameters */ (void)iih; (void)ith;
 
-    return(DS_OK);
+    return( DS_OK );
 }
 
 dip_status DIPIMPENTRY( TypeRelease )( imp_image_handle *iih, imp_type_handle *ith )
 {
     /* unused parameters */ (void)iih; (void)ith;
 
-    return(DS_OK);
+    return( DS_OK );
 }
 
 dip_status DIPIMPENTRY( TypeFreeAll )( imp_image_handle *iih )
 {
     /* unused parameters */ (void)iih;
 
-    return(DS_OK);
+    return( DS_OK );
 }

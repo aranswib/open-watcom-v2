@@ -2,7 +2,6 @@
 *
 *                            Open Watcom Project
 *
-* Copyright (c) 2002-2017 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -25,48 +24,12 @@
 *
 *  ========================================================================
 *
-* Description:  WHEN YOU FIGURE OUT WHAT THIS FILE DOES, PLEASE
-*               DESCRIBE IT HERE!
+* Description:  Declaration of UI Help data.
 *
 ****************************************************************************/
 
 
-#include <stdio.h>
-#include <string.h>
-#include <windows.h>
-#include "dip.h"
-#include "dipimp.h"
-#include "dipcli.h"
-#include "dipsys.h"
-
-void DIPSysUnload( dip_sys_handle *sys_hdl )
-{
-    if( *sys_hdl != NULL_SYSHDL ) {
-        FreeLibrary( *sys_hdl );
-        *sys_hdl = NULL_SYSHDL;
-    }
-}
-
-dip_status DIPSysLoad( const char *path, dip_client_routines *cli, dip_imp_routines **imp, dip_sys_handle *sys_hdl )
-{
-    dip_sys_handle      dip_dll;
-    dip_init_func       *init_func;
-    char                newpath[256];
-    dip_status          ds;
-
-    *sys_hdl = NULL_SYSHDL;
-    strcpy( newpath, path );
-    strcat( newpath, ".dll" );
-    dip_dll = LoadLibrary( newpath );
-    if( dip_dll == NULL ) {
-        return( DS_ERR | DS_FOPEN_FAILED );
-    }
-    ds = DS_ERR | DS_INVALID_DIP;
-    init_func = (dip_init_func *)GetProcAddress( dip_dll, "DIPLOAD" );
-    if( init_func != NULL && (*imp = init_func( &ds, cli )) != NULL ) {
-        *sys_hdl = dip_dll;
-        return( DS_OK );
-    }
-    FreeLibrary( dip_dll );
-    return( ds );
-}
+#ifndef __WIN__
+extern char *helpFiles[];
+extern int  nHelpFiles;
+#endif
