@@ -78,7 +78,7 @@ vi_rc   ReadAFile( linenum, const char * );
 
 /* clset.c */
 vi_rc   Set( const char * );
-const char *GetASetVal( const char *token );
+const char *GetASetVal( const char *token, char * );
 vi_rc   SettingSelected( const char *item, char *value, int *winflag );
 
 /* clsubs.c */
@@ -134,7 +134,7 @@ vi_rc   Filter( range * );
 /* dir.c */
 void    DirFini( void );
 void    GetCWD1( char ** );
-void    GetCWD2( char *, int );
+void    GetCWD2( char *, size_t );
 void    UpdateCurrentDirectory( void );
 vi_rc   ChangeDirectory( const char * );
 vi_rc   ConditionalChangeDirectory( const char * );
@@ -679,7 +679,7 @@ void    Lead( char c, int num, char *buff );
 /* readstr.c */
 bool    ReadStringInWindow( window_id, int, char *, char *, int, history_data * );
 vi_rc   PromptForString( char *prompt, char *buff, int maxbuff, history_data *h );
-bool    GetTextForSpecialKey( int str_max, vi_key event, char *tmp );
+bool    GetTextForSpecialKey( vi_key event, char *buff, int buffsize );
 void    InsertTextForSpecialKey( vi_key event, char *buff );
 
 /* replace.c */

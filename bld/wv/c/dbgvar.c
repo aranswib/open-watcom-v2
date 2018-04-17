@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -558,9 +559,7 @@ static var_node *NewNode( var_info *i, unsigned len )
     new = DbgAlloc( size + type_SIZE );
     i->mem_lock = false;
     if( new == NULL ) {
-        _SwitchOn( SW_ERROR_RETURNS );
-        Error( ERR_NONE, LIT_ENG( ERR_NO_MEMORY_FOR_WINDOW ) );
-        _SwitchOff( SW_ERROR_RETURNS );
+        ErrorRet( ERR_NONE, LIT_ENG( ERR_NO_MEMORY_FOR_WINDOW ) );
         return( NULL );
     }
     memset( new, 0, size );

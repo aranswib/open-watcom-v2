@@ -37,6 +37,17 @@ typedef unsigned_8 dbg_err_flags; enum {
     ERR_SILENT  = 0x04,
 };
 
+/* this function never return to the caller */
+#if defined( __WATCOMC__ )
+_WCNORETURN extern void Error( dbg_err_flags, char *, ... );
+#elif defined( __GNUC__ ) || defined( __clang__ )
+extern void Error( dbg_err_flags, char *, ... ) __attribute__ ((noreturn));
+#elif defined( _MSC_VER )
+__declspec(noreturn) extern void Error( dbg_err_flags, char *, ... );
+#else
 extern void Error( dbg_err_flags, char *, ... );
+#endif
+/* this function return to the caller */
+extern void ErrorRet( dbg_err_flags, char *, ... );
 extern void PrevError( const char *msg );
 extern void StartupErr( const char *err );

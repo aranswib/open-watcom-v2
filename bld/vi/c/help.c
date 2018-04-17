@@ -49,11 +49,10 @@
     pick( "SETtings",           "set.hlp" ) \
     pick( "STARTing",           "start.hlp" )
 
-static char helpCmds[] = {
+static char HelpCmdTokens[] = {
     #define pick(t,h)   t "\0"
     HELPCMDS()
     #undef pick
-    "\0"
 };
 
 char *helpFiles[] = {
@@ -118,12 +117,12 @@ vi_rc DoHelp( const char *data )
     char        *tstr;
     int         token;
     vi_rc       rc;
-    char        path[FILENAME_MAX];
+    char        path[_MAX_PATH];
     char        tmp[MAX_STR];
     int         i;
 
     data = SkipLeadingSpaces( data );
-    token = Tokenize( helpCmds, data, false );
+    token = Tokenize( HelpCmdTokens, data, false );
     if( token == TOK_INVALID ) {
         if( data[0] == '\0' ) {
             strcpy( tmp, "Topics: " );
@@ -131,7 +130,7 @@ vi_rc DoHelp( const char *data )
                 if( i != 0 ) {
                     strcat( tmp, ", " );
                 }
-                strcat( tmp, GetTokenString( helpCmds, i ) );
+                strcat( tmp, GetTokenString( HelpCmdTokens, i ) );
             }
             Message1( "%s", tmp );
         } else {
@@ -151,7 +150,7 @@ vi_rc DoHelp( const char *data )
     if( rc != ERR_NO_ERR ) {
         return( rc );
     }
-    tstr = GetTokenString( helpCmds, token );
+    tstr = GetTokenString( HelpCmdTokens, token );
     strcpy( tmp, tstr );
     strlwr( tmp );
     strcat( tmp, " Help" );

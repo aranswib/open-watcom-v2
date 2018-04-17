@@ -487,9 +487,7 @@ typedef union ss_flags {
 } ss_flags;
 
 typedef enum syntax_element {
-    SE_UNPARSED = -2,   // basically used to flag problems
-    SE_UNUSED = -1,     // use to temporarily setup a style
-    SE_TEXT = 0,        // always first
+    SE_TEXT,            // always first
     SE_WHITESPACE,      // don't mess with order (fonts in .cfg parallel #s)
     SE_SELECTION,
     SE_EOFTEXT,
@@ -508,8 +506,12 @@ typedef enum syntax_element {
     SE_STRING,
     SE_VARIABLE,
     SE_REGEXP,
-    SE_NUMTYPES,        // always last
+    SE_UNUSED,          // hidden, use to temporarily setup a style
+    SE_UNPARSED,        // hidden, basically used to flag problems
+    SE_MAXSIZE          // max style array size
 } syntax_element;
+
+#define SE_NUMTYPES     SE_UNUSED
 
 typedef struct ss_block {
     short               end;
@@ -625,7 +627,7 @@ typedef struct {
     linenum             sl;                     // selected line
     char                *title;                 // title of window
     vi_rc (*checkres)(const char *, char *, int * ); // check if selected change is valid
-    int                 *allow_rl;              // allow cursor right/left (for menu bar)
+    int                 *allowrl;               // allow cursor right/left (for menu bar)
     hilst               *hilite;                // chars to highlight
     const vi_key        *retevents;             // events that simulate pressing enter
     vi_key              event;                  // event that caused a return
@@ -652,7 +654,7 @@ typedef struct {
 
 typedef struct {
     union {
-        FILE            *f;
+        FILE            *fp;
         int             handle;
         char            *pos;
         struct file     *cfile;
@@ -670,13 +672,13 @@ typedef struct {
     /*
      * set booleans are here
      */
-    #define PICK(a,b,c,d,e)     bool c;
+    #define PICK(a,b,c,d,e)     bool c :1;
     #include "setb.h"
     #undef PICK
     /*
      * internal booleans are here
      */
-    #define PICK(a,b)           bool a;
+    #define PICK(a,b)           bool a :1;
     #include "setbi.h"
     #undef PICK
 } eflags;               // don't forget to give default in globals.c
