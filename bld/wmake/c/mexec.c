@@ -221,7 +221,7 @@ STATIC char *createTmpFileName( void )
             result = FinishVec( buf );
         } else {
             WriteVec( buf, tmpPath );
-            if( tmpPath[strlen( tmpPath ) - 1] != BACKSLASH ) {
+            if( tmpPath[strlen( tmpPath ) - 1] != '\\' ) {
                 buf2 = StartVec();
 #if defined( __UNIX__ )
                 WriteVec( buf2, "/" );
@@ -270,7 +270,7 @@ STATIC RET_T processInlineFile( int handle, const char *body,
     // we will push the whole body back into the stream to be fully
     // deMacroed
     for( index = 0; (c = body[index++]) != NULLCHAR; ) {
-        if( c == EOL ) {
+        if( c == '\n' ) {
             InsString( body + currentSent, false );
             DeMacroBody = ignoreWSDeMacro( false, ForceDeMacro() );
             currentSent = index;
@@ -323,16 +323,19 @@ STATIC char *RemoveBackSlash( const char *inString )
  * remove backslash from \"
  */
 {
-    char    buffer[_MAX_PATH];
-    char    *p;
-    int     pos;
-    char    c;
+    char        buffer[_MAX_PATH];
+    const char  *p;
+    int         pos;
+    char        c;
 
     assert( inString != NULL );
 
-    for( pos = 0, p = (char *)inString; (c = *p++) != NULLCHAR && pos < _MAX_PATH - 1; ) {
-        if( c == BACKSLASH ) {
-            if( *p == DOUBLEQUOTE ) {
+    pos = 0;
+    for( p = inString; (c = *p++) != NULLCHAR; ) {
+        if( pos >= sizeof( buffer ) - 1 )
+            break;
+        if( c == '\\' ) {
+            if( *p == '\"' ) {
                 c = *p++;
             }
         }
@@ -375,7 +378,7 @@ STATIC RET_T createFile( const FLIST *head )
         /* Push the filename back into the stream
          * and then get it back out using DeMacro to fully DeMacro
          */
-        UnGetCH( STRM_MAGIC );
+        UnGetCHR( STRM_MAGIC );
         InsString( head->fileName, false );
         fileName = DeMacro( TOK_MAGIC );
         GetCHR();           /* eat STRM_MAGIC */
@@ -446,8 +449,8 @@ STATIC RET_T writeInlineFiles( FLIST *head, char **commandIn )
         // the filename into a temp filename
         if( strcmp( current->fileName, INLINE_SYMBOL ) == 0 ) {
             for( ;; ) {
-                if( cmdText[index] == LESSTHAN ) {
-                    if( cmdText[index + 1] == LESSTHAN ) {
+                if( cmdText[index] == '<' ) {
+                    if( cmdText[index + 1] == '<' ) {
                         index += 2;
                         break;
                     }
@@ -461,7 +464,7 @@ STATIC RET_T writeInlineFiles( FLIST *head, char **commandIn )
             if( ret == RET_ERROR ) {
                 break;
             }
-            CatNStrToVec( newCommand, cmdText+start, index-start-2 );
+            CatNStrToVec( newCommand, cmdText + start, index - start - 2 );
             start = index;
             FreeSafe( current->fileName );
             current->fileName = createTmpFileName();
@@ -609,14 +612,14 @@ STATIC RET_T percentWrite( char *arg, enum write_type type )
     }
 
     fn = p = SkipWS( arg );
-    if( *p != DOUBLEQUOTE ) {
+    if( *p != '\"' ) {
         while( cisfilec( *p ) ) {
             ++p;
         }
     } else {
         ++p;    // Skip the first quote
         ++fn;
-        while( *p != DOUBLEQUOTE && *p != NULLCHAR ) {
+        while( *p != '\"' && *p != NULLCHAR ) {
             ++p;
         }
         if( *p != NULLCHAR ) {
@@ -713,14 +716,14 @@ STATIC RET_T percentRename( char *arg )
 
     /* Get first file name, must end in space but may be surrounded by double quotes */
     fn1 = p = SkipWS( arg );
-    if( *p != DOUBLEQUOTE ) {
+    if( *p != '\"' ) {
         while( cisfilec( *p ) ) {
             ++p;
         }
     } else {
         ++p;    // Skip the first quote
         ++fn1;
-        while( *p != DOUBLEQUOTE && *p != NULLCHAR ) {
+        while( *p != '\"' && *p != NULLCHAR ) {
             ++p;
         }
         if( *p != NULLCHAR ) {
@@ -738,14 +741,14 @@ STATIC RET_T percentRename( char *arg )
 
     /* Get second file name as well */
     fn2 = p = SkipWS( p );
-    if( *p != DOUBLEQUOTE ) {
+    if( *p != '\"' ) {
         while( cisfilec( *p ) ) {
             ++p;
         }
     } else {
         ++p;    // Skip the first quote
         ++fn2;
-        while( *p != DOUBLEQUOTE && *p != NULLCHAR ) {
+        while( *p != '\"' && *p != NULLCHAR ) {
             ++p;
         }
         if( *p != NULLCHAR ) {
@@ -1306,7 +1309,6 @@ STATIC RET_T handleCD( char *cmd )
 /********************************/
 {
     char        *p;     // pointer to walk with
-    char        *s;
 
 #ifdef DEVELOPMENT
     PrtMsg( DBG | INF | INTERPRETING, dosInternals[COM_CD] );
@@ -1324,8 +1326,7 @@ STATIC RET_T handleCD( char *cmd )
     }
 
     if( p[1] == ':' ) {             /* just a drive: arg, print the cd */
-        s = SkipWS( p + 2 );
-        if( *s == NULLCHAR ) {
+        if( *SkipWS( p + 2 ) == NULLCHAR ) {
             return( mySystem( cmd, cmd ) );
         }
     }
@@ -1802,18 +1803,18 @@ STATIC RET_T shellSpawn( char *cmd, shell_flags flags )
     int         retcode;            // from spawnvp
     UINT16      tmp_env = 0;        // for * commands
     RET_T       my_ret;             // return code for this function
-    int         quote;              // true if inside quotes
+    bool        quote;              // true if inside quotes
 
     assert( cmd != NULL );
 
     percent_cmd = cmd[0] == '%';
     arg = cmd + (percent_cmd ? 1 : 0);      /* split cmd name from args */
 
-    quote = 0;                              /* no quotes yet */
+    quote = false;                          /* no quotes yet */
     while( !((cisws( *arg ) || *arg == Glob.swchar || *arg == '+' ||
         *arg == '=' ) && !quote) && *arg != NULLCHAR ) {
         if( *arg == '\"' ) {
-            quote = !quote;  /* found a quote */
+            quote = !quote;     /* found a quote */
         }
         ++arg;
     }
@@ -2076,7 +2077,7 @@ RET_T ExecCList( CLIST *clist )
         ret = writeInlineFiles( clist->inlineHead, &(clist->text) );
         currentFlist = clist->inlineHead;
         if( ret == RET_SUCCESS ) {
-            UnGetCH( STRM_MAGIC );
+            UnGetCHR( STRM_MAGIC );
             InsString( clist->text, false );
             line = DeMacro( TOK_MAGIC );
             GetCHR();        /* eat STRM_MAGIC */

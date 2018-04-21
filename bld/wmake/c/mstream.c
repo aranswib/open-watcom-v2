@@ -62,6 +62,8 @@
  * is no further input available in the stream.
  */
 
+#define CTRLZ       0x1a
+
 typedef enum {                  /* the different stream types           */
     SENT_FILE,
     SENT_STR,
@@ -254,7 +256,7 @@ RET_T InsFile( const char *name, bool envsearch )
         pushFH( tmp, fh );
 
         if( !Glob.overide ) {
-            UnGetCH( EOL );
+            UnGetCHR( '\n' );
             InsString( path, false );
             InsString( "$+$(__MAKEFILES__)$- ", false );
             DefMacro( "__MAKEFILES__" );
@@ -305,7 +307,7 @@ void InsString( const char *str, bool weFree )
 }
 
 
-void UnGetCH( STRM_T s )
+void UnGetCHR( STRM_T s )
 /******************************
  * Push back a single character
  */
@@ -345,17 +347,19 @@ STRM_T GetCHR( void )
                     }
                     popSENT();
                     flagEOF = true;
-                    return( EOL );
+                    return( '\n' );
                 }
             }
-            s = *(head->data.file.cur++);
+            s = *(unsigned char *)head->data.file.cur;
+            head->data.file.cur++;
             if( sisbarf( s ) ) {
                 /* ignore \r in \r\n */
-                if( s == '\r' && head->data.file.cur[0] == EOL ) {
-                    s = *(head->data.file.cur++);
-                } else if( Glob.compat_nmake && s == 0x1a ) {
+                if( s == '\r' && head->data.file.cur[0] == '\n' ) {
+                    s = *(unsigned char *)head->data.file.cur;
+                    head->data.file.cur++;
+                } else if( Glob.compat_nmake && s == CTRLZ ) {
                     /* embedded ^Z terminates stream in MS mode */
-                    s = EOL;
+                    s = '\n';
                     popSENT();
                     flagEOF = true;
                 } else {
@@ -365,9 +369,9 @@ STRM_T GetCHR( void )
                 }
             }
             if( s == '\f' ) {
-                s = EOL;
+                s = '\n';
             }
-            if( s == EOL ) {
+            if( s == '\n' ) {
                 head->data.file.line++;
             }
             return( s );
@@ -464,8 +468,7 @@ RET_T GetFileLine( const char **pname, UINT16 *pline )
      * evaluate improperly).
      */
     *pline = cur->data.file.line;
-    if( cur->data.file.cur > cur->data.file.buf &&
-        cur->data.file.cur[-1] == EOL ) {
+    if( cur->data.file.cur > cur->data.file.buf && cur->data.file.cur[-1] == '\n' ) {
         --(*pline);
     }
 
@@ -502,7 +505,7 @@ void dispSENT( void )
                     pos += FmtStr( &buf[pos],
                         "fh %d, in buf %d, next 0x%x, line %d",
                         cur->data.file.fh, cur->data.file.max - cur->data.file.cur,
-                        *(cur->data.file.cur), cur->data.file.line );
+                        *(unsigned char *)cur->data.file.cur, cur->data.file.line );
                 }
                 if( cur->data.file.name ) {
                     pos += FmtStr( &buf[pos], ", name %s", cur->data.file.name );

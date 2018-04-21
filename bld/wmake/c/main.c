@@ -244,7 +244,7 @@ STATIC char *procFlags( char const * const *argv, const char **log_name )
     while( (p = *++argv) != NULL ) {
         checkCtrl( p );
         select = p[0];
-        option = (char)ctolower( p[1] );
+        option = ctolower( p[1] );
         if( select == '-' || select == Glob.swchar ) {
             if( option != NULLCHAR && p[2] == NULLCHAR ) {
                 switch( option ) {
@@ -642,19 +642,19 @@ static int ExitSafe( int rc )
     return( rc );
 }
 
-NO_RETURN void ExitFatal( void )
+void ExitFatal( void )
 {
     exit( ExitSafe( EXIT_FATAL ) );
     // never return
 }
 
-NO_RETURN void ExitError( void )
+void ExitError( void )
 {
     exit( ExitSafe( EXIT_ERROR ) );
     // never return
 }
 
-NO_RETURN void ExitOK( void )
+void ExitOK( void )
 {
     exit( ExitSafe( EXIT_OK ) );
     // never return
