@@ -81,8 +81,8 @@ static void brinfMacFini        // COMPLETION
         MACVALUE* curr;
         RingIterBeg( values, curr ) {
             switch( curr->type ) {
-              case MVT_DEFINED :
-              case MVT_UNDEFED :
+            case MVT_DEFINED :
+            case MVT_UNDEFED :
               { void* temp = curr->defin;
                 curr->defin = NULL;
                 CMemFree( temp );   // same format for undef'ed
@@ -153,7 +153,7 @@ static MACVALUE* findValue      // LOOKUP VALUE IN SAVED VALUES
             }
         }
     } RingIterEnd( srch );
-    return retn;
+    return( retn );
 }
 
 
@@ -168,7 +168,7 @@ MACVALUE* BrinfMacAddValue      // ADD A VALUE
         retn->type = MVT_VALUE;
         retn->value = mac;
     }
-    return retn;
+    return( retn );
 }
 
 
@@ -193,12 +193,12 @@ static MACVALUE* findDefUndef   // LOOKUP (UN)DEFINED VALUE IN SAVED VALUES
     if( NULL == retn ) {
         char * save = CMemAlloc( nlen + 1 );
         memcpy( save, name, nlen );
-        save[ nlen ] = '\0';
+        save[nlen] = '\0';
         retn = RingCarveAlloc( carveMacVals, &values );
         retn->type = type;
         retn->defin = save;   // note: undefed is same format
     }
-    return retn;
+    return( retn );
 }
 
 
@@ -206,7 +206,7 @@ MACVALUE* BrinfMacAddDefin      // ADD A defined(name) VALUE
     ( char const* name          // - macro name
     , unsigned nlen )           // - name length
 {
-    return findDefUndef( name, nlen, MVT_DEFINED );
+    return( findDefUndef( name, nlen, MVT_DEFINED ) );
 }
 
 
@@ -214,7 +214,7 @@ MACVALUE* BrinfMacAddUndef      // ADD A !defined(name) VALUE
     ( char const* name          // - macro name
     , unsigned nlen )           // - name length
 {
-    return findDefUndef( name, nlen, MVT_UNDEFED );
+    return( findDefUndef( name, nlen, MVT_UNDEFED ) );
 }
 
 
@@ -245,18 +245,18 @@ char const *BrinfMacValueName   // GET NAME FROM MACVALUE
     char const *name;           // - name for macro
 
     switch( mv->type ) {
-      case MVT_VALUE :
+    case MVT_VALUE :
         name = mv->value->macro_name;
         break;
-      case MVT_DEFINED :
+    case MVT_DEFINED :
         name = mv->defin;
         break;
-      case MVT_UNDEFED :
+    case MVT_UNDEFED :
         name = mv->undef;
         break;
-      DbgDefault( "Bad MACVALUE type" );
+    DbgDefault( "Bad MACVALUE type" );
     }
-    return name;
+    return( name );
 }
 
 
@@ -264,7 +264,7 @@ TOKEN_LOCN const* BrinfMacValueLocn // GET LOCATION FOR MACVALUE DECLARATION
     ( MACVALUE const *mv )      // - the MACVALUE
 {
     DbgVerify( mv->type == MVT_VALUE, "Cannot get location for non-value" );
-    return &mv->value->defn;
+    return( &mv->value->defn );
 }
 
 
@@ -273,7 +273,7 @@ unsigned BrinfMacValueParmCount // GET # PARAMETERS FOR MACVALUE DECLARATION
 {
     // note: the parm count is 1 + # parameters
     DbgVerify( mv->type == MVT_VALUE, "Cannot get # parms for non-value" );
-    return mv->value->parm_count;
+    return( mv->value->parm_count );
 }
 
 

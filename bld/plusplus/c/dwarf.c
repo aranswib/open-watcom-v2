@@ -442,11 +442,14 @@ static bool dwarfClassInfo( TYPE type )
     // define any template typedefs
     for( ;; ) {
         SCOPE scope;
-        if( (type->flag & TF1_INSTANTIATION) == 0 ) break;
+        if( (type->flag & TF1_INSTANTIATION) == 0 )
+            break;
         scope = type->u.c.scope->enclosing;
-        if( !ScopeType( scope, SCOPE_TEMPLATE_INST ) ) break;
+        if( !ScopeType( scope, SCOPE_TEMPLATE_INST ) )
+            break;
         scope = scope->enclosing;
-        if( !ScopeType( scope, SCOPE_TEMPLATE_PARM ) ) break;
+        if( !ScopeType( scope, SCOPE_TEMPLATE_PARM ) )
+            break;
         stop = ScopeOrderedStart( scope );
         curr = ScopeOrderedNext( stop, NULL );
         while( curr != NULL ) {
@@ -893,8 +896,8 @@ static dbg_type dwarfBasedPointerType( TYPE type, uint flags ) {
     btype = BasedType( type->of );
     switch( btype->flag & TF1_BASED ) {
     case TF1_BASED_STRING:
-    //   __based(__segname("_name"))
-    // on stack top->| offset 0 | seg sym |
+        //   __based(__segname("_name"))
+        // on stack top->| offset 0 | seg sym |
         if( SegmentFindBased( btype ) == SEG_CODE ) {
 #if _INTEL_CPU
             if( !IsFlat() ) {  /* should check Client */
@@ -918,19 +921,19 @@ static dbg_type dwarfBasedPointerType( TYPE type, uint flags ) {
         DWLocConstS( Client, locid, 0 );
         break;
     case TF1_BASED_SELF:
-    //  char __based((__segment)__self) *sp; -- inherits base from expression
-    // on stack top->| offset 0 |
+        //  char __based((__segment)__self) *sp; -- inherits base from expression
+        // on stack top->| offset 0 |
         DWLocConstS( Client, locid, 0 );
         break;
     case TF1_BASED_VOID:
-    //   char __based(void) *vp;           -- just an offset (based on nothing)
-    // on stack top->| offset 0 | seg 0 |
+        //   char __based(void) *vp;           -- just an offset (based on nothing)
+        // on stack top->| offset 0 | seg 0 |
         DWLocConstS( Client, locid, 0 );
         DWLocConstS( Client, locid, 0 );
         break;
     case TF1_BASED_FETCH:
-   // char __based(seg_var) *bp;        -- fetch segment from seg_var
-   // on stack top->| offset 0 | seg (seg_var) |
+        // char __based(seg_var) *bp;        -- fetch segment from seg_var
+        // on stack top->| offset 0 | seg (seg_var) |
         sym = dwarfDebugSymAlias( btype->u.m.base );
         DbgAddrTaken( sym );
         dref = DW_LOC_deref_size;
@@ -943,10 +946,10 @@ static dbg_type dwarfBasedPointerType( TYPE type, uint flags ) {
         DWLocConstS( Client, locid, 0 );
         break;
     case TF1_BASED_ADD:
-    // char __based(fp) *pp;             -- add offset to fp to produce pointer
-    // on stack top->| offset (fp) | seg (fp) | if far
-    // on stack top->| offset (fp) | if flat
-    {
+        // char __based(fp) *pp;             -- add offset to fp to produce pointer
+        // on stack top->| offset (fp) | seg (fp) | if far
+        // on stack top->| offset (fp) | if flat
+      {
         TYPE        bptr;
         type_flag   bflags;
 
@@ -983,7 +986,7 @@ static dbg_type dwarfBasedPointerType( TYPE type, uint flags ) {
             dwarfRefSymLoc( locid, sym ); /*  offset on top  */
             DWLocOp( Client, locid, dref, CgTypeOffset() );
         }
-    }   break;
+      } break;
     }
     dl_seg = DWLocFini( Client, locid );
     dh = DWBasedPointer( Client, dwarfType( type->of, DC_DEFAULT ), dl_seg, flags );
@@ -1331,11 +1334,9 @@ static void dwarfProcessFunction( CGFILE *file_ctl )
         // scanning for case IC_* patterns.
         // ICMASK BEGIN DWARF (do not remove)
         switch( ins->opcode ) {
-
         case IC_EOF :                     // TERMINATING IC FOR ICMASK PROGRAM
             DbgNever();
             break;
-
 //
 //          SYMBOL REFERENCES
 //
@@ -1348,14 +1349,12 @@ static void dwarfProcessFunction( CGFILE *file_ctl )
                 }
             }
             break;
-
 //
 //          PROCEDURE DECLARATIONS
 //
         case IC_FUNCTION_ARGS :           // DEFINE FUNCTION ARG.S
             ScopeWalkOrderedSymbols( ins_value.pvalue, &dwarf_define_parm );
             break;
-
         case IC_BLOCK_OPEN :              // OPEN BLOCK SCOPE (LIVE CODE)
             if( ins_value.pvalue != NULL ) {
                 DWBeginLexicalBlock( Client, NULL, NULL );
@@ -1363,7 +1362,6 @@ static void dwarfProcessFunction( CGFILE *file_ctl )
                 ScopeWalkOrderedSymbols( ins_value.pvalue, &dwarf_block_open );
             }
             break;
-
         case IC_BLOCK_DEAD :              // OPEN BLOCK SCOPE (DEAD CODE)
             if( ins_value.pvalue != NULL ) {
                 DWBeginLexicalBlock( Client, NULL, NULL );
@@ -1371,18 +1369,15 @@ static void dwarfProcessFunction( CGFILE *file_ctl )
                 ScopeWalkOrderedSymbols( ins_value.pvalue, &dwarf_block_open );
             }
             break;
-
         case IC_BLOCK_END :               // CLOSE BLOCK SCOPE
             DWEndLexicalBlock( Client );
             break;
-
 //
 //          DEBUGGING -- for program
 //
         case IC_DBG_LINE :                // SET LINE NUMBER
             line = ins_value.uvalue;
             break;
-
 //
 //          EXCEPTION HANDLING
 //
@@ -1392,14 +1387,12 @@ static void dwarfProcessFunction( CGFILE *file_ctl )
                 DWReference( Client, line, column, dh );
             }
             break;
-
         case IC_CATCH_VAR :               // SET TRY_VAR FOR CATCH
             dh = dwarfSymbol( ins_value.pvalue, DC_DEFAULT );
             if( dh != 0 ) {
                 DWReference( Client, line, column, dh );
             }
             break;
-
         case IC_CATCH :                   // SET TYPE OF A CATCH
             if( ins_value.pvalue != 0 ) {
                 dh = dwarfType( ins_value.pvalue, DC_DEFAULT );
@@ -1408,7 +1401,6 @@ static void dwarfProcessFunction( CGFILE *file_ctl )
                 }
             }
             break;
-
         case IC_EXCEPT_SPEC :             // FUNCTION EXCEPTION SPEC.
             if( ins_value.pvalue != NULL ) { // not throw()
                 dh = dwarfType( ins_value.pvalue, DC_DEFAULT );
@@ -1417,14 +1409,12 @@ static void dwarfProcessFunction( CGFILE *file_ctl )
                 }
             }
             break;
-
         case IC_THROW_RO_BLK :            // SET THROW R/O BLOCK
             dh = dwarfType( ins_value.pvalue, DC_DEFAULT );
             if( dh != 0 ) {
                 DWReference( Client, line, column, dh );
             }
             break;
-
         default:
             DbgNever();
         }
@@ -1647,7 +1637,7 @@ static dw_handle dwarfDebugStatic( SYMBOL sym )
         DWLocTrash( Client, dl_seg );
     }
 #endif
-    if( flags & DW_FLAG_GLOBAL ){
+    if( flags & DW_FLAG_GLOBAL ) {
         name = CppClassPathDebug( sym ); //non rent do after dwarftype
         DWPubname( Client, dh, name );
     }
@@ -1745,7 +1735,8 @@ static bool dwarfForwardFollowup( void )
         TypeTraverse( TYP_CLASS, &doDwarfForwardFollowupClass, &keep_going );
         TypeTraverse( TYP_TYPEDEF, &doDwarfForwardFollowupTypedef, &keep_going );
         TypeTraverse( TYP_ENUM, &doDwarfForwardFollowupEnum, &keep_going );
-        if( ! keep_going ) break;
+        if( ! keep_going )
+            break;
         did_something = true;
     }
     return( did_something );
@@ -1800,7 +1791,8 @@ static void dwarfEmitFundamentalType( void )
 extern void DwarfBrowseEmit( void )
 /*********************************/
 {
-    if( !CompFlags.emit_browser_info ) return;
+    if( !CompFlags.emit_browser_info )
+        return;
     initDwarf( false, DSI_ONLY_SYMS );
     Client = DwarfInit();
     dummyLoc = DWLocFini( Client, DWLocInit( Client ) );
@@ -1913,7 +1905,7 @@ static void dwarfNameSpace( SYMBOL curr )
 /***************************************/
 {
     SCOPE scope = curr->u.ns->scope;
-    if( curr->u.ns->u.s.unnamed ){
+    if( curr->u.ns->u.s.unnamed ) {
         dwarfDebugSymbol( scope );
     } else {
         dwarfBegNameSpace( curr );
@@ -2040,7 +2032,8 @@ static bool dwarfUsedTypeSymbol( SCOPE scope )
             }
             curr = ScopeOrderedNext( stop, curr );
         }
-        if( !change )break;
+        if( !change )
+            break;
         has_changed = true;
     }
     return( has_changed );
@@ -2052,11 +2045,11 @@ static void dwarfPreUsedNameSpace( SYMBOL curr )
 /**********************************************/
 {
 
-    if( !curr->u.ns->u.s.unnamed ){
+    if( !curr->u.ns->u.s.unnamed ) {
         dwarfBegNameSpace( curr );
     }
     dwarfPreUsedSymbol( curr->u.ns->scope );
-    if( !curr->u.ns->u.s.unnamed ){
+    if( !curr->u.ns->u.s.unnamed ) {
         DWEndNameSpace( Client );
     }
 }
@@ -2105,9 +2098,12 @@ static bool typedef_is_of_basic_types( TYPE type )
 
     for(;;) {
         type = TypedefModifierRemove( type );
-        if( type == NULL ) break;
-        if( type->id == TYP_CLASS ) return( false );
-        if( type->id == TYP_MEMBER_POINTER ) return( false );
+        if( type == NULL )
+            break;
+        if( type->id == TYP_CLASS )
+            return( false );
+        if( type->id == TYP_MEMBER_POINTER )
+            return( false );
         if( type->id == TYP_FUNCTION ) {
             alist = TypeArgList( type );
             for( i = 0 ; i < alist->num_args ; i++ ) {

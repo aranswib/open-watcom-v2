@@ -462,10 +462,10 @@ typedef PCH_struct {            /* used for keeping track of function arguments 
 
 typedef struct                  // TEMP_ARG_LIST
 {   arg_list base;              // - base
-    TYPE array[ AUTO_ARG_MAX-1];// - default # (1 in arg_list)
+    TYPE array[AUTO_ARG_MAX - 1];// - default # (1 in arg_list)
 } TEMP_ARG_LIST;
 
-typedef PTREE TEMP_PT_LIST[ AUTO_ARG_MAX ]; // TEMP_PT_LIST
+typedef PTREE TEMP_PT_LIST[AUTO_ARG_MAX]; // TEMP_PT_LIST
 
 //
 // list of comparisons to exclude in TypeCompareExclude
@@ -718,30 +718,30 @@ typedef enum {
 ,   SCOPE_MAX
 } scope_type_t;
 
-#define SC_DEFS                                                               \
- SC_DEF(SC_NULL                    )/* not defined                          */\
-,SC_DEF(SC_EXTERN                  )/* external reference                   */\
-,SC_DEF(SC_STATIC                  )/* static definition                    */\
-,SC_DEF(SC_AUTO                    )/* automatic storage                    */\
-,SC_DEF(SC_REGISTER                )/* register storage                     */\
-,SC_DEF(SC_TYPEDEF                 )/* typedef symbol                       */\
-,SC_DEF(SC_ACCESS                  )/* member access symbol (11.3)          */\
-,SC_DEF(SC_DEFAULT                 )/* represents a default argument value  */\
-,SC_DEF(SC_ENUM                    )/* enumerated constant                  */\
-,SC_DEF(SC_MEMBER                  )/* class member                         */\
-,SC_DEF(SC_PUBLIC                  )/* defined and symbol exported          */\
-,SC_DEF(SC_NAMESPACE               )/* symbol is a namespace id             */\
-,SC_DEF(SC_CLASS_TEMPLATE          )/* symbol is a class template           */\
-,SC_DEF(SC_FUNCTION_TEMPLATE       )/* symbol is a function template        */\
-,SC_DEF(SC_EXTERN_FUNCTION_TEMPLATE)/* symbol is an extern function template */\
-,SC_DEF(SC_STATIC_FUNCTION_TEMPLATE)/* symbol is a static function template */\
-                                    /* **** used only in Code Generation:   */\
-,SC_DEF(SC_VIRTUAL_FUNCTION        )/* indirect symbol for a virt. fn call  */\
-                                    /* **** only in template instantiation  */\
-,SC_DEF(SC_ADDRESS_ALIAS           )/* symbol use in template instantiations*/\
-                                    /* **** used only when writing pchdrs   */\
-,SC_DEF(SC_FREE                    )/* used for precompiled headers         */\
-,SC_DEF(SC_MAX                     )
+#define SC_DEFS \
+ SC_DEF( SC_NULL )                      /* not defined                           */\
+,SC_DEF( SC_EXTERN )                    /* external reference                    */\
+,SC_DEF( SC_STATIC )                    /* static definition                     */\
+,SC_DEF( SC_AUTO )                      /* automatic storage                     */\
+,SC_DEF( SC_REGISTER )                  /* register storage                      */\
+,SC_DEF( SC_TYPEDEF )                   /* typedef symbol                        */\
+,SC_DEF( SC_ACCESS )                    /* member access symbol (11.3)           */\
+,SC_DEF( SC_DEFAULT )                   /* represents a default argument value   */\
+,SC_DEF( SC_ENUM )                      /* enumerated constant                   */\
+,SC_DEF( SC_MEMBER )                    /* class member                          */\
+,SC_DEF( SC_PUBLIC )                    /* defined and symbol exported           */\
+,SC_DEF( SC_NAMESPACE )                 /* symbol is a namespace id              */\
+,SC_DEF( SC_CLASS_TEMPLATE )            /* symbol is a class template            */\
+,SC_DEF( SC_FUNCTION_TEMPLATE )         /* symbol is a function template         */\
+,SC_DEF( SC_EXTERN_FUNCTION_TEMPLATE )  /* symbol is an extern function template */\
+,SC_DEF( SC_STATIC_FUNCTION_TEMPLATE )  /* symbol is a static function template  */\
+                                        /* **** used only in Code Generation:    */\
+,SC_DEF( SC_VIRTUAL_FUNCTION )          /* indirect symbol for a virt. fn call   */\
+                                        /* **** only in template instantiation   */\
+,SC_DEF( SC_ADDRESS_ALIAS )             /* symbol use in template instantiations */\
+                                        /* **** used only when writing pchdrs    */\
+,SC_DEF( SC_FREE )                      /* used for precompiled headers          */\
+,SC_DEF( SC_MAX )
 
 
 typedef enum {
@@ -1789,8 +1789,8 @@ typedef enum typc_index {
 } typc_index;
 
 extern TYPE TypeCache[];
-#define TypeGetCache( tci )     ( TypeCache[ (tci) ] )
-#define TypeSetCache( tci, ty ) ( TypeCache[ (tci) ] = ( ty ) )
+#define TypeGetCache( tci )     ( TypeCache[(tci)] )
+#define TypeSetCache( tci, ty ) ( TypeCache[(tci)] = ( ty ) )
 
 #define TypeSegmentShort()                  TypeGetCache( TYPC_SEGMENT_SHORT )
 #define TypePtrToVoid()                     TypeGetCache( TYPC_VOID_PTR )

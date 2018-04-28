@@ -120,9 +120,11 @@ static int replicateSearch( const char *name )
     DbgAssert( name[0] != '$' );
 #endif
     for( i = 0 ; i < next_replicate ; i++ ) {
-         if( len == replicate[i].len ) {
-             if( strcmp( name, replicate[i].ptr ) == 0 ) return( i );
-         }
+        if( len == replicate[i].len ) {
+            if( strcmp( name, replicate[i].ptr ) == 0 ) {
+                return( i );
+            }
+        }
     }
     if( i < MAX_REPLICATE ) {
         replicate[i].len = len;
@@ -141,7 +143,8 @@ static uint_32 objNameHash( uint_32 h, char *s )
     for(;;) {
         /* ( h & ~0x0ffffff ) == 0 is always true here */
         c = *s;
-        if( c == 0 ) break;
+        if( c == 0 )
+            break;
         h = (h << 4) + c;
         g = h & ~0x0ffffff;
         h ^= g;
@@ -211,10 +214,10 @@ static char *utoa_zz( unsigned value, char *buffer )
     rem = value % 36;
     value = value / 36;
 #endif
-    *p++ = __Alphabet36[ value / 36 ];
-    *p++ = __Alphabet36[ value % 36 ];
+    *p++ = __Alphabet36[value / 36];
+    *p++ = __Alphabet36[value % 36];
 #ifdef ZZ_LEN_3
-    *p++ = __Alphabet36[ rem ];
+    *p++ = __Alphabet36[rem];
 #endif
     *p = '\0';
     return( buffer );
@@ -691,7 +694,8 @@ static void appendScopeMangling(// APPEND CLASS SCOPES
     char buff[1 + sizeof( unsigned ) * 2 + 1];
 
     for(;;) {
-        if( scope == NULL ) break;
+        if( scope == NULL )
+            break;
         switch( ScopeId( scope ) ) {
         case SCOPE_FILE:
             appendNameSpaceName( scope );
@@ -715,7 +719,8 @@ static void appendScopeMangling(// APPEND CLASS SCOPES
             appendStr( IN_NAME_SUFFIX );
             for(;;) {
                 next = scope->enclosing;
-                if( ScopeId( next ) != SCOPE_BLOCK ) break;
+                if( ScopeId( next ) != SCOPE_BLOCK )
+                    break;
                 scope = next;
                 DbgAssert( ScopeId( scope ) == SCOPE_BLOCK );
             }
@@ -727,7 +732,8 @@ static void appendScopeMangling(// APPEND CLASS SCOPES
             appendChar( IN_CLASS_DELIM );
             for(;;) {
                 curr = ScopeOrderedNext( stop, curr );
-                if( curr == NULL ) break;
+                if( curr == NULL )
+                    break;
                 appendTemplateParm( curr );
             }
             break;
@@ -774,14 +780,16 @@ bool CppLookupOperatorName(     // FIND OPERATOR FOR NAME (false IF NOT FOUND)
         if( nameHasPrefix( name, IN_OP_PREFIX ) ) {
             // name is an operator
             ExtraRptIncrementCtr( ctr_lookups_slow );
-            index = (CGOP)( NameHash( name ) - NameHash( operatorNames[ 0 ] ) );
+            index = (CGOP)( NameHash( name ) - NameHash( operatorNames[0] ) );
 #ifndef NDEBUG
-            operatorNames[ MAX_OP_NAMES ] = name;
+            operatorNames[MAX_OP_NAMES] = name;
             i = 0;
             for(;;) {
-                if( operatorNames[ i ] == name ) break;
+                if( operatorNames[i] == name )
+                    break;
                 ++i;
-                if( operatorNames[ i ] == name ) break;
+                if( operatorNames[i] == name )
+                    break;
                 ++i;
             }
             DbgAssert( i != MAX_OP_NAMES );
@@ -863,7 +871,7 @@ static char* setMangling(       // SET FOR MANGLING
     setPrefix( last );
     save = strsave( VbufString( &mangled_name ) );
     VbufRewind( &mangled_name );
-    return save;
+    return( save );
 }
 
 static NAME retMangling(        // RETURN MANGLED NAME
@@ -1162,7 +1170,7 @@ char *CppNameDebug(             // TRANSLATE INTERNAL NAME TO DEBUGGER NAME
     if( CppLookupOperatorName( sym->name->name, &oper ) ) {
         switch( oper ) {
         case CO_CONVERT:
-        {
+          {
             VBUF prefix, suffix;
             appendStr( "operator " );
             FormatFunctionType( SymFuncReturnType( sym ), &prefix, &suffix,
@@ -1171,7 +1179,7 @@ char *CppNameDebug(             // TRANSLATE INTERNAL NAME TO DEBUGGER NAME
             appendStr( VbufString( &suffix ) );
             VbufFree( &prefix );
             VbufFree( &suffix );
-        }   break;
+          } break;
         case CO_CTOR:
             appendStr( NameStr( SimpleTypeName( ScopeClass( SymScope( sym ) ) ) ) );
             break;

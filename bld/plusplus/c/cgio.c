@@ -202,10 +202,10 @@ static CGFILE* lookupFile(      // DO A FILE LOOKUP FOR A SYMBOL, RING
     RingIterBeg( ring, curr ) {
         ExtraRptIncrementCtr( cgio_comps );
         if( sym == curr->symbol ) {
-            return curr;
+            return( curr );
         }
     } RingIterEnd( curr );
-    return NULL;
+    return( NULL );
 }
 
 #ifndef NDEBUG
@@ -300,7 +300,7 @@ void CgioWriteIC(               // WRITE IC RECORD TO VIRTUAL FILE
 {
 #ifndef NDEBUG
     ExtraRptIncrementCtr( cgio_write_ins );
-    if( ICOpTypes[ ins->opcode ] == ICOT_NUL ) {
+    if( ICOpTypes[ins->opcode] == ICOT_NUL ) {
         ExtraRptIncrementCtr( cgio_write_nul );
     }
 #endif
@@ -354,7 +354,7 @@ CGINTER *CgioSeek(              // SEEK TO POSITION IN VIRTUAL FILE
 {
     DbgAssert( ctl->cursor != NULL );
     ctl->buffer = CgioBuffSeek( ctl->buffer, posn, &ctl->cursor );
-    return ctl->cursor;
+    return( ctl->cursor );
 }
 
 
@@ -363,7 +363,7 @@ CGINTER *CgioReadIC(            // READ IC RECORD (LOCATE MODE)
 {
     DbgAssert( ctl->cursor != NULL );
     ctl->buffer = CgioBuffReadIC( ctl->buffer, &ctl->cursor );
-    return ctl->cursor;
+    return( ctl->cursor );
 }
 
 
@@ -373,7 +373,7 @@ CGINTER *CgioReadICUntilOpcode( // READ IC RECORD UNTIL OPCODE IS FOUND
 {
     DbgAssert( ctl->cursor != NULL );
     ctl->buffer = CgioBuffReadICUntilOpcode( ctl->buffer, &ctl->cursor, opcode );
-    return ctl->cursor;
+    return( ctl->cursor );
 }
 
 
@@ -383,7 +383,7 @@ CGINTER *CgioReadICMask(        // READ IC RECORD UNTIL OPCODE IN SET IS FOUND
 {
     DbgAssert( ctl->cursor != NULL );
     ctl->buffer = CgioBuffReadICMask( ctl->buffer, &ctl->cursor, mask );
-    return ctl->cursor;
+    return( ctl->cursor );
 }
 
 
@@ -395,7 +395,7 @@ CGINTER *CgioReadICMaskCount(   // READ IC RECORD UNTIL OPCODE IN SET IS FOUND
 {
     DbgAssert( ctl->cursor != NULL );
     ctl->buffer = CgioBuffReadICMaskCount( ctl->buffer, &ctl->cursor, mask, count_mask, count );
-    return ctl->cursor;
+    return( ctl->cursor );
 }
 
 
@@ -516,7 +516,7 @@ CGFILE *CgioLocateFile(         // LOCATE LIVE FILE FOR A SYMBOL
     SYMBOL sym )                // - symbol for file
 {
     ExtraRptIncrementCtr( cgio_locates );
-    return lookupFile( sym, cg_file_ring );
+    return( lookupFile( sym, cg_file_ring ) );
 }
 
 
@@ -532,7 +532,7 @@ CGFILE* CgioLocateAnyFile(      // LOCATE LIVE OR REMOVED FILE FOR A SYMBOL
             retn = lookupFile( sym, cg_file_removed );
         }
     }
-    return retn;
+    return( retn );
 }
 
 #define doWriteOpNUL    NULL
@@ -556,8 +556,8 @@ CGVALUE CgioGetIndex( CGINTEROP opcode, CGVALUE value )
     ic_op_type op_class;
     CGIRELOCFN *reloc;
 
-    op_class = ICOpTypes[ opcode ];
-    reloc = relocWriteOperand[ op_class ];
+    op_class = ICOpTypes[opcode];
+    reloc = relocWriteOperand[op_class];
     if( reloc != NULL ) {
         value.pvalue = reloc( value.pvalue );
     }
@@ -625,8 +625,8 @@ static void saveCGFILE( void *e, carve_walk_base *d )
         // CGFILE contains a finished function
         for(;;) {
             opcode = cursor->opcode;
-            op_class = ICOpTypes[ opcode ];
-            reloc = relocWriteOperand[ op_class ];
+            op_class = ICOpTypes[opcode];
+            reloc = relocWriteOperand[op_class];
             if( reloc != NULL ) {
                 void *save = cursor->value.pvalue;
                 cursor->value.pvalue = reloc( save );
@@ -636,7 +636,8 @@ static void saveCGFILE( void *e, carve_walk_base *d )
                 PCHWriteUnaligned( cursor, sizeof( *cursor ) );
             }
             ++ics;
-            if( opcode == IC_EOF ) break;
+            if( opcode == IC_EOF )
+                break;
             h = CgioBuffReadIC( h, &cursor );
         }
     } else {
@@ -655,7 +656,8 @@ static void saveCGFILE( void *e, carve_walk_base *d )
         stop_cursor->opcode = IC_NO_OP;
         DbgAssert( stop_cursor->opcode != IC_NEXT );
         for(;;) {
-            if( h == stop_buffer && cursor == stop_cursor ) break;
+            if( h == stop_buffer && cursor == stop_cursor )
+                break;
             opcode = cursor->opcode;
             // might be the destination of a CgioZap
             zap_ref.opcode = IC_NO_OP;
@@ -677,8 +679,8 @@ static void saveCGFILE( void *e, carve_walk_base *d )
                 }
                 break;
             }
-            op_class = ICOpTypes[ opcode ];
-            reloc = relocWriteOperand[ op_class ];
+            op_class = ICOpTypes[opcode];
+            reloc = relocWriteOperand[op_class];
             if( reloc != NULL ) {
                 void *save = cursor->value.pvalue;
                 cursor->value.pvalue = reloc( save );
@@ -753,7 +755,7 @@ pch_status PCHReadCGFiles( void )
             if( opcode == IC_PCH_STOP )
                 break;
             if( opcode == IC_EOF ) {
-                DbgAssert( ICOpTypes[ opcode ] == ICOT_NUL );
+                DbgAssert( ICOpTypes[opcode] == ICOT_NUL );
                 // this writes the IC_EOF into the buffer
                 CgioCloseOutputFile( curr );
                 break;

@@ -303,7 +303,7 @@ SYMBOL PCHDebugSym;
 
 extern SCOPE    GetCurrScope(void)
 {
-    return g_CurrScope;
+    return( g_CurrScope );
 }
 
 extern SCOPE    SetCurrScope(SCOPE newScope)
@@ -324,31 +324,31 @@ extern SCOPE    SetCurrScope(SCOPE newScope)
     }
 #endif
 
-    return oldScope;
+    return( oldScope );
 }
 
 extern SCOPE    GetFileScope(void)
 {
-    return g_FileScope;
+    return( g_FileScope );
 }
 
 extern SCOPE    SetFileScope(SCOPE newScope)
 {
     SCOPE oldScope = g_FileScope;
     g_FileScope = newScope;
-    return oldScope;
+    return( oldScope );
 }
 
 extern SCOPE    GetInternalScope(void)
 {
-    return g_InternalScope;
+    return( g_InternalScope );
 }
 
 extern SCOPE    SetInternalScope(SCOPE newScope)
 {
     SCOPE oldScope = g_InternalScope;
     g_InternalScope = newScope;
-    return oldScope;
+    return( oldScope );
 }
 
 
@@ -720,7 +720,7 @@ void ScopeCreatePCHDebugSym( void )
         type = GetBasicType( TYP_CHAR );
         sym = SymCreateFileScope( type, SC_PUBLIC, 0, name );
         PCHDebugSym = sym;
-    }else if( CompFlags.pch_debug_info_read ){
+    }else if( CompFlags.pch_debug_info_read ) {
         name = PCHDebugInfoName();
         type = GetBasicType( TYP_CHAR );
         sym = SymCreateFileScope( type, SC_EXTERN, 0, name );
@@ -1695,7 +1695,7 @@ SYMBOL AllocTypedSymbol( TYPE type )
 
     sym = AllocSymbol();
     sym->sym_type = type;
-    return sym;
+    return( sym );
 }
 
 
@@ -2921,7 +2921,9 @@ static SCOPE nextAccessScope( SCOPE scope )
         /* skip enclosing class scopes */
         do {
             scope = scope->enclosing;
-            if( scope == NULL ) break;
+            if( scope == NULL ) {
+                break;
+            }
         } while( _IsClassScope( scope ) );
     } else {
         scope = scope->enclosing;
@@ -3375,11 +3377,11 @@ bool ScopeSameVFuns( SYMBOL fun1, SYMBOL fun2 )
     a_fun1 = &fun1;
     name = fun1->name->name;
     switch( distinctVirtualFunction( a_fun1, fun2, name ) ) {
-      case FNOV_NOT_DISTINCT_RETURN:
-      case FNOV_EXACT_MATCH:
+    case FNOV_NOT_DISTINCT_RETURN:
+    case FNOV_EXACT_MATCH:
         ok = true;
         break;
-      default :
+    default :
         ok = false;
         break;
     }
@@ -4922,11 +4924,11 @@ static walk_status collectVBTable( BASE_STACK *top, void *parm )
     table = RingAlloc( &(data->tables), amount );
     assignLocation( &(table->h), &location );
     table->h.count = max_vbase;
-    table->data[ max_vbase ] = NULL;
+    table->data[max_vbase] = NULL;
     if( ! data->already_done ) {
         RingIterBeg( ScopeInherits( scope ), base ) {
             if( _IsVirtualBase( base ) ) {
-                table->data[ base->vb_index - 1 ] = base->type;
+                table->data[base->vb_index - 1] = base->type;
             }
         } RingIterEnd( base )
     }
@@ -5406,7 +5408,7 @@ static void handleVFN( vftable_walk *data, SYMBOL sym )
     table = data->curr;
     thunk_table = table->data;
     vf_index = sym->u.member_vf_index - 1;
-    thunk = &thunk_table[ vf_index ];
+    thunk = &thunk_table[vf_index];
     introducing_sym = thunk->sym;
     if( introducing_sym == NULL ) {
         thunk->sym = sym;
@@ -6506,13 +6508,13 @@ static bool searchError( SEARCH_RESULT *result, SYMBOL sym, MSG_NUM msg )
 #else
     AccessErrMsg( msg, sym, &result->errlocn );
 #endif
-    return true;
+    return( true );
 }
 
 static bool diagnoseAmbiguity( SEARCH_RESULT *result, SYMBOL sym )
 {
     if( result->ambiguous ) {
-        return searchError( result, sym, ERR_AMBIGUOUS_MEMBER );
+        return( searchError( result, sym, ERR_AMBIGUOUS_MEMBER ) );
     }
     return( false );
 }
@@ -6594,7 +6596,7 @@ bool ScopeCheckSymbol( SEARCH_RESULT *result, SYMBOL sym )
                     err_msg = ERR_LOCAL_ACCESSING_AUTO;
                 }
             }
-            return searchError( result, sym, err_msg );
+            return( searchError( result, sym, err_msg ) );
         }
     }
     if( ! _IsClassScope( located ) ) {
@@ -6613,7 +6615,7 @@ bool ScopeCheckSymbol( SEARCH_RESULT *result, SYMBOL sym )
         if( perm == IN_PROTECTED ) {
             err_msg = ERR_ACCESS_THROUGH_PROTECTED;
         }
-        return searchError( result, sym, err_msg );
+        return( searchError( result, sym, err_msg ) );
     }
     /* report access permission error */
     perm = makePerm( sym->flag );
@@ -6627,7 +6629,7 @@ bool ScopeCheckSymbol( SEARCH_RESULT *result, SYMBOL sym )
         if( perm == IN_PROTECTED ) {
             err_msg = ERR_PROTECTED_MEMBER;
         }
-        return searchError( result, sym, err_msg );
+        return( searchError( result, sym, err_msg ) );
     }
     return( false );
 }
@@ -6824,7 +6826,7 @@ SYMBOL ScopeFunctionScope( SCOPE scope )
 SYMBOL ScopeFunctionInProgress( void )
 /************************************/
 {
-    return ScopeFunctionScope( GetCurrScope() );
+    return( ScopeFunctionScope( GetCurrScope() ) );
 }
 
 
@@ -7109,7 +7111,7 @@ void ScopeAuxName( const char *id, AUX_INFO *auxinfo )
          *  Check to see if we are defining code and we already have a symbol
          *  defined that has code attached ( a function body )
          */
-        if( auxinfo && auxinfo->code && SymIsInitialized( sym ) && SymIsFunction( sym ) ){
+        if( auxinfo && auxinfo->code && SymIsInitialized( sym ) && SymIsFunction( sym ) ) {
             CErr2p( ERR_FUNCTION_REDEFINITION, sym );   //ERR_SYM_ALREADY_DEFINED, sym );
         }
 

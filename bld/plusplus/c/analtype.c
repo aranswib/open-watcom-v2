@@ -42,7 +42,7 @@ static TYPE makePointerToModType( // MAKE POINTER TO [OPTIONALLY MODIFIED] TYPE
     if( flags != 0 ) {
         type = MakeModifiedType( type, flags );
     }
-    return MakePointerTo( type );
+    return( MakePointerTo( type ) );
 }
 
 
@@ -55,7 +55,7 @@ TYPE TypeReferenced(            // GET TYPE OR TYPE REFERENCED
     if( refed == NULL ) {
         refed = type;
     }
-    return refed;
+    return( refed );
 }
 
 
@@ -70,21 +70,21 @@ static TYPE typeTested(         // TEST FOR TYPE PAST MODIFIERS, REFERENCE
             type = NULL;
         }
     }
-    return type;
+    return( type );
 }
 
 
 TYPE ClassTypeForType(          // GET CLASS TYPE FOR TYPE OR REFERENCE TO IT
     TYPE type )                 // - input type
 {
-    return typeTested( type, TYP_CLASS );
+    return( typeTested( type, TYP_CLASS ) );
 }
 
 
 TYPE EnumTypeForType(           // GET ENUM TYPE FOR TYPE OR REFERENCE TO IT
     TYPE type )                 // - input type
 {
-    return typeTested( type, TYP_ENUM );
+    return( typeTested( type, TYP_ENUM ) );
 }
 
 
@@ -97,7 +97,7 @@ TYPE UserDefTypeForType(        // GET ENUM or CLASS TYPE FOR TYPE OR REFERENCE 
     if( retn == NULL ) {
         retn = EnumTypeForType( type );
     }
-    return retn;
+    return( retn );
 }
 
 
@@ -112,7 +112,7 @@ CLASSINFO *TypeClassInfo(       // GET CLASSINFO PTR FOR A TYPE
     } else {
         info = type->u.c.info;
     }
-    return info;
+    return( info );
 }
 
 static TYPE getThisBaseType( SYMBOL sym )
@@ -133,7 +133,7 @@ static TYPE getThisBaseType( SYMBOL sym )
             }
         }
     }
-    return base;
+    return( base );
 }
 
 
@@ -162,14 +162,14 @@ TYPE TypeThisSymbol(            // GET TYPE OF THIS FOR SYMBOL MEMBER
 TYPE TypeThis(                  // GET TYPE OF THIS FOR MEMBER BEING DEFINED
     void )
 {
-    return TypeThisSymbol( ScopeFunctionInProgress(), false );
+    return( TypeThisSymbol( ScopeFunctionInProgress(), false ) );
 }
 
 
 TYPE TypeThisExists(            // GET BASE TYPE OF THIS FOR MEMBER BEING DEFINED
     void )
 {
-    return getThisBaseType( ScopeFunctionInProgress() );
+    return( getThisBaseType( ScopeFunctionInProgress() ) );
 }
 
 
@@ -207,10 +207,11 @@ target_size_t ArrayTypeNumberItems( // GET ACTUAL NUMBER OF ITEMS FOR AN ARRAY
 
     for( count = 1; ; artype = artype->of ) {
         artype = TypedefModifierRemove( artype );
-        if( artype->id != TYP_ARRAY ) break;
+        if( artype->id != TYP_ARRAY )
+            break;
         count *= artype->u.a.array_size;
     }
-    return count;
+    return( count );
 }
 
 
@@ -224,7 +225,7 @@ TYPE TypeTargetSizeT(           // GET TYPE OF TARGET'S size_t
     } else {
         type = GetBasicType( TYP_UINT );
     }
-    return type;
+    return( type );
 }
 
 
@@ -238,7 +239,7 @@ unsigned SizeTargetSizeT(       // GET SIZE OF TARGET'S size_t
     } else {
         size = TARGET_UINT;
     }
-    return size;
+    return( size );
 }
 
 
@@ -269,7 +270,7 @@ TYPE TypeRebuildPcPtr(          // REBUILD PC-PTR TYPE
     type_flag old_flags,        // - old flags
     type_flag new_flags )       // - new flags
 {
-    return makePointerToModType( type, (old_flags & ~TF1_MEM_MODEL) | new_flags );
+    return( makePointerToModType( type, (old_flags & ~TF1_MEM_MODEL) | new_flags ) );
 }
 
 
@@ -279,14 +280,14 @@ TYPE TypeSegOp(                 // GET TYPE FOR :> OPERATION
     type_flag flags;            // - flags for type
 
     type = TypePointedAt( type, &flags );
-    return TypeRebuildPcPtr( type, flags, TF1_FAR );
+    return( TypeRebuildPcPtr( type, flags, TF1_FAR ) );
 }
 
 
 TYPE TypeSegId(                 // GET TYPE OF SEGMENT ID
     void )
 {
-    return TypeSegmentShort();
+    return( TypeSegmentShort() );
 }
 
 
@@ -296,7 +297,7 @@ TYPE TypeSegAddr(               // GET INTERNAL TYPE OF BASE :> ADDRESS
     TYPE type;                  // - resultant type
 
     type = GetBasicType( TYP_VOID );
-    return makePointerToModType( type, TF1_NEAR );
+    return( makePointerToModType( type, TF1_NEAR ) );
 }
 
 
@@ -325,7 +326,7 @@ PC_PTR TypePcPtr(               // CLASSIFY PTR FOR PC
     } else {
         classification = ( flag & TF1_BASED ) >> 8;
     }
-    return classification;
+    return( classification );
 }
 
 
@@ -340,30 +341,30 @@ TYPE TypeConvertFromPcPtr(      // TRANSFORM TYPE AFTER CONVERSION FROM PC PTR
     pted = TypePointedAtModified( ptype );
     type = TypeModExtract( pted, &flags, &baser, TC1_NOT_ENUM_CHAR );
     switch( flags & TF1_BASED ) {
-      case 0 :
+    case 0 :
         if( flags & TF1_FAR16 ) {
             ptype = TypeRebuildPcPtr( type, flags, DefaultMemoryFlag( type ) );
         }
         break;
-      case TF1_BASED_VOID :
+    case TF1_BASED_VOID :
         ptype = TypeRebuildPcPtr( type, flags, TF1_NEAR );
         break;
-      case TF1_BASED_ADD :
+    case TF1_BASED_ADD :
       { type_flag bflags;       // - flags for baser
         TypePointedAt( baser->sym_type, &bflags );
         ptype = TypeRebuildPcPtr( type, flags, bflags & TF1_MEM_MODEL );
       } break;
-      case TF1_BASED_SELF :
+    case TF1_BASED_SELF :
         ptype = TypeRebuildPcPtr( type, flags, TF1_FAR );
         break;
-      case TF1_BASED_FETCH :
+    case TF1_BASED_FETCH :
         ptype = TypeRebuildPcPtr( type, flags, TF1_FAR );
         break;
-      case TF1_BASED_STRING :
+    case TF1_BASED_STRING :
         ptype = TypeRebuildPcPtr( type, flags, TF1_FAR );
         break;
     }
-    return ptype;
+    return( ptype );
 }
 
 #if _CPU == 8086
@@ -412,7 +413,7 @@ static type_id intPromo[] = {   // Table of integral promotions
 static type_id integralPromote( // GET type_id AFTER INTEGRAL PROMOTION
     TYPE type )                 // - original type
 {
-    return intPromo[ TypedefModifierRemove( type ) -> id ];
+    return( intPromo[TypedefModifierRemove( type )->id] );
 }
 
 
@@ -436,14 +437,14 @@ TYPE TypeBinArithResult(        // TYPE OF BINARY ARITHMETIC RESULT
         id2 = TYP_ULONG;
     }
 #endif
-    return GetBasicType( id2 );
+    return( GetBasicType( id2 ) );
 }
 
 
 TYPE TypeUnArithResult(         // TYPE OF UNARY ARITHMETIC RESULT
     TYPE op1 )                  // - type
 {
-    return GetBasicType( integralPromote( op1 ) );
+    return( GetBasicType( integralPromote( op1 ) ) );
 }
 
 TYPE PointerTypeEquivalent( TYPE type )
@@ -477,53 +478,53 @@ CTD TypeCommonDerivation(       // GET COMMON TYPE DERIVATION FOR TWO TYPES
             retn = CTD_LEFT;
         } else if( NULL != scope2 ) {
             switch( ScopeDerived( scope1, scope2 ) ) {
-              case DERIVED_YES :
+            case DERIVED_YES :
                 retn = CTD_LEFT;
                 break;
-              case DERIVED_YES_BUT_VIRTUAL :
+            case DERIVED_YES_BUT_VIRTUAL :
                 retn = CTD_LEFT_VIRTUAL;
                 break;
-              case DERIVED_YES_BUT_AMBIGUOUS :
+            case DERIVED_YES_BUT_AMBIGUOUS :
                 retn = CTD_LEFT_AMBIGUOUS;
                 break;
-              case DERIVED_YES_BUT_PRIVATE :
+            case DERIVED_YES_BUT_PRIVATE :
                 retn = CTD_LEFT_PRIVATE;
                 break;
-              case DERIVED_YES_BUT_PROTECTED :
+            case DERIVED_YES_BUT_PROTECTED :
                 retn = CTD_LEFT_PROTECTED;
                 break;
-              case DERIVED_NO :
+            case DERIVED_NO :
                 switch( ScopeDerived( scope2, scope1 ) ) {
-                  case DERIVED_YES :
+                case DERIVED_YES :
                     retn = CTD_RIGHT;
                     break;
-                  case DERIVED_YES_BUT_VIRTUAL :
+                case DERIVED_YES_BUT_VIRTUAL :
                     retn = CTD_RIGHT_VIRTUAL;
                     break;
-                  case DERIVED_YES_BUT_AMBIGUOUS :
+                case DERIVED_YES_BUT_AMBIGUOUS :
                     retn = CTD_RIGHT_AMBIGUOUS;
                     break;
-                  case DERIVED_YES_BUT_PRIVATE :
+                case DERIVED_YES_BUT_PRIVATE :
                     retn = CTD_RIGHT_PRIVATE;
                     break;
-                  case DERIVED_YES_BUT_PROTECTED :
+                case DERIVED_YES_BUT_PROTECTED :
                     retn = CTD_RIGHT_PROTECTED;
                     break;
-                  case DERIVED_NO :
+                case DERIVED_NO :
                     retn = CTD_NO;
                     break;
                 }
             }
         }
     }
-    return retn;
+    return( retn );
 }
 
 
 bool TypeRequiresCtorParm(      // TEST IF EXTRA CTOR PARM REQUIRED
     TYPE type )                 // - the type
 {
-    return TypeHasVirtualBases( type );
+    return( TypeHasVirtualBases( type ) );
 }
 
 
@@ -576,7 +577,7 @@ TYPE TypeFunctionCalled(        // GET FUNCTION DECLARATION TYPE CALLED
     if( NULL != pted ) {
         type = pted;
     }
-    return FunctionDeclarationType( type );
+    return( FunctionDeclarationType( type ) );
 }
 
 
@@ -592,7 +593,7 @@ TYPE TypeThisForCall(           // GET "THIS" TYPE FOR A CALL
     } else {
         this_type = MakePointerTo( this_type );
     }
-    return this_type;
+    return( this_type );
 }
 
 
@@ -619,7 +620,7 @@ static CLASSINFO* getClassInfo( // GET CLASS INFO FOR GOOD ELEMENTAL TYPE
             }
         }
     }
-    return info;
+    return( info );
 }
 
 
@@ -684,7 +685,7 @@ static TYPE augmentWithNear(    // AUGMENT TYPE WITH TF1_NEAR, IF REQ'D
     if( 0 == ( flags & TF1_MEM_MODEL ) ) {
         type = MakeModifiedType( type, TF1_NEAR );
     }
-    return type;
+    return( type );
 }
 
 
@@ -708,7 +709,7 @@ TYPE TypeAutoDefault(           // ADD NEAR QUALIFIER FOR AUTO SYMBOL
             }
         }
     }
-    return type;
+    return( type );
 }
 
 
@@ -721,7 +722,7 @@ TYPE TypeForLvalue              // GET TYPE FOR LVALUE
     type_expr = NodeType( expr );
     type_lv = TypeReference( type_expr );
     DbgVerify( type_lv != NULL, "TypeForLvalue -- not lvalue" );
-    return type_lv;
+    return( type_lv );
 }
 
 

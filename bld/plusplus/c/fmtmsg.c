@@ -74,7 +74,7 @@ SYMBOL FormatMsg( VBUF *pbuf, char *fmt, va_list arg )
 {
     VBUF    prefix, suffix;
     char    cfmt;
-    char    local_buf[ 1 + sizeof( int ) * 2 + 1 ];
+    char    local_buf[1 + sizeof( int ) * 2 + 1];
     unsigned len;
     SYMBOL  retn_symbol;
 
@@ -260,5 +260,5 @@ SYMBOL FormatMsg( VBUF *pbuf, char *fmt, va_list arg )
         fmt++;
         cfmt = *fmt;
     }
-    return retn_symbol;
+    return( retn_symbol );
 }

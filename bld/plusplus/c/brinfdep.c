@@ -106,7 +106,7 @@ SRCDEP* BrinfDepSrcBeg          // ALLOCATE A SRCDEP
                   , srcfile )
         );
     }
-    return sd;
+    return( sd );
 }
 
 
@@ -120,7 +120,7 @@ void BrinfDepSrcEnd             // END OF SOURCE-FILE DEPENDENCIES
 char const * BrinfDepSrcFname   // GET FILE NAME FOR SOURCE-DEPENDENCY
     ( SRCDEP const *sd )        // - dependency for source file
 {
-    return SrcFileFullName( sd->srcfile );
+    return( SrcFileFullName( sd->srcfile ) );
 }
 
 
@@ -133,16 +133,16 @@ void BrinfDepWrite              // WRITE DEPENDENCY INFORMATION
     RingIterBeg( sd->deps, cd ) {
         if( ! cd->written ) {
             switch( cd->type ) {
-              case MVT_VALUE :
+            case MVT_VALUE :
                 BrinfWriteDepMacVal( cd->value );
                 break;
-              case MVT_DEFINED :
+            case MVT_DEFINED :
                 BrinfWriteDepMacDefed( cd->value );
                 break;
-              case MVT_UNDEFED :
+            case MVT_UNDEFED :
                 BrinfWriteDepMacUndefed( cd->value );
                 break;
-              DbgDefault( "bad type of macro dependency" );
+            DbgDefault( "bad type of macro dependency" );
             }
             cd->written = true;
         }
@@ -171,18 +171,18 @@ void BrinfDepMacAdd             // ADD A MACRO DEPENDENCY
     sd = PstkTopElement( &active_srcfiles );
     DbgVerify( NULL != sd, "No active srcfile" );
     switch( type ) {
-      case MVT_VALUE :
+    case MVT_VALUE :
         defn = macro->defn.src_file;
         break;
-      case MVT_DEFINED :
+    case MVT_DEFINED :
         defn = macro->defn.src_file;
         macro = NULL;
         break;
-      case MVT_UNDEFED :
+    case MVT_UNDEFED :
         defn = BrinfMacUndefSource( BrinfMacValueName( value ) );
         macro = NULL;
         break;
-      DbgDefault( "Impossible MAC_VTYPE" );
+    DbgDefault( "Impossible MAC_VTYPE" );
     }
     if( srcfilePrecedes( sd->srcfile, defn ) ) {
         // dependency only when macro set before the current source file
@@ -232,7 +232,7 @@ void BrinfDepMacAdd             // ADD A MACRO DEPENDENCY
 SRCFILE BrinfDepSrcfile         // GET SRCFILE FOR DEPENDENCY
     ( SRCDEP const * sd )       // - dependency
 {
-    return sd->srcfile;
+    return( sd->srcfile );
 }
 
 

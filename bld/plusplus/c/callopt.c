@@ -74,7 +74,7 @@ CALL_OPT AnalyseCallOpts        // ANALYSE CALL OPTIMIZATIONS
     } else {
         retn = CALL_OPT_NONE;
     }
-    return retn;
+    return( retn );
 }
 
 
@@ -107,7 +107,7 @@ static PTREE doCopySubstitution( // EFFECT COPY SUBSTITUTION
                            | PTF_MEMORY_EXACT
                            | PTF_SIDE_EFF
                            | PTF_MEANINGFUL );
-    return orig;
+    return( orig );
 }
 
 
@@ -123,7 +123,7 @@ static PTREE doCopyElimination( // EFFECT COPY ELIMINATION
         parm->flags = ( parm->flags & PTF_ARGS ) | repl->flags;
         parm->type = repl->type;
     }
-    return retn;
+    return( retn );
 }
 
 
@@ -138,31 +138,31 @@ PTREE CopyOptimize              // COPY OPTIMIZATION
     PTREE parm;                 // - parameter node to be replaced
 
     switch( opt ) {
-      case CALL_OPT_NONE :
+    case CALL_OPT_NONE :
         DbgVerify( 0, "CopyOptimize -- CALL_OPT_NONE" );
         break;
-      case CALL_OPT_CTOR :
+    case CALL_OPT_CTOR :
         for( parm = right->u.subtree[1]
            ; 0 == ( parm->flags & PTF_ARG_THIS )
            ; parm = parm->u.subtree[0] ) ;
         expr = doCopyElimination( parm, src, left, dtor );
         break;
-      case CALL_OPT_FUN_CALL :
+    case CALL_OPT_FUN_CALL :
         for( parm = right->u.subtree[1]
            ; 0 == ( parm->flags & PTF_ARG_RETURN )
            ; parm = parm->u.subtree[0] ) ;
         expr = doCopyElimination( parm, src, left, dtor );
         break;
-      case CALL_OPT_BIN_COPY :
+    case CALL_OPT_BIN_COPY :
         expr = doCopySubstitution( &right->u.subtree[0], src, left, dtor );
         break;
-      case CALL_OPT_ERR :
+    case CALL_OPT_ERR :
         PTreeErrorNode( left );
         NodeFreeDupedExpr( src );
         expr = left;
         break;
-      DbgDefault( "CopyOptimize -- impossible optimization" );
+    DbgDefault( "CopyOptimize -- impossible optimization" );
     }
-    return expr;
+    return( expr );
 }
 
