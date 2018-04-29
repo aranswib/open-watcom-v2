@@ -30,16 +30,15 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "coderep.h"
 #include "makeins.h"
 #include "data.h"
 #include "namelist.h"
 #include "insutil.h"
 #include "generate.h"
+#include "varusage.h"
 
-
-extern  void            FindReferences(void);
 
 #if 0
 static bool WorthAConversion( name *temp )

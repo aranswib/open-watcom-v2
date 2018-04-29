@@ -30,11 +30,10 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include "targsys.h"
 #include "_cg.h"
 #include "cgaux.h"
 #include "bckdef.h"

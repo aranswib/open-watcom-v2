@@ -32,10 +32,10 @@
 
 
 
-#include "cgstd.h"
-#include "typedef.h"
+#include "_cgstd.h"
 #include "types.h"
 #include "model.h"
+
 
 type_def TNearCP= {  TY_NEAR_CODE_PTR,4,      TYPE_POINTER + TYPE_CODE };
 type_def THugeCP= {  TY_NEAR_CODE_PTR,4,      TYPE_POINTER + TYPE_CODE };

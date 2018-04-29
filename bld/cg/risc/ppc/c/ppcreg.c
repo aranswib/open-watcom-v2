@@ -30,7 +30,7 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "coderep.h"
 #include "cgaux.h"
 #include "cgmem.h"
@@ -161,7 +161,7 @@ hw_reg_set      CallZap( call_state *state )
     hw_reg_set  tmp;
 
     zap = state->modify;
-    if( ( state->attr & ROUTINE_MODIFY_EXACT ) == EMPTY ) {
+    if( ( state->attr & ROUTINE_MODIFY_EXACT ) == 0 ) {
         HW_TurnOn( zap, state->parm.used );
         HW_TurnOn( zap, state->return_reg );
         HW_TurnOn( zap, ReturnAddrReg() );

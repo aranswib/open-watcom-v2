@@ -30,7 +30,7 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "optwif.h"
 #include "inslist.h"
 #include "block.h"
@@ -40,6 +40,7 @@
 #include "encode.h"
 #include "optutil.h"
 #include "optmkins.h"
+#include "optrel.h"
 
 
 extern  void            ChgLblRef(ins_entry*,label_handle);
@@ -216,8 +217,8 @@ static  void    SetShort( void )
 }
 
 
-extern  void    SetBranches( void )
-/*********************************/
+void    SetBranches( void )
+/*************************/
 /* Check whether the actual label itself can be targeted*/
 {
   ins_entry     *add;

@@ -30,7 +30,7 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "coderep.h"
 #include "cgmem.h"
 #include "memcheck.h"
@@ -50,6 +50,7 @@
 #include "rgtbl.h"
 #include "typemap.h"
 #include "generate.h"
+#include "types.h"
 #include "feprotos.h"
 
 

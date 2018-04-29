@@ -30,7 +30,7 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "cgmem.h"
 #include "memout.h"
 #include "cgsrtlst.h"
@@ -166,10 +166,9 @@ static  void            ShellSort( void **array, unsigned length,
 }
 
 
-extern  void            *SortList( void *list, unsigned next_offset,
-                                  bool (*before)(void *,void *) ) {
-/****************************************************************/
-
+void *SortList( void *list, unsigned next_offset, bool (*before)(void *,void *) )
+/*******************************************************************************/
+{
     void                *list2;
     unsigned            length;
     mem_out_action      old_memout;

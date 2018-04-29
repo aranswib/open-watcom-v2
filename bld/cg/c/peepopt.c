@@ -34,7 +34,7 @@
 /* - collapse adjacent integral ADD,SUB operations */
 /* - collapse adjacent integral MUL operations */
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "coderep.h"
 #include "indvars.h"
 #include "score.h"
@@ -46,9 +46,8 @@
 #include "redefby.h"
 #include "insdead.h"
 #include "optimize.h"
+#include "inssched.h"
 
-
-extern  bool                    InsOrderDependant(instruction*,instruction*);
 
 #define OP2VAL( ins ) ( (ins)->operands[1]->c.lo.int_value )
 

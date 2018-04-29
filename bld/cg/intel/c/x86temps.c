@@ -31,17 +31,17 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "coderep.h"
 #include "data.h"
 #include "savings.h"
 #include "targetin.h"
 #include "namelist.h"
 #include "optab.h"
+#include "temps.h"
 
 
 extern  bool            UnChangeable(instruction*);
-extern  void            PropLocal(name*);
 
 extern  savings         Save;
 

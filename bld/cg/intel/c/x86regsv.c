@@ -30,20 +30,16 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "coderep.h"
 #include "data.h"
 #include "savings.h"
 #include "rgtbl.h"
 #include "conflict.h"
+#include "regsave.h"
 
 
 extern  savings         Save;
-
-extern  void            SetCost(save_def*,save_def);
-extern  void            SetLoopCost(uint);
-extern  void            AdjTimeSize(uint*,uint*);
-extern  save_def        Weight(save_def,block*);
 
 static  save_def        MaxConstSave;
 

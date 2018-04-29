@@ -31,7 +31,7 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "coderep.h"
 #include "cgaux.h"
 #include "cgmem.h"
@@ -207,8 +207,7 @@ void    UpdateReturn( call_state *state, type_def *tipe, type_class_def class, a
 {
     hw_reg_set  normal;
 
-    if( _FPULevel( FPU_87 ) && _NPX( state->attr )
-      && ( tipe->attr & TYPE_FLOAT ) ) {
+    if( _FPULevel( FPU_87 ) && _NPX( state->attr ) && (tipe->attr & TYPE_FLOAT) ) {
         HW_COnlyOn( state->return_reg, HW_ST0 );
     } else {
         HW_CTurnOff( state->return_reg, HW_FLTS );

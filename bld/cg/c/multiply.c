@@ -30,13 +30,14 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
+#include "_cgstd.h"
 #include "coderep.h"
 #include "data.h"
 #include "makeins.h"
 #include "namelist.h"
 #include "insutil.h"
 #include "utils.h"
+#include "multiply.h"
 
 
 extern  int             SubCost(void);
@@ -232,8 +233,8 @@ static  instruction     *CheckMul( instruction *ins )
 }
 
 
-extern  void    MulToShiftAdd( void )
-/***********************************/
+void    MulToShiftAdd( void )
+/***************************/
 {
     block       *blk;
     instruction *ins;

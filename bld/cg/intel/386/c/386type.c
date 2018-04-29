@@ -30,10 +30,10 @@
 ****************************************************************************/
 
 
-#include "cgstd.h"
-#include "typedef.h"
+#include "_cgstd.h"
 #include "types.h"
 #include "model.h"
+
 
 // type_def THugeCP= {  TY_HUGE_CODE_PTR,6,      TYPE_POINTER + TYPE_CODE };
 type_def TLongCP= {  TY_LONG_CODE_PTR,6,      TYPE_POINTER + TYPE_CODE };
