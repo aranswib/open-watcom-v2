@@ -25,56 +25,58 @@
 *
 *  ========================================================================
 *
-* Description:  WHEN YOU FIGURE OUT WHAT THIS FILE DOES, PLEASE
-*               DESCRIBE IT HERE!
+* Description:  Select registers used for passing an arguments.
 *
 ****************************************************************************/
 
 
 #include "_cgstd.h"
 #include "coderep.h"
-#include "opctable.h"
+#include "procdef.h"
+#include "types.h"
+#include "regset.h"
 #include "zoiks.h"
-#include "optab.h"
+#include "cgaux.h"
+#include "rgtbl.h"
+#include "parmreg.h"
 #include "feprotos.h"
 
 
-const opcode_entry  *CodeTable( instruction *ins )
-/************************************************/
+type_length     ParmAlignment( type_def *tipe )
+/*********************************************/
 {
-    int         idx;
-    table_def   opcode_idx;
+    /* unused parameters */ (void)tipe;
 
-    idx = ins->head.opcode;
-    idx *= ( XX + 1 );
-    idx += ins->type_class;
-    opcode_idx = OpTable[idx];
-    if( opcode_idx == BAD ) {
-        _Zoiks( ZOIKS_052 );
-    }
-#if _TARGET & _TARG_RISC
-    if( opcode_idx == NYI ) {
-        _Zoiks( ZOIKS_091 );
-    }
-#endif
-    return( OpcodeTable( opcode_idx ) );
+    return( 1 );
 }
 
-
-void    DoNothing( instruction *ins )
-/***********************************/
+hw_reg_set      ParmReg( type_class_def class, type_length len, type_length alignment, call_state *state )
+/********************************************************************************************************/
 {
-    ins->table = OpcodeTable( DONOTHING );
-    ins->u.gen_table = ins->table;
-}
+    hw_reg_set  *possible;
+    hw_reg_set  *reg_set;
+    hw_reg_set  regs;
 
+    /* unused parameters */ (void)len; (void)alignment;
 
-bool    DoesSomething( instruction *ins )
-/***************************************/
-{
-    if( ins->u.gen_table == NULL )
-        return( true );
-    if( G( ins ) != G_NO )
-        return( true );
-    return( false );
+    possible = ParmChoices( class );
+    if( possible == NULL || HW_CEqual( *possible, HW_EMPTY ) ) {
+        if( !HW_CEqual( *state->parm.curr_entry, HW_EMPTY ) ) {
+            state->parm.curr_entry++;
+        }
+        return( HW_EMPTY );
+    }
+    for( ; !HW_CEqual( *state->parm.curr_entry, HW_EMPTY ); state->parm.curr_entry++ ) {
+        for( reg_set = possible; !HW_CEqual( *reg_set, HW_EMPTY ); ++reg_set ) {
+            regs = *reg_set;
+            if( !HW_Ovlap( regs, state->parm.used ) ) {
+                if( HW_Subset( *state->parm.curr_entry, regs ) ) {
+                    HW_TurnOn( state->parm.used, regs );
+                    HW_TurnOn( state->parm.used, ParmRegConflicts( regs ) );
+                    return( regs );
+                }
+            }
+        }
+    }
+    return( HW_EMPTY );
 }

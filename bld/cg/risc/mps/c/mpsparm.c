@@ -25,7 +25,7 @@
 *
 *  ========================================================================
 *
-* Description:  MIPS parameter passing processing.
+* Description:  Select registers used for passing an arguments.
 *
 ****************************************************************************/
 
@@ -47,16 +47,16 @@
  * home locations on the stack for arguments passed in registers.
  */
 
-extern  type_length     ParmAlignment( type_def *tipe )
-/*****************************************************/
+type_length     ParmAlignment( type_def *tipe )
+/*********************************************/
 {
     /* unused parameters */ (void)tipe;
 
     return( 1 );
 }
 
-extern  hw_reg_set      ParmReg( type_class_def class, type_length len, type_length alignment, call_state *state )
-/****************************************************************************************************************/
+hw_reg_set      ParmReg( type_class_def class, type_length len, type_length alignment, call_state *state )
+/********************************************************************************************************/
 {
     hw_reg_set  *possible;
     hw_reg_set  *reg_set;

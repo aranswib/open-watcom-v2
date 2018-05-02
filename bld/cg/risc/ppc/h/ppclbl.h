@@ -2,7 +2,7 @@
 *
 *                            Open Watcom Project
 *
-* Copyright (c) 2017-2017 The Open Watcom Contributors. All Rights Reserved.
+*    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
 *
@@ -30,5 +30,4 @@
 ****************************************************************************/
 
 
-extern void     DumpGen( const opcode_entry *try );
-extern void     DumpTab( const opcode_entry *try );
+extern label_handle     GetWeirdPPCDotDotLabel( label_handle lbl );

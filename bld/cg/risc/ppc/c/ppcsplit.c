@@ -33,7 +33,6 @@
 
 #include "_cgstd.h"
 #include "coderep.h"
-#include "tables.h"
 #include "zoiks.h"
 #include "model.h"
 #include "makeins.h"
