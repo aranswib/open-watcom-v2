@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -30,12 +31,25 @@
 ****************************************************************************/
 
 
-#include "_cgstd.h"
+// RISC common reduce functions
+extern instruction      *rDOSET(instruction*);
+extern instruction      *rSIMPCMP(instruction*);
+extern instruction      *rDOTEST(instruction*);
+extern instruction      *rPUSHTOMOV(instruction*);
+extern instruction      *rPOPTOMOV(instruction*);
+extern instruction      *rOP1CMEM(instruction*);
+extern instruction      *rOP2CMEM(instruction*);
+extern instruction      *rCHANGETYPE(instruction*);
+extern instruction      *rMOVEXX(instruction*);
+extern instruction      *rBIN2INT(instruction*);
+extern instruction      *rBIN2QUAD(instruction*);
+extern instruction      *rSHR(instruction*);
+extern instruction      *rMOVEXX_4(instruction*);
+extern instruction      *rCLRHI_4( instruction * );
+extern instruction      *rSEX_4TO8( instruction * );
+extern instruction      *rMOVELOW( instruction * );
 
-extern  int             FrontEnd(char *);
-
-extern  int     main( char *p ) {
-/*******************************/
-
-    return( FrontEnd( p ) );
-}
+// rscsplit.c function prototypes
+extern name     *TrimConst( name *, type_class_def );
+extern name     *OffsetMem( name *, type_length, type_class_def );
+extern name     *Int64Equivalent( name * );

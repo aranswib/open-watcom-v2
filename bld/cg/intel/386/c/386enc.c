@@ -64,15 +64,6 @@
 #include "feprotos.h"
 
 
-extern  bool            BaseIsSP( name * );
-extern  segment_id      AskCode16Seg( void );
-
-/* forward declarations */
-static  void            Add32Displacement( signed_32 val );
-static  void            LayIdxModRM( name *op );
-
-static  void            doProfilingCode( char *fe_name, label_handle *data, bool prolog );
-
 #define RMR_MOD_IND     0x80
 #define RMR_MOD_DIR     5
 #define RMR_MOD_SIB     4
@@ -159,6 +150,16 @@ static  hw_reg_set IndexTab[] = {
         HW_D( HW_ESI ),
         HW_D( HW_EDI )
 };
+
+
+static  void    Add32Displacement( signed_32 val )
+/************************************************/
+{
+    AddByte( val );
+    AddByte( val >> 8 );
+    AddByte( val >> 16 );
+    AddByte( val >> 24 );
+}
 
 static  byte    Displacement( signed_32 val, hw_reg_set regs )
 /************************************************************/
@@ -427,38 +428,6 @@ static  void    CheckSize( void )
 }
 
 
-void    LayModRM( name *op )
-/**************************/
-{
-    name        *base;
-
-    switch( op->n.class ) {
-    case N_MEMORY:
-        CheckSize();
-        EA( HW_EMPTY, HW_EMPTY, 0, 0, op, false );
-        break;
-    case N_TEMP:
-        CheckSize();
-        base = DeAlias( op );
-        if( base->t.location == NO_LOCATION ) {
-            _Zoiks( ZOIKS_030 );
-        }
-        if( BaseIsSP( base ) ) {
-            EA( HW_SP, HW_EMPTY, 0, TmpLoc( base, op ), NULL, false );
-        } else {
-            EA( HW_BP, HW_EMPTY, 0, TmpLoc( base, op ), NULL, false );
-        }
-        break;
-    case N_INDEXED:
-        LayIdxModRM( op );
-        break;
-    case N_REGISTER:
-        LayRMRegOp( op );
-        break;
-    }
-}
-
-
 static  void    LayIdxModRM( name *op )
 /*************************************/
 {
@@ -505,13 +474,35 @@ static  void    LayIdxModRM( name *op )
 }
 
 
-static  void    Add32Displacement( signed_32 val )
-/************************************************/
+void    LayModRM( name *op )
+/**************************/
 {
-    AddByte( val );
-    AddByte( val >> 8 );
-    AddByte( val >> 16 );
-    AddByte( val >> 24 );
+    name        *base;
+
+    switch( op->n.class ) {
+    case N_MEMORY:
+        CheckSize();
+        EA( HW_EMPTY, HW_EMPTY, 0, 0, op, false );
+        break;
+    case N_TEMP:
+        CheckSize();
+        base = DeAlias( op );
+        if( base->t.location == NO_LOCATION ) {
+            _Zoiks( ZOIKS_030 );
+        }
+        if( BaseIsSP( base ) ) {
+            EA( HW_SP, HW_EMPTY, 0, TmpLoc( base, op ), NULL, false );
+        } else {
+            EA( HW_BP, HW_EMPTY, 0, TmpLoc( base, op ), NULL, false );
+        }
+        break;
+    case N_INDEXED:
+        LayIdxModRM( op );
+        break;
+    case N_REGISTER:
+        LayRMRegOp( op );
+        break;
+    }
 }
 
 
@@ -633,60 +624,9 @@ pointer GenFar16Thunk( pointer label, unsigned_16 parms_size, bool remove_parms 
     return( code_32 );
 }
 
-#if 0
-void    GenProfilingCode( char *fe_name, label_handle *data, bool prolog )
-/************************************************************************/
-{
-    if( _IsTargetModel( NEW_P5_PROFILING ) ) {
-        doProfilingCode( fe_name, data, prolog );
-    }
-}
-#endif
 
-segment_id GenProfileData( char *fe_name, label_handle *data, label_handle *stack )
-/*********************************************************************************/
-/* generate P5 profiler code                                                     */
-/*********************************************************************************/
-{
-    segment_id      old;
-    segment_id      data_seg = (segment_id)(pointer_int)FEAuxInfo( NULL, P5_PROF_SEG );
-
-    old = SetOP( data_seg );
-    TellOptimizerByPassed();
-    SetUpObj( true );
-    *data = AskForNewLabel();
-    OutLabel( *data );
-    OutDataByte( *fe_name );                    //flag
-    OutDataByte( 0 );
-    OutDataByte( 0 );
-    OutDataByte( 0 );
-    OutDataLong( 0 );                           //semaphore
-    if( stack == NULL ) {
-        OutDataLong( 0 );                       //stack
-    } else {
-        OutReloc( data_seg, F_OFFSET, false );  //caller
-        OutLblPatch( *stack, F_OFFSET, 0 );
-    }
-    OutDataLong( 0 );                           //esp
-    OutDataLong( 0 );                           //dynamic
-    OutDataLong( 0 );                           //lo_count
-    OutDataLong( 0 );                           //hi_count
-    OutDataLong( 0 );                           //lo_cycle
-    OutDataLong( 0 );                           //hi_cycle
-    OutDataLong( 0 );                           //lo_start_time
-    OutDataLong( 0 );                           //hi_start_time
-    OutReloc( AskCodeSeg(), F_OFFSET, false );  //caller
-    OutLblPatch( CurrProc->label, F_OFFSET, 0 );
-    OutDataLong( 0 );                           //call_ins
-    OutDataLong( 0 );                           //callee
-    TellByPassOver();
-    SetOP( old );
-    return( data_seg );
-}
-
-
-void    doProfilingCode( char *fe_name, label_handle *data, bool prolog )
-/***********************************************************************/
+static void    doProfilingCode( char *fe_name, label_handle *data, bool prolog )
+/******************************************************************************/
 {
     if( prolog )
         GenProfileData( fe_name, data, NULL );
@@ -768,6 +708,57 @@ static  void    doProfilingPrologEpilog( label_handle label, bool prolog )
         }
         _Emit;
     }
+}
+
+#if 0
+void    GenProfilingCode( char *fe_name, label_handle *data, bool prolog )
+/************************************************************************/
+{
+    if( _IsTargetModel( NEW_P5_PROFILING ) ) {
+        doProfilingCode( fe_name, data, prolog );
+    }
+}
+#endif
+
+segment_id GenProfileData( char *fe_name, label_handle *data, label_handle *stack )
+/*********************************************************************************/
+/* generate P5 profiler code                                                     */
+/*********************************************************************************/
+{
+    segment_id      old;
+    segment_id      data_seg = (segment_id)(pointer_int)FEAuxInfo( NULL, P5_PROF_SEG );
+
+    old = SetOP( data_seg );
+    TellOptimizerByPassed();
+    SetUpObj( true );
+    *data = AskForNewLabel();
+    OutLabel( *data );
+    OutDataByte( *fe_name );                    //flag
+    OutDataByte( 0 );
+    OutDataByte( 0 );
+    OutDataByte( 0 );
+    OutDataLong( 0 );                           //semaphore
+    if( stack == NULL ) {
+        OutDataLong( 0 );                       //stack
+    } else {
+        OutReloc( data_seg, F_OFFSET, false );  //caller
+        OutLblPatch( *stack, F_OFFSET, 0 );
+    }
+    OutDataLong( 0 );                           //esp
+    OutDataLong( 0 );                           //dynamic
+    OutDataLong( 0 );                           //lo_count
+    OutDataLong( 0 );                           //hi_count
+    OutDataLong( 0 );                           //lo_cycle
+    OutDataLong( 0 );                           //hi_cycle
+    OutDataLong( 0 );                           //lo_start_time
+    OutDataLong( 0 );                           //hi_start_time
+    OutReloc( AskCodeSeg(), F_OFFSET, false );  //caller
+    OutLblPatch( CurrProc->label, F_OFFSET, 0 );
+    OutDataLong( 0 );                           //call_ins
+    OutDataLong( 0 );                           //callee
+    TellByPassOver();
+    SetOP( old );
+    return( data_seg );
 }
 
 
