@@ -43,6 +43,8 @@ THIS SOFTWARE.
 
 #define NOPAT       ((size_t)-1)
 
+#define NIL         ((Node *)0)
+
 #define NSYMTAB     50              /* initial size of a symbol table */
 
 /* function types */
@@ -60,8 +62,6 @@ THIS SOFTWARE.
 #define FTOUPPER    12
 #define FTOLOWER    13
 #define FFLUSH      14
-
-#define NIL         ((Node *)0)
 
 /* ctypes */
 #define OCELL       1
@@ -95,7 +95,7 @@ THIS SOFTWARE.
 #define NSTAT       2
 #define NEXPR       3
 
-#define notlegal(n)     (n <= FIRSTTOKEN || n >= LASTTOKEN || proctab[n-FIRSTTOKEN] == nullproc)
+#define notlegal(n)     (n <= FIRSTTOKEN || n >= LASTTOKEN || proctab[n - FIRSTTOKEN] == nullproc)
 #define isvalue(n)      ((n)->ntype == NVALUE)
 #define isexpr(n)       ((n)->ntype == NEXPR)
 #define isjump(n)       ((n)->ctype == OJUMP)
@@ -181,61 +181,61 @@ typedef struct rrow {
 
 typedef struct fa {
     uschar      gototab[NSTATES][NCHARS];
-    uschar      out[NSTATES];
-    uschar      *restr;
+    bool        out[NSTATES];
+    char        *restr;
     int         *posns[NSTATES];
     bool        anchor;
+    bool        reset;
     int         use;
     int         initstat;
     int         curstat;
     int         accept;
-    bool        reset;
     struct rrow re[1]; /* variable: actual size set by calling malloc */
 } fa;
 
-extern int      compile_time;   /* 1 if compiling, 0 if running */
-extern int      safe;           /* 0 => unsafe, 1 => safe */
+extern int          compile_time;   /* 1 if compiling, 0 if running */
+extern bool         safe;           /* false => unsafe, true => safe */
 
-extern size_t   recsize;        /* size of current record, orig RECSIZE */
+extern size_t       recsize;        /* size of current record, orig RECSIZE */
 
-extern char     **FS;
-extern char     **RS;
-extern char     **ORS;
-extern char     **OFS;
-extern char     **OFMT;
-extern Awkfloat *NR;
-extern Awkfloat *FNR;
-extern Awkfloat *NF;
-extern char     **FILENAME;
-extern char     **SUBSEP;
-extern Awkfloat *RSTART;
-extern Awkfloat *RLENGTH;
+extern char         **FS;
+extern char         **RS;
+extern char         **ORS;
+extern char         **OFS;
+extern char         **OFMT;
+extern Awkfloat     *NR;
+extern Awkfloat     *FNR;
+extern Awkfloat     *NF;
+extern char         **FILENAME;
+extern char         **SUBSEP;
+extern Awkfloat     *RSTART;
+extern Awkfloat     *RLENGTH;
 
-extern char     *record;        /* points to $0 */
-extern int      lineno;         /* line number in awk program */
-extern int      errorflag;      /* 1 if error has occurred */
-extern bool     donefld;        /* true if record broken into fields */
-extern bool     donerec;        /* true if record is valid (no fld has changed */
-extern char     inputFS[];      /* FS at time of input, for field splitting */
+extern char         *record;        /* points to $0 */
+extern int          lineno;         /* line number in awk program */
+extern int          errorflag;      /* 1 if error has occurred */
+extern bool         donefld;        /* true if record broken into fields */
+extern bool         donerec;        /* true if record is valid (no fld has changed */
+extern char         inputFS[];      /* FS at time of input, for field splitting */
 
-extern int      dbg;
+extern int          dbg;
 
-extern char     *patbeg;        /* beginning of pattern matched */
-extern size_t   patlen;         /* length of pattern matched.  set in b.c */
+extern const char   *patbeg;        /* beginning of pattern matched */
+extern size_t       patlen;         /* length of pattern matched.  set in b.c */
 
-extern Array    *symtab;
+extern Array        *symtab;
 
-extern Cell     *nrloc;         /* NR */
-extern Cell     *fnrloc;        /* FNR */
-extern Cell     *nfloc;         /* NF */
-extern Cell     *rstartloc;     /* RSTART */
-extern Cell     *rlengthloc;    /* RLENGTH */
+extern Cell         *nrloc;         /* NR */
+extern Cell         *fnrloc;        /* FNR */
+extern Cell         *nfloc;         /* NF */
+extern Cell         *rstartloc;     /* RSTART */
+extern Cell         *rlengthloc;    /* RLENGTH */
 
-extern Node     *winner;
-extern Node     *nullstat;
-extern Node     *nullnode;
+extern Node         *winner;
+extern Node         *nullstat;
+extern Node         *nullnode;
 
-extern int      pairstack[];
-extern int      paircnt;
+extern bool         pairstack[];
+extern Cell         **fldtab;
 
 #include "proto.h"

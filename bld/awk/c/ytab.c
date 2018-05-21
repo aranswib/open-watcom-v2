@@ -21,12 +21,12 @@ static int yygrowstack();
 void checkdup(Node *list, Cell *item);
 int yywrap(void) { return( 1 ); }
 
-Node    *beginloc = 0;
-Node    *endloc = 0;
-int infunc  = 0;    /* = 1 if in arglist or body of func */
-int inloop  = 0;    /* = 1 if in while, for, do */
-char    *curfname = 0;  /* current function name */
-Node    *arglist = 0;   /* list of args for current function */
+Node    *beginloc = NULL;
+Node    *endloc = NULL;
+int     infunc  = 0;    /* = 1 if in arglist or body of func */
+int     inloop  = 0;    /* = 1 if in while, for, do */
+char    *curfname = NULL;  /* current function name */
+Node    *arglist = NULL;   /* list of args for current function */
 #line 41 "awkgram.y"
 typedef union {
     Node    *p;
@@ -2521,7 +2521,7 @@ static int yygrowstack( void )
     if( newsize > YYMAXDEPTH ) {
         newsize = YYMAXDEPTH;
     }
-    i = yyssp - yyss;
+    i = (int)( yyssp - yyss );
     newss = ( yyss != NULL ) ? (short *)realloc( yyss, newsize * sizeof( *newss ) ) :
         (short *)malloc( newsize * sizeof( *newss ) );
     if( newss == NULL )
@@ -2544,30 +2544,7 @@ static int yygrowstack( void )
 #define YYACCEPT goto yyaccept
 #define YYERROR goto yyerrlab
 
-#ifndef YYPARSE_PARAM
-#if defined(__cplusplus) || __STDC__
-#define YYPARSE_PARAM_ARG void
-#define YYPARSE_PARAM_DECL
-#else   /* ! ANSI-C/C++ */
-#define YYPARSE_PARAM_ARG
-#define YYPARSE_PARAM_DECL
-#endif  /* ANSI-C/C++ */
-#else   /* YYPARSE_PARAM */
-#ifndef YYPARSE_PARAM_TYPE
-#define YYPARSE_PARAM_TYPE void *
-#endif
-#if defined(__cplusplus) || __STDC__
-#define YYPARSE_PARAM_ARG YYPARSE_PARAM_TYPE YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL
-#else   /* ! ANSI-C/C++ */
-#define YYPARSE_PARAM_ARG YYPARSE_PARAM
-#define YYPARSE_PARAM_DECL YYPARSE_PARAM_TYPE YYPARSE_PARAM;
-#endif  /* ANSI-C/C++ */
-#endif  /* ! YYPARSE_PARAM */
-
-int
-yyparse (YYPARSE_PARAM_ARG)
-    YYPARSE_PARAM_DECL
+int yyparse( void )
 {
     register int yym, yyn, yystate;
 #if YYDEBUG
@@ -2592,7 +2569,7 @@ yyparse (YYPARSE_PARAM_ARG)
     *yyssp = yystate = 0;
 
 yyloop:
-    if( (yyn = yydefred[yystate]) )
+    if( (yyn = yydefred[yystate]) != 0 )
         goto yyreduce;
     if( yychar < 0 ) {
         if( (yychar = yylex()) < 0 ) {
@@ -2600,7 +2577,7 @@ yyloop:
         }
 #if YYDEBUG
         if( yydebug ) {
-            yys = 0;
+            yys = NULL;
             if( yychar <= YYMAXTOKEN )
                 yys = yyname[yychar];
             if( !yys )
@@ -2667,7 +2644,7 @@ yyinrecovery:
             goto yyabort;
 #if YYDEBUG
         if( yydebug ) {
-            yys = 0;
+            yys = NULL;
             if( yychar <= YYMAXTOKEN )
                 yys = yyname[yychar];
             if( yys == NULL )
@@ -2743,11 +2720,11 @@ case 28:
 break;
 case 30:
 #line 161 "awkgram.y"
-{ yyval.p = 0; }
+{ yyval.p = NULL; }
 break;
 case 32:
 #line 166 "awkgram.y"
-{ yyval.p = 0; }
+{ yyval.p = NULL; }
 break;
 case 33:
 #line 167 "awkgram.y"
@@ -2779,11 +2756,11 @@ case 39:
 break;
 case 40:
 #line 181 "awkgram.y"
-{ beginloc = linkum(beginloc, yyvsp[-1].p); yyval.p = 0; }
+{ beginloc = linkum(beginloc, yyvsp[-1].p); yyval.p = NULL; }
 break;
 case 41:
 #line 183 "awkgram.y"
-{ endloc = linkum(endloc, yyvsp[-1].p); yyval.p = 0; }
+{ endloc = linkum(endloc, yyvsp[-1].p); yyval.p = NULL; }
 break;
 case 42:
 #line 184 "awkgram.y"
@@ -2791,7 +2768,7 @@ case 42:
 break;
 case 43:
 #line 185 "awkgram.y"
-{ infunc--; curfname=0; defn((Cell *)yyvsp[-7].p, yyvsp[-5].p, yyvsp[-1].p); yyval.p = 0; }
+{ infunc--; curfname=0; defn((Cell *)yyvsp[-7].p, yyvsp[-5].p, yyvsp[-1].p); yyval.p = NULL; }
 break;
 case 45:
 #line 190 "awkgram.y"
@@ -2919,7 +2896,7 @@ case 74:
     if( safe ) {
         SYNTAX( "cmd | getline is unsafe" );
     } else {
-        yyval.p = op3( GETLINE, (Node *)0, itonp( yyvsp[-1].i ), yyvsp[-2].p );
+        yyval.p = op3( GETLINE, NIL, itonp( yyvsp[-1].i ), yyvsp[-2].p );
     }
 }
 break;
@@ -3085,7 +3062,7 @@ case 126:
 break;
 case 127:
 #line 339 "awkgram.y"
-{ yyval.p = 0; }
+{ yyval.p = NULL; }
 break;
 case 129:
 #line 344 "awkgram.y"
@@ -3285,7 +3262,7 @@ case 177:
 break;
 case 178:
 #line 427 "awkgram.y"
-{ arglist = yyval.p = 0; }
+{ arglist = yyval.p = NULL; }
 break;
 case 179:
 #line 428 "awkgram.y"
@@ -3333,7 +3310,7 @@ break;
                 yychar = 0;
 #if YYDEBUG
             if( yydebug ) {
-                yys = 0;
+                yys = NULL;
                 if( yychar <= YYMAXTOKEN )
                     yys = yyname[yychar];
                 if( yys == NULL )
@@ -3347,7 +3324,7 @@ break;
             goto yyaccept;
         goto yyloop;
     }
-    if( (yyn = yygindex[yym]) != NULL && (yyn += yystate) >= 0 && yyn <= YYTABLESIZE && yycheck[yyn] == yystate ) {
+    if( (yyn = yygindex[yym]) != 0 && (yyn += yystate) >= 0 && yyn <= YYTABLESIZE && yycheck[yyn] == yystate ) {
         yystate = yytable[yyn];
     } else {
         yystate = yydgoto[yym];
