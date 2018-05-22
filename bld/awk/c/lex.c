@@ -29,7 +29,7 @@ THIS SOFTWARE.
 #include "awk.h"
 #include "ytab.h"
 
-extern YYSTYPE  yylval;
+
 extern int  infunc;
 extern char *lexprog;
 
@@ -90,7 +90,7 @@ Keyword keywords[] ={   /* keep sorted: binary searched */
     { "while",  WHILE,      WHILE },
 };
 
-#define RET(x)  { if(dbg)printf("lex %s\n", tokname(x)); return(x); }
+#define RET(x)  { if(dbg) printf("lex %s\n", tokname(x)); return(x); }
 
 static int peek( void )
 {
