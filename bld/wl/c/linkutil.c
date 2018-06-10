@@ -229,7 +229,7 @@ static class_entry  *class = NULL;
     }
     for( ; class != NULL; class = class->next_class ) {
         while( (seg = RingStep( class->segs, seg )) != NULL ) {
-            if( stricmp( seg->segname, name ) == 0 ) {
+            if( stricmp( seg->segname.u.ptr, name ) == 0 ) {
                 return( seg );
             }
         }
@@ -264,27 +264,27 @@ void FreeList( void *_curr )
     }
 }
 
-name_list *AddNameTable( const char *name, size_t len, bool is_mod, name_list **owner )
-/*************************************************************************************/
+obj_name_list *AddNameTable( const char *name, size_t len, bool is_mod, obj_name_list **owner )
+/*********************************************************************************************/
 {
-    name_list   *imp;
-    unsigned_32 off;
-    unsigned_16 index;
+    obj_name_list   *imp;
+    unsigned_32     off;
+    unsigned_16     index;
 
     index = 1;
     off = 1;
     for( imp = *owner; imp != NULL; imp = imp->next ) {
-        if( len == imp->len && memcmp( imp->name, name, len ) == 0 )
+        if( len == imp->len && memcmp( imp->name.u.ptr, name, len ) == 0 )
             break;
         off += imp->len + 1;
         ++index;
         owner = &imp->next;
     }
     if( imp == NULL ) {
-        _PermAlloc( imp, sizeof( name_list ) );
+        _PermAlloc( imp, sizeof( obj_name_list ) );
         imp->next = NULL;
         imp->len = len;
-        imp->name = AddSymbolStringTable( &PermStrings, name, len );
+        imp->name.u.ptr = AddSymbolStringTable( &PermStrings, name, len );
         imp->num = is_mod ? index : off;
         *owner = imp;
     }
