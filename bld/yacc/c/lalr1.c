@@ -260,8 +260,8 @@ static void check_for_user_hooks( a_state *state, a_shift_action *saction, index
     }
     sym = saction->sym;
     min_max_set = false;
-    min_id = UINT_MAX;
-    max_id = 0;
+    min_id = CONFLICT_MAX_ID;
+    max_id = CONFLICT_MIN_ID;
     for( item = state->items; *item != NULL; ++item ) {
         pro = extract_pro( *item );
         if( pro->SR_conflicts == NULL ) {
@@ -292,6 +292,7 @@ static void check_for_user_hooks( a_state *state, a_shift_action *saction, index
         last_conflict = NULL;
         all_match = true;
         for( item = state->items; *item != NULL; ++item ) {
+            conflict = NULL;
             pro = extract_pro( *item );
             for( cx = pro->SR_conflicts; cx != NULL; cx = cx->next ) {
                 conflict = cx->conflict;
@@ -455,7 +456,7 @@ static void Conflict( void )
             }
         }
     }
-    FREE( set );
+    FreeSet( set );
     FREE( reduce );
     FREE( work );
 }
@@ -505,7 +506,6 @@ void lalr1( void )
         puts( "internal error" );
     }
     FREE( look );
-    FREE( lset );
     FREE( stk );
     Conflict();
     nbstate = nstate;
