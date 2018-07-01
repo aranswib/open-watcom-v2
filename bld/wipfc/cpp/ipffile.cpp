@@ -2,7 +2,7 @@
 *
 *                            Open Watcom Project
 *
-*    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
+* Copyright (c) 2009-2018 The Open Watcom Contributors. All Rights Reserved.
 *
 *  ========================================================================
 *
@@ -27,13 +27,13 @@
 * Description:  IPF Input file reader
 *
 ****************************************************************************/
+
+#include "wipfc.hpp"
+#include <cstdlib>
 #include "ipffile.hpp"
 #include "errors.hpp"
 #include "util.hpp"
-#include <cstdlib>
-#if !defined( __UNIX__ ) && !defined( __APPLE__ )
-    #include <mbctype.h>
-#endif
+
 
 IpfFile::IpfFile( const std::wstring* fname ) : IpfData(), fileName ( fname ),
     ungottenChar( WEOF ), ungotten( false )
@@ -55,10 +55,10 @@ std::wint_t IpfFile::get()
         ch = ungottenChar;
         ungotten = false;
     } else {
-        ch = read_wchar();
+        ch = read_wchar( stream );
     }
     if( ch == L'\r' ) {
-        ch = read_wchar();
+        ch = read_wchar( stream );
     }
     incCol();
     if( ch == L'\n' ) {
@@ -82,27 +82,4 @@ void IpfFile::unget( wchar_t ch )
     if( ch == L'\n' ) {
         decLine();
     }
-}
-/*****************************************************************************/
-std::wint_t IpfFile::read_wchar()
-{
-    wchar_t ch;
-
-#if defined( __UNIX__ ) || defined( __APPLE__ )
-    // TODO! read MBCS character and convert it to UNICODE by mbtow_char
-    ch = std::fgetwc( stream );
-#else
-    char    mbc[ MB_LEN_MAX ];
-    if( std::fread( &mbc[0], sizeof( char ), 1, stream ) != 1 )
-        return( WEOF );
-    if( _ismbblead( mbc[0] ) ) {
-        if( std::fread( &mbc[1], sizeof( char ), 1, stream ) != 1 ) {
-            return( WEOF );
-        }
-    }
-    if( mbtow_char( &ch, mbc, MB_CUR_MAX ) < 0 ) {
-        throw FatalError( ERR_T_CONV );
-    }
-#endif
-    return( ch );
 }
