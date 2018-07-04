@@ -218,7 +218,7 @@ static char *(Gen_titles[GEN_TITLE_LAST][TITLE_CASE_LAST])={
 
 /* File stuff */
 static jmp_buf          Jmp_buf;
-static int              Line_buf_size;
+static size_t           Line_buf_size;
 
 /* Processing globals */
 static bool             Exclude_on = false;
@@ -410,201 +410,158 @@ static int process_args( int argc, char *argv[] )
 
     for( start_arg = 0; start_arg < argc; ++start_arg ) {
         if( argv[start_arg][0] == '-' || argv[start_arg][0] == '/' ) {
-
             for( i = 0; Args[i] != NULL; ++i ) {
                 if( stricmp( Args[i], &argv[start_arg][1] ) == 0 ) {
                     break;
                 }
             }
-
             switch( i ) {
-
             case ARG_DPT:
                 Dump_popup_t = true;
                 break;
-
             case ARG_DPI:
                 Dump_popup_i = true;
                 break;
-
             case ARG_DPK:
                 Dump_popup_k = true;
                 break;
-
             case ARG_DPB:
                 Dump_popup_b = true;
                 break;
-
             case ARG_UP:
                 Do_up = true;
                 break;
-
             case ARG_KB:
                 Do_kw_button = true;
                 break;
-
             case ARG_I:
                 Do_index = true;
                 break;
-
             case ARG_KW:
                 Do_keywords = true;
                 break;
-
             case ARG_B:
                 Do_blist = true;
                 break;
-
             case ARG_S:
                 Browse_sort = true;
                 break;
-
             case ARG_K:
                 Keep_titles = true;
                 break;
-
             case ARG_EX:
                 Exclude_special = true;
                 break;
-
             case ARG_H:
                 Do_def = true;
                 break;
-
             case ARG_HH:
                 Do_hdef = true;
                 break;
-
             case ARG_HN:
                 Do_ctx_ids = true;
                 break;
-
             case ARG_XL:
                 Start_inc_sl = INDENT_INC;
                 Start_inc_ol = INDENT_INC;
                 Start_inc_dl = INDENT_INC;
                 Start_inc_ul = INDENT_INC;
                 break;
-
             case ARG_DL:
                 Start_inc_dl = INDENT_INC;
                 break;
-
             case ARG_SL:
                 Start_inc_sl = INDENT_INC;
                 break;
-
             case ARG_OL:
                 Start_inc_ol = INDENT_INC;
                 break;
-
             case ARG_UL:
                 Start_inc_ul = INDENT_INC;
                 break;
-
             case ARG_IW:
                 Index_gml_fmt = false;
                 break;
-
             case ARG_RTF:
                 Output_type = OUT_RTF;
                 break;
-
             case ARG_IPF:
                 Output_type = OUT_IPF;
                 break;
-
             case ARG_IB:
                 Output_type = OUT_IB;
                 break;
-
             case ARG_HTML:
                 Output_type = OUT_HTML;
                 break;
-
             case ARG_WIKI:
                 Output_type = OUT_WIKI;
                 break;
-
             case ARG_BL:
                 Break_link = true;
                 break;
-
             case ARG_T:
                 Do_contents = true;
                 break;
-
             case ARG_E:
                 Remove_empty = true;
                 break;
-
             case ARG_RF:
                 Real_ipf_font = true;
                 break;
-
             case ARG_LK:
                 Keep_link_topics = true;
                 break;
-
             case ARG_KT:
                 Do_topic_keyword=false;
                 break;
-
             case ARG_RM:
                 start_arg++;
                 if( start_arg < argc ) {
-                    Right_Margin = atoi( argv[ start_arg ] );
+                    Right_Margin = atoi( argv[start_arg] );
                 } else {
                     error( ERR_BAD_ARGS, false );
                 }
                 break;
-
             case ARG_TAB:
                 start_arg++;
                 if( start_arg < argc ) {
-                    Text_Indent = atoi( argv[ start_arg ] );
+                    Text_Indent = atoi( argv[start_arg] );
                 } else {
                     error( ERR_BAD_ARGS, false );
                 }
                 break;
-
             case ARG_HD:
                 start_arg++;
                 if( start_arg < argc ) {
-                    strncpy( Header_File, argv[ start_arg ], 100 );
+                    strncpy( Header_File, argv[start_arg], 100 );
                     Header_File[99] = '\0';
                 } else {
                     error( ERR_BAD_ARGS, false );
                 }
                 break;
-
             case ARG_FT:
                 start_arg++;
                 if( start_arg < argc ) {
-                    strncpy( Header_File, argv[ start_arg ], 100 );
+                    strncpy( Header_File, argv[start_arg], 100 );
                     Header_File[99] = '\0';
                 } else {
                     error( ERR_BAD_ARGS, false );
                 }
                 break;
-
             case ARG_HB:
                 Hyper_Brace_L = IB_BRACE_L_CHAR;
                 Hyper_Brace_R = IB_BRACE_R_CHAR;
                 break;
-
             case ARG_BR:
                 Do_browse = true;
                 break;
-
             case ARG_TC:
                 Do_tc_button = true;
                 break;
-
             case ARG_IX:
                 Do_idx_button = true;
                 break;
-
             case ARG_TL:
                 ++start_arg;
                 if( start_arg < argc ) {
@@ -614,11 +571,9 @@ static int process_args( int argc, char *argv[] )
                     error( ERR_BAD_ARGS, false );
                 }
                 break;
-
             case ARG_MC:
                 Title_case = TITLE_CASE_MIXED;
                 break;
-
             case ARG_DT:
                 ++start_arg;
                 if( start_arg < argc ) {
@@ -628,7 +583,6 @@ static int process_args( int argc, char *argv[] )
                     error( ERR_BAD_ARGS, false );
                 }
                 break;
-
             case ARG_DS:
                 ++start_arg;
                 if( start_arg < argc ) {
@@ -638,7 +592,6 @@ static int process_args( int argc, char *argv[] )
                     error( ERR_BAD_ARGS, false );
                 }
                 break;
-
             case ARG_OF:
                 ++start_arg;
                 if( start_arg < argc ) {
@@ -648,7 +601,6 @@ static int process_args( int argc, char *argv[] )
                     error( ERR_BAD_ARGS, false );
                 }
                 break;
-
             default:
                 return( 0 );
             }
@@ -668,6 +620,7 @@ static int valid_args( int argc, char *argv[] )
     char                line[200];
     int                 ret;
     int                 i;
+    size_t              j;
     char                *x;
 
     Tab_xmp = false;
@@ -740,21 +693,20 @@ static int valid_args( int argc, char *argv[] )
                     break;
                 }
                 line[199] = 0;
-                for (x = line, i = 0; i < 200 && *x != 0; i++, x++) {
-                    if ( *x != ' ' && *x != 9 ) {
-                        strcpy (line, x);
+                for( x = line, i = 0; i < 200 && *x != 0; i++, x++) {
+                    if( *x != ' ' && *x != 9 ) {
+                        strcpy( line, x );
                         break;
                     }
                 }
-                for (i = strlen( line ), x = line + i - 1; i > 0; i--, x--) {
-                    if (*x == '\n' || *x == ' ' || *x == 9) {
+                for( j = strlen( line ), x = line + j - 1; j > 0; j--, x-- ) {
+                    if( *x == '\n' || *x == ' ' || *x == 9 ) {
                         *x = 0;
                     } else {
                         break;
                     }
                 }
-
-                _new( argv[argc], i + 1 );
+                _new( argv[argc], j + 1 );
                 strcpy( argv[argc], line );
             }
             fclose( opt_file );
@@ -770,7 +722,6 @@ static int valid_args( int argc, char *argv[] )
             break;
         }
     }
-
     return( start_arg );
 }
 
@@ -787,7 +738,7 @@ bool read_line( void )
 {
     int                 ch;
     char                *buf;
-    int                 len;
+    size_t              len;
     bool                eat_blank;
 
     eat_blank = false;
@@ -808,7 +759,7 @@ bool read_line( void )
             if( len > Line_buf_size ) {
                 Line_buf_size += BUF_GROW;
                 Line_buf = _realloc( Line_buf, Line_buf_size );
-                buf = &Line_buf[len-1];
+                buf = &Line_buf[len - 1];
             }
 
             if( ch == 255 ) {
@@ -882,23 +833,22 @@ char *whole_keyword_line( char *ptr )
     return( ptr );
 }
 
-int trans_add_char( int ch, section_def *section, int *alloc_size )
-/*****************************************************************/
+size_t trans_add_char( int ch, section_def *section, allocsize *alloc_size )
+/**************************************************************************/
 {
-    ++section->section_size;
+    section->section_size++;
     if( section->section_size > *alloc_size ) {
         *alloc_size += 1024;    // grow by a good, big amount
         _renew( section->section_text, *alloc_size );
     }
     section->section_text[section->section_size - 1] = ch;
-
     return( 1 );
 }
 
-int trans_add_str( char *str, section_def *section, int *alloc_size )
-/*******************************************************************/
+size_t trans_add_str( char *str, section_def *section, allocsize *alloc_size )
+/****************************************************************************/
 {
-    int                 len;
+    size_t      len;
 
     len = 0;
     for( ; *str != '\0'; ++str ) {
@@ -909,10 +859,10 @@ int trans_add_str( char *str, section_def *section, int *alloc_size )
     return( len );
 }
 
-int trans_add_nobreak_str( char *str, section_def *section, int *alloc_size )
-/***************************************************************************/
+size_t trans_add_nobreak_str( char *str, section_def *section, allocsize *alloc_size )
+/************************************************************************************/
 {
-    int                 len;
+    size_t      len;
 
     len = 0;
     for( ; *str != '\0'; ++str ) {
@@ -979,7 +929,7 @@ static void add_key_ctx( keyword_def *key, ctx_def *ctx )
 /*******************************************************/
 {
     if( key->ctx_list == NULL ) {
-        _new( key->ctx_list, 1);
+        _new( key->ctx_list, 1 );
         key->ctx_list_alloc = 1;
         key->ctx_list_size = 0;
     }
@@ -989,7 +939,7 @@ static void add_key_ctx( keyword_def *key, ctx_def *ctx )
         key->ctx_list_alloc += 16;      // grow by a reasonable amount
         _renew( key->ctx_list, key->ctx_list_alloc );
     }
-    key->ctx_list[ key->ctx_list_size - 1] = ctx;
+    key->ctx_list[key->ctx_list_size - 1] = ctx;
 }
 
 
@@ -1026,8 +976,8 @@ void add_ctx_keyword( ctx_def *ctx, char *keyword )
 }
 
 
-static int trans_line( section_def *section, int alloc_size )
-/***********************************************************/
+static allocsize trans_line( section_def *section, allocsize alloc_size )
+/***********************************************************************/
 {
     switch( Output_type ) {
     case OUT_RTF:
@@ -1074,7 +1024,7 @@ static bool read_topic_text( ctx_def *ctx, bool is_blank, int order_num )
     bool                more_to_do;
     section_def         *section;
     section_def         **ins_section;
-    int                 sect_alloc_size;
+    allocsize           sect_alloc_size;
 
     section = NULL;
     sect_alloc_size = 0;
@@ -1292,7 +1242,7 @@ static ctx_def *define_ctx( void )
     char                ch, o_ch;
     int                 i;
 
-    Delim[0] = (unsigned char)CH_CTX_DEF;
+    Delim[0] = (char)(unsigned char)CH_CTX_DEF;
     ptr = strtok( Line_buf + 1, Delim );
     head_level = atoi( ptr );
     ctx_name = strtok( NULL, Delim );
@@ -1368,7 +1318,7 @@ static bool read_ctx_topic( void )
     ctx_def             *ctx;
     char                *order_str;
 
-    Delim[0] = (unsigned char)CH_TOPIC;
+    Delim[0] = (char)(unsigned char)CH_TOPIC;
     ctx_name = strtok( Line_buf, Delim );
 
     ctx = find_ctx( ctx_name );
@@ -1391,13 +1341,10 @@ static bool read_topic( void )
 /****************************/
 {
     switch( *(unsigned char *)Line_buf ) {
-
     case CH_CTX_DEF:
         return( read_ctx_def() );
-
     case CH_TOPIC:
         return( read_ctx_topic() );
-
     case ' ':
     case '\t':
     case '\0':
@@ -1406,12 +1353,11 @@ static bool read_topic( void )
                between topics, like this */
             return( read_line() );
         }
-        /* fall throught */
+        /* fall through */
     default:
         printf( "Error in input file on line %d.\n", Line_num );
         printf( "****%s\n", Error_list[ERR_NO_TOPIC] );
     }
-
     return( false );
 }
 
@@ -1520,8 +1466,7 @@ static void output_idx_file( void )
                     strcpy( pfx, ":p." );
                 }
                 ch = toupper( *sort_title );
-                whp_fprintf( Idx_file, "%s%c- %c -\n",
-                                    pfx, CH_DLIST_TERM, ch );
+                whp_fprintf( Idx_file, "%s%c- %c -\n", pfx, CH_DLIST_TERM, ch );
                 new_topic = true;
             } else {
                 ch = toupper( *sort_title );
@@ -1598,8 +1543,7 @@ static void output_kw_file( void )
     bool                        title;      // whether we've printed this kw
 
     // output header
-    whp_fprintf( KW_file, ":H1.%s\n",
-                                Gen_titles[GEN_TITLE_KEYWORD][Title_case] );
+    whp_fprintf( KW_file, ":H1.%s\n", Gen_titles[GEN_TITLE_KEYWORD][Title_case] );
     whp_fprintf( KW_file, ":pb.%cc\n", CH_SLIST_START );
 
     // count the number of keywords in our list
@@ -1619,7 +1563,7 @@ static void output_kw_file( void )
         }
 
         // .. and then sort it.
-        qsort( kw, kw_num, sizeof(keyword_def *), kw_cmp );
+        qsort( kw, kw_num, sizeof( keyword_def * ), kw_cmp );
 
         for( i = 0; i < kw_num; i++ ) {
             title = false;
@@ -1629,27 +1573,24 @@ static void output_kw_file( void )
 
             // get our array of contexts
             ctx = kw[i]->ctx_list;
-            ctx_num = 0;
 
             // we treat keywords with only one context as a special case
             if( kw[i]->ctx_list_size == 1 ) {
-                if( !is_special_topic( ctx[ctx_num], Dump_popup_k ) ) {
-                    if( kw[i]->ctx_list_size == 1 ) {
-                        whp_fprintf( KW_file,
-                                    ":pb.%c:pb.%c%s%c%s%c\n",
-                                    CH_LIST_ITEM,
-                                    CH_HLINK,
-                                    ctx[ 0 ]->ctx_name,
-                                    CH_HLINK,
-                                    kw[i]->keyword,
-                                    CH_HLINK );
-                    }
+                if( !is_special_topic( ctx[0], Dump_popup_k ) ) {
+                    whp_fprintf( KW_file,
+                                ":pb.%c:pb.%c%s%c%s%c\n",
+                                CH_LIST_ITEM,
+                                CH_HLINK,
+                                ctx[0]->ctx_name,
+                                CH_HLINK,
+                                kw[i]->keyword,
+                                CH_HLINK );
                 }
-            } else if( kw[i]->ctx_list_size >1 ) {
+            } else if( kw[i]->ctx_list_size > 1 ) {
                 // sort the list of contexts by title.
-                qsort( ctx, kw[i]->ctx_list_size, sizeof(ctx_def *), ctx_cmp );
+                qsort( ctx, kw[i]->ctx_list_size, sizeof( ctx_def * ), ctx_cmp );
 
-                while( ctx_num < kw[i]->ctx_list_size ) {
+                for( ctx_num = 0; ctx_num < kw[i]->ctx_list_size; ctx_num++ ) {
                     // if the context is not special output a hyperlink
                     if( !is_special_topic( ctx[ctx_num], Dump_popup_k ) ) {
                         if( !title ) {
@@ -1670,13 +1611,12 @@ static void output_kw_file( void )
                         whp_fprintf( KW_file, ":pb.%c%c%s%c%s%c\n",
                                 CH_LIST_ITEM,
                                 CH_HLINK,
-                                ctx[ ctx_num ]->ctx_name,
+                                ctx[ctx_num]->ctx_name,
                                 CH_HLINK,
-                                ctx[ ctx_num ]->title,
+                                ctx[ctx_num]->title,
                                 CH_HLINK );
                     }
                     // go to the next context on our list
-                    ctx_num++;
                 }
                 if( title ) {
                     whp_fprintf( KW_file, ":pb.%c\n", CH_SLIST_END );
@@ -1799,8 +1739,8 @@ static void output_def_file( void )
 {
     ctx_def                     *ctx;
     char                        *buf;
-    int                         len;
-    int                         max_len;
+    size_t                      len;
+    size_t                      max_len;
 
     whp_fprintf( Def_file, "/* This file was created by WHPCVT.EXE. DO NOT MODIFY BY HAND! */\n\n" );
 
@@ -2111,14 +2051,11 @@ int main( int argc, char *argv[] )
         wiki_output_file();
         break;
     }
-
     if( Do_contents ) {
         /* do this before sorting the context lists */
         output_contents_file();
     }
-
     sort_ctx_list();
-
     if( Do_index ) {
         output_idx_file();
     }
