@@ -154,7 +154,7 @@ public:
     STD1::uint16_t extFileIndex( std::wstring& str ) { return extfiles->index( str ); };
 
     //To FontCollection
-    std::size_t addFont( FontEntry& fnt ) { return fonts->add( fnt ); };
+    std::size_t addFont( const FontEntry& fnt ) { return fonts->add( fnt ); };
 
     //To GlobalDictionary
     GlobalDictionaryWord * addWord( GlobalDictionaryWord* word ) { return dict->insert( word ); };
@@ -180,7 +180,7 @@ public:
     wchar_t entity( const std::wstring& key ) { return nls->entity( key ); };
 
     //To Strings
-    void addString( std::wstring& str ) { strings->addString( str ); };
+    void addString( const std::wstring& str ) { strings->add( str ); };
 
 private:
     Document( const Document &rhs );            //no copy constructor
