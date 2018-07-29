@@ -44,14 +44,12 @@
 #include "uniutil.hpp"
 
 
-extern class Env Environment;
-
 Nls::Nls( const char *loc ) : bytes( 0 ), useDBCS( false )
 {
-    sbcsG.type = GRAPHIC;
-    dbcsG.type = GRAPHIC;
-    sbcsT.setDefaultBits( TEXT );
-    sbcsG.setDefaultBits( GRAPHIC );
+    sbcsG.type = WIPFC::GRAPHIC;
+    dbcsG.type = WIPFC::GRAPHIC;
+    sbcsT.setDefaultBits( WIPFC::TEXT );
+    sbcsG.setDefaultBits( WIPFC::GRAPHIC );
     setLocalization( loc );
 }
 
@@ -80,12 +78,12 @@ std::string Nls::readNlsConfFile( std::FILE *nlsconf, const char *loc )
         if( p == NULL )
             continue;                       // skip incorrect lines
         p = skipWS( p );
-        country.country = static_cast< STD1::uint16_t >( std::strtoul( p, NULL, 10 ) );
+        country.country = static_cast< word >( std::strtoul( p, NULL, 10 ) );
         p = std::strtok( NULL, " \t" );     // get codepage
         if( p == NULL )
             continue;                       // skip incorrect lines
         p = skipWS( p );
-        country.codePage = static_cast< STD1::uint16_t >( std::strtoul( p, NULL, 10 ) );
+        country.codePage = static_cast< word >( std::strtoul( p, NULL, 10 ) );
         std::fclose( nlsconf );
         return( std::string( fn ) );
     }
@@ -110,7 +108,7 @@ std::string Nls::getNlsFileName( const char *loc )
 }
 
 /*****************************************************************************/
-void Nls::setCodePage( STD1::uint16_t cp )
+void Nls::setCodePage( word cp )
 {
 #if !defined( __UNIX__ ) && !defined( __APPLE__ )
     _setmbcp( cp ); //doesn't do much of anything in OW
@@ -189,6 +187,8 @@ void Nls::readNLS( std::FILE *nls )
     wchar_t     value[256];
     char        *p;
     bool        doGrammar( false );
+
+    _cgraphicFont.setCodePage( country.codePage );
     while( std::fgets( sbuffer, sizeof( sbuffer ), nls ) ) {
         std::size_t len( std::strlen( sbuffer ) );
         killEOL( sbuffer + len - 1 );
@@ -242,11 +242,11 @@ void Nls::readNLS( std::FILE *nls )
             } else if( std::strcmp( sbuffer, "cgraphicFontFaceName" ) == 0 ) {
                 std::wstring text( value );
                 killQuotes( text );
-                cgraphicFontFace = text;
+                _cgraphicFont.setFaceName( text );
             } else if( std::strcmp( sbuffer, "cgraphicFontWidth" ) == 0 ) {
-                cgraphicFontW = static_cast< int >( std::wcstol( value, 0, 10 ) );
+                _cgraphicFont.setWidth( static_cast< word >( std::wcstol( value, 0, 10 ) ) );
             } else if( std::strcmp( sbuffer, "cgraphicFontHeight" ) == 0 ) {
-                cgraphicFontH = static_cast< int >( std::wcstol( value, 0, 10 ) );
+                _cgraphicFont.setHeight( static_cast< word >( std::wcstol( value, 0, 10 ) ) );
             } else {
                 // error: unknown keyword
             }
@@ -279,8 +279,8 @@ void Nls::processGrammar( wchar_t *buffer )
             wchar_t chr2( tok[2] );
             for( wchar_t c = chr1; c <= chr2; ++c )
                 grammarChars += c;
-            dbcsT.ranges.push_back( static_cast< STD1::uint16_t >( chr1 ) );
-            dbcsT.ranges.push_back( static_cast< STD1::uint16_t >( chr2 ) );
+            dbcsT.ranges.push_back( static_cast< word >( chr1 ) );
+            dbcsT.ranges.push_back( static_cast< word >( chr2 ) );
             if( chr1 > 255 || chr2 > 255 ) {
                 useDBCS = true;
             }
@@ -288,8 +288,8 @@ void Nls::processGrammar( wchar_t *buffer )
             // single character "chr"
             wchar_t chr( tok[0] );
             grammarChars += chr;
-            dbcsT.ranges.push_back( static_cast< STD1::uint16_t >( chr ) );
-            dbcsT.ranges.push_back( static_cast< STD1::uint16_t >( chr ) );
+            dbcsT.ranges.push_back( static_cast< word >( chr ) );
+            dbcsT.ranges.push_back( static_cast< word >( chr ) );
             if( chr > 255 ) {
                 useDBCS = true;
             }
@@ -313,7 +313,7 @@ wchar_t Nls::entity( const std::wstring& key )
 STD1::uint32_t Nls::write( std::FILE *out )
 {
     bytes = country.size;
-    STD1::uint32_t start( country.write( out ) );
+    dword start = country.write( out );
     if( useDBCS ) {
         dbcsT.write( out );
         bytes += dbcsT.size;
@@ -330,25 +330,26 @@ STD1::uint32_t Nls::write( std::FILE *out )
 /*****************************************************************************/
 STD1::uint32_t Nls::CountryDef::write( std::FILE *out ) const
 {
-    STD1::uint32_t start( std::ftell( out ) );
-    if( std::fwrite( &size, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+    dword start = std::ftell( out );
+    if( std::fwrite( &size, sizeof( size ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &type, sizeof( STD1::uint8_t ), 1, out ) != 1 )
+    byte _type = static_cast< byte >( type );
+    if( std::fwrite( &_type, sizeof( _type ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &format, sizeof( STD1::uint8_t ), 1, out ) != 1 )
+    if( std::fwrite( &format, sizeof( format ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &value, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+    if( std::fwrite( &value, sizeof( value ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &country, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+    if( std::fwrite( &country, sizeof( country ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &codePage, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+    if( std::fwrite( &codePage, sizeof( codePage ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &reserved, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+    if( std::fwrite( &reserved, sizeof( reserved ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
     return( start );
 }
 /*****************************************************************************/
-void Nls::SbcsGrammarDef::setDefaultBits( NlsRecType rectype )
+void Nls::SbcsGrammarDef::setDefaultBits( WIPFC::NLSRecType rectype )
 {
     static const unsigned char defbits[2][32] = {
         { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xff, 0xc0,
@@ -360,35 +361,37 @@ void Nls::SbcsGrammarDef::setDefaultBits( NlsRecType rectype )
           0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
           0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }
     };
-    std::memcpy( this->bits, &defbits[rectype - 1][0], 32 );
+    std::memcpy( this->bits, &defbits[rectype - WIPFC::TEXT][0], 32 );
 }
 /*****************************************************************************/
 STD1::uint32_t Nls::SbcsGrammarDef::write( std::FILE *out ) const
 {
-    STD1::uint32_t start( std::ftell( out ) );
-    if( std::fwrite( &size, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+    dword start = std::ftell( out );
+    if( std::fwrite( &size, sizeof( size ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &type, sizeof( STD1::uint8_t ), 1, out ) != 1 )
+    byte _type = static_cast< byte >( type );
+    if( std::fwrite( &_type, sizeof( _type ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &format, sizeof( STD1::uint8_t ), 1, out ) != 1 )
+    if( std::fwrite( &format, sizeof( format ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( bits, sizeof( STD1::uint8_t ), sizeof( bits ) / sizeof( bits[0] ), out ) != sizeof( bits ) / sizeof( bits[0] ) )
+    if( std::fwrite( bits, sizeof( byte ), sizeof( bits ) / sizeof( bits[0] ), out ) != sizeof( bits ) / sizeof( bits[0] ) )
         throw FatalError( ERR_WRITE );
     return( start );
 }
 /*****************************************************************************/
 STD1::uint32_t Nls::DbcsGrammarDef::write( std::FILE *out )
 {
-    STD1::uint32_t start( std::ftell( out ) );
-    size = 4 + static_cast< STD1::uint16_t >( ranges.size() * sizeof( STD1::uint16_t ) );
-    if( std::fwrite( &size, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+    dword start = std::ftell( out );
+    size = static_cast< word >( sizeof( word ) + 2 * sizeof( byte ) + ranges.size() * sizeof( word ) );
+    if( std::fwrite( &size, sizeof( size ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &type, sizeof( STD1::uint8_t ), 1, out ) != 1 )
+    byte _type = static_cast< byte >( type );
+    if( std::fwrite( &_type, sizeof( _type ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &format, sizeof( STD1::uint8_t ), 1, out ) != 1 )
+    if( std::fwrite( &format, sizeof( format ), 1, out ) != 1 )
         throw FatalError( ERR_WRITE );
-    for( std::vector< STD1::uint16_t >::const_iterator itr = ranges.begin(); itr != ranges.end(); ++itr ) {
-        if( std::fwrite( &(*itr), sizeof( STD1::uint16_t), 1, out ) != 1 ) {
+    for( std::vector< word >::const_iterator itr = ranges.begin(); itr != ranges.end(); ++itr ) {
+        if( std::fwrite( &(*itr), sizeof( word ), 1, out ) != 1 ) {
             throw FatalError( ERR_WRITE );
         }
     }

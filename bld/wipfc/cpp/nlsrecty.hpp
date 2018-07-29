@@ -24,50 +24,23 @@
 *
 *  ========================================================================
 *
-* Description:  Font data
+* Description:  NLS record type
 *
 ****************************************************************************/
 
 
-#include "wipfc.hpp"
-#include <string>
-#include "fntcol.hpp"
-#include "errors.hpp"
+#ifndef NLSRECTY_INCLUDED
+#define NLSRECTY_INCLUDED
 
-FontCollection::FontCollection( word cp ) : bytes( 0 )
-/****************************************************/
-{
-    fonts.reserve( MAX_FONTS );
-    try {
-        add( FontEntry( L"System Proportional", 0, 0, cp ) );   //set the default font
-    }
-    catch( Class2Error &e ) {
-        (void)e;
-    }
-}
+namespace WIPFC {
 
-std::size_t FontCollection::add( const FontEntry& fnt )
-/*****************************************************/
-{
-    std::size_t index( 0 );
-    for( ConstFontIter itr = fonts.begin(); itr != fonts.end(); ++itr, ++index ) {
-        if( *itr == fnt ) {
-            return( index );
-        }
-    }
-    if( fonts.size() >= MAX_FONTS )
-        throw Class2Error( ERR2_FONTS );
-    fonts.push_back( fnt );
-    return( fonts.size() - 1 );
-}
-
-STD1::uint32_t FontCollection::write( std::FILE *out )
-/****************************************************/
-{
-    dword start = std::ftell( out );
-    for( FontIter itr = fonts.begin(); itr != fonts.end(); ++itr ) {
-        bytes += itr->write( out );
-    }
-    return( start );
+    enum NLSRecType {
+            CONTROL = 0,
+            TEXT,
+            GRAPHIC
+    };
 
 }
+
+#endif
+
