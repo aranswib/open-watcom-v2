@@ -44,7 +44,7 @@
 
 Lexer::Token ISyn::parse( Lexer* lexer )
 {
-    Lexer::Token tok( document->getNextToken() );
+    Lexer::Token tok( _document->getNextToken() );
     while( tok != Lexer::TAGEND ) {
         if( tok == Lexer::ATTRIBUTE ) {
             std::wstring key;
@@ -52,45 +52,45 @@ Lexer::Token ISyn::parse( Lexer* lexer )
             splitAttribute( lexer->text(), key, value );
             if( key == L"root" ) {
                 root = value;
+            } else {
+                _document->printError( ERR1_ATTRNOTDEF );
             }
-            else
-                document->printError( ERR1_ATTRNOTDEF );
-        }
-        else if( tok == Lexer::FLAG ) {
-            document->printError( ERR1_ATTRNOTDEF );
-        }
-        else if( tok == Lexer::ERROR_TAG )
+        } else if( tok == Lexer::FLAG ) {
+            _document->printError( ERR1_ATTRNOTDEF );
+        } else if( tok == Lexer::ERROR_TAG ) {
             throw FatalError( ERR_SYNTAX );
-        else if( tok == Lexer::END )
+        } else if( tok == Lexer::END ) {
             throw FatalError( ERR_EOF );
-        else
-            document->printError( ERR1_TAGSYNTAX );
-        tok = document->getNextToken();
+        } else {
+            _document->printError( ERR1_TAGSYNTAX );
+        }
+        tok = _document->getNextToken();
     }
-    tok = document->getNextToken(); //consume TAGEND
-    unsigned int currentLine = document->dataLine();
-    while( tok != Lexer::END && !( tok == Lexer::TAG && lexer->tagId() == Lexer::EUSERDOC)) {
+    tok = _document->getNextToken(); //consume TAGEND
+    unsigned int currentLine = _document->dataLine();
+    while( tok != Lexer::END && !( tok == Lexer::TAG && lexer->tagId() == Lexer::EUSERDOC ) ) {
         if( tok == Lexer::WORD ) {
-            char buffer[ 256 ];
+            char buffer[ 256 ];     // max len 255 + null
             std::size_t length( wtomb_cstring( buffer, lexer->text().c_str(), sizeof( buffer ) - 1 ) );
-            if( length == static_cast< std::size_t >( -1 ) )
+            if( length == ERROR_CNV )
                 throw FatalError( ERR_T_CONV );
             std::string txt( buffer );
             syn->add( txt );
+        } else if( tok == Lexer::WHITESPACE ) {
+            tok = _document->getNextToken();
+        } else {
+            break;
         }
-        else if( tok == Lexer::WHITESPACE )
-            tok = document->getNextToken();
-        else
+        if( _document->dataLine() > currentLine ) {
             break;
-        if( document->dataLine() > currentLine )
-            break;
+        }
     }
     try {
-        document->addSynonym( root, syn.get() );
+        _document->addSynonym( root, syn.get() );
     }
     catch( Class3Error& e ) {
-        document->printError( e.code );
-        }
+        _document->printError( e.code );
+    }
     return tok;
 }
 
