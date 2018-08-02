@@ -45,6 +45,7 @@
 #include "lexer.hpp"
 #include "ptrops.hpp"
 
+
 class Compiler {
 public:
     enum OutputType {
@@ -56,8 +57,6 @@ public:
     int compile();
     //set the input source file name
     void setInputFile( const std::string& sfname );
-    //initialize first(top) source file
-    void startInput();
     //add a file name to the set of file names
     std::wstring* addFileName( std::wstring* wfname );
     //set the output file name
@@ -100,9 +99,6 @@ public:
 private:
     Compiler( const Compiler &rhs );            //no copy constructor
     Compiler& operator=( const Compiler &rhs ); //no assignment
-    std::wstring _inFileNameW;
-    std::string _inFileName;
-    std::string _outFileName;
     std::auto_ptr< Lexer > _lexer;
     std::vector< IpfData* > _inFiles;            //a stack of files being parsed
     typedef std::vector< IpfData* >::iterator InFilesIter;
@@ -117,6 +113,9 @@ private:
     bool _printBanner;
     bool _search;    //construct search table
     bool _xref;
+    std::wstring *_inFileNameW;
+    std::string _inFileName;
+    std::string _outFileName;
 };
 
 #endif //COMPILER_INCLUDED

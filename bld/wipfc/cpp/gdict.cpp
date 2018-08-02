@@ -35,17 +35,18 @@
 #include <cstdlib>
 #include "gdict.hpp"
 #include "errors.hpp"
+#include "document.hpp"
 
 GlobalDictionary::~GlobalDictionary()
 {
-    for( WordIter iter = words.begin(); iter != words.end(); ++iter ) {
+    for( WordIter iter = _words.begin(); iter != _words.end(); ++iter ) {
         delete *iter;
     }
 }
 /***************************************************************************/
 GlobalDictionaryWord* GlobalDictionary::insert( GlobalDictionaryWord *wordent )
 {
-    std::pair< WordIter, bool > status( words.insert( wordent ) );
+    std::pair< WordIter, bool > status( _words.insert( wordent ) );
     if( !status.second )
         delete wordent;
     return( *status.first );
@@ -60,7 +61,7 @@ GlobalDictionaryWord* GlobalDictionary::insert( const std::wstring& wordtxt )
 void GlobalDictionary::convert( std::size_t count )
 {
     word index = 0;
-    for( WordIter iter = words.begin(); iter != words.end(); ++iter, ++index ) {
+    for( WordIter iter = _words.begin(); iter != _words.end(); ++iter, ++index ) {
         (*iter)->setIndex( index );
         (*iter)->setPages( count );
     }
@@ -78,18 +79,18 @@ GlobalDictionaryWord* GlobalDictionary::findWord( const std::wstring& wordtxt )
     return( findWord( &wordent ) );
 }
 /***************************************************************************/
-STD1::uint32_t GlobalDictionary::write( std::FILE *out )
+STD1::uint32_t GlobalDictionary::write( std::FILE *out, Document *document )
 {
     dword start = std::ftell( out );
-    for( ConstWordIter itr = words.begin(); itr != words.end(); ++itr )
-        bytes += (*itr)->writeWord( out );
+    for( ConstWordIter itr = _words.begin(); itr != _words.end(); ++itr )
+        _bytes += (*itr)->writeWord( out, document );
     return( start );
 }
 /***************************************************************************/
 bool GlobalDictionary::buildFTS()
 {
     bool big( false );
-    for( ConstWordIter itr = words.begin(); itr != words.end(); ++itr ) {
+    for( ConstWordIter itr = _words.begin(); itr != _words.end(); ++itr ) {
         (*itr)->buildFTS();
         if( (*itr)->isBigFTS() ) {
             big = true;
@@ -101,7 +102,7 @@ bool GlobalDictionary::buildFTS()
 STD1::uint32_t GlobalDictionary::writeFTS( std::FILE *out, bool big )
 {
     dword start = std::ftell( out );
-    for( ConstWordIter itr = words.begin(); itr != words.end(); ++itr )
-        ftsBytes += (*itr)->writeFTS( out, big );
+    for( ConstWordIter itr = _words.begin(); itr != _words.end(); ++itr )
+        _ftsBytes += (*itr)->writeFTS( out, big );
     return( start );
 }

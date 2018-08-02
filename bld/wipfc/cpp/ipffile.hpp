@@ -34,11 +34,15 @@
 #include <cstdio>
 #include "ipfdata.hpp"
 
+class Document;     // forward reference
+
 class IpfFile : public IpfData {
 public:
-    IpfFile( const std::wstring* wfname );
-    IpfFile( const std::string& sfname, const std::wstring* wfname );
+    IpfFile( Document *document, const std::wstring* wfname );
+    IpfFile( Document *document, const std::string& sfname, const std::wstring* wfname );
     ~IpfFile() { if( _stream ) std::fclose( _stream ); };
+    //Set the file name for use in error messages
+    void setName( const std::wstring* fileName ) { _fileName = fileName; }
     //Returns the file or buffer name for use in error messages
     virtual
     const std::wstring* name() const { return _fileName; };
@@ -60,6 +64,7 @@ public:
 private:
     IpfFile( const IpfFile& rhs );              //no copy
     IpfFile& operator=( const IpfFile& rhs );   //no assignment
+    Document *_document;
     const std::wstring* _fileName;
     std::FILE* _stream;
     wchar_t _ungottenChar;

@@ -40,7 +40,7 @@
 #include "errors.hpp"
 #include "lexer.hpp"
 #include "util.hpp"
-#include "uniutil.hpp"
+
 
 Lexer::Token ISyn::parse( Lexer* lexer )
 {
@@ -51,7 +51,7 @@ Lexer::Token ISyn::parse( Lexer* lexer )
             std::wstring value;
             splitAttribute( lexer->text(), key, value );
             if( key == L"root" ) {
-                root = value;
+                _root = value;
             } else {
                 _document->printError( ERR1_ATTRNOTDEF );
             }
@@ -71,11 +71,11 @@ Lexer::Token ISyn::parse( Lexer* lexer )
     while( tok != Lexer::END && !( tok == Lexer::TAG && lexer->tagId() == Lexer::EUSERDOC ) ) {
         if( tok == Lexer::WORD ) {
             char buffer[ 256 ];     // max len 255 + null
-            std::size_t length( wtomb_cstring( buffer, lexer->text().c_str(), sizeof( buffer ) - 1 ) );
+            std::size_t length( _document->wtomb_cstring( buffer, lexer->text().c_str(), sizeof( buffer ) - 1 ) );
             if( length == ERROR_CNV )
                 throw FatalError( ERR_T_CONV );
             std::string txt( buffer );
-            syn->add( txt );
+            _syn->add( txt );
         } else if( tok == Lexer::WHITESPACE ) {
             tok = _document->getNextToken();
         } else {
@@ -86,7 +86,7 @@ Lexer::Token ISyn::parse( Lexer* lexer )
         }
     }
     try {
-        _document->addSynonym( root, syn.get() );
+        _document->addSynonym( _root, _syn.get() );
     }
     catch( Class3Error& e ) {
         _document->printError( e.code );

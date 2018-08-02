@@ -43,14 +43,14 @@ void CountryDef::nlsConfig( const char *loc )
 /*******************************************/
 {
     char        buffer[256];
-    char        *fn1;
-    char        *fn2;
+    const char  *fn1;
+    const char  *fn2;
 
     std::string path( Environment.value( "WIPFC" ) );
     if( path.length() )
         path += PATH_SEPARATOR;
-    path += "nlsconf.txt";
-    std::FILE *nlsconf = std::fopen( path.c_str(), "r" );
+    std::string fname( path + "nlsconf.txt" );
+    std::FILE *nlsconf = std::fopen( fname.c_str(), "r" );
     if( nlsconf == NULL )
         throw FatalError( ERR_NLSCONF );
     while( (fn1 = fn2 = std::fgets( buffer, sizeof( buffer ), nlsconf )) != NULL ) {
@@ -96,9 +96,6 @@ void CountryDef::nlsConfig( const char *loc )
         fn1 = "en_US.nls";
         fn2 = "entity.txt";
     }
-    path = Environment.value( "WIPFC" );
-    if( path.length() )
-        path += PATH_SEPARATOR;
     _nlsFileName = path + std::string( fn1 );
     _entityFileName = path + std::string( fn2 );
 }
