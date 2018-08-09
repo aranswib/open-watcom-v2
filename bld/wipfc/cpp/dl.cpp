@@ -129,7 +129,7 @@ Lexer::Token Dl::parse( Lexer* lexer )
                         _document->printError( ERR1_DLHEADMATCH );
                         needDdHd = false;
                     } else {
-                        Dt *dt =  new Dt( _document, this, _document->dataName(),
+                        Dt *dt = new Dt( _document, this, _document->dataName(),
                             _document->lexerLine(), _document->lexerCol(), indent,
                             tabSize, breakage, compact && !first );
                         appendChild( dt );
@@ -282,8 +282,9 @@ Lexer::Token DdHd::parse( Lexer* lexer )
     appendChild( new Lm( _document, this, _document->dataName(),
         _document->lexerLine(), _document->lexerCol(), indent + tabSize ) );
     while( tok != Lexer::END && !( tok == Lexer::TAG && lexer->tagId() == Lexer::EUSERDOC ) ) {
-        if( parseInline( lexer, tok ) )
+        if( parseInline( lexer, tok ) ) {
             break;
+        }
     }
     return tok;
 }
@@ -357,9 +358,10 @@ Lexer::Token Dd::parse( Lexer* lexer )
     Lexer::Token tok( parseAttributes( lexer ) );
     appendChild( new Lm( _document, this, _document->dataName(),
         _document->lexerLine(), _document->lexerCol(), indent + tabSize ) );
-    if( doBreak )
+    if( doBreak ) {
         appendChild( new BrCmd( _document, this, _document->dataName(),
             _document->lexerLine(), _document->lexerCol() ) );
+    }
     while( tok != Lexer::END && !( tok == Lexer::TAG && lexer->tagId() == Lexer::EUSERDOC ) ) {
         if( parseInline( lexer, tok ) ) {
             if( lexer->tagId() == Lexer::DD )
@@ -369,4 +371,3 @@ Lexer::Token Dd::parse( Lexer* lexer )
     }
     return tok;
 }
-
