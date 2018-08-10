@@ -31,13 +31,14 @@
 #ifndef FNT_INCLUDED
 #define FNT_INCLUDED
 
-#include <cstring>
 #include <cstdio>
+#include <string>
+
 
 #define MAX_FACENAME_SIZE   33
 #define DEFAULT_CODEPAGE    static_cast< word >( -1 )
 
-class Document;     // forward reference
+class OutFile;      // forward reference
 
 // Font Entry
 struct FontEntry {
@@ -47,14 +48,14 @@ private:
     typedef STD1::uint32_t  dword;
 
 public:
-    FontEntry() { std::memset( this, 0, sizeof( FontEntry ) ); _codePage = DEFAULT_CODEPAGE; };
+    FontEntry() : _faceName(), _width( 0 ), _height( 0 ), _codePage( DEFAULT_CODEPAGE ) { };
     FontEntry( const std::wstring& faceName, word width, word height, word codePage = DEFAULT_CODEPAGE )
         : _faceName( faceName ), _width( width ), _height( height ), _codePage( codePage ) {}
     void setFaceName( const std::wstring& faceName ) { _faceName = faceName; }
     void setHeight( word height ) { _height = height; }
     void setWidth( word width ) { _width = width; }
     void setCodePage( word codePage ) { _codePage = codePage; }
-    STD1::uint32_t write( std::FILE *out, Document *document ) const;
+    dword write( OutFile *out ) const;
     bool operator==( const FontEntry &rhs ) const;
 
 private:

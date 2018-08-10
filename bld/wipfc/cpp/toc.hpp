@@ -34,12 +34,19 @@
 #include <cstdio>
 #include <cstring>
 
+
+class OutFile;
+
 #pragma pack(push, 1)
 
 // TocEntry: located at offset pointed to by tocOffsetOffset[i]
 // There is one entry per page, stored in the order in which
 // they occur in the document.
 struct TocEntry {
+    typedef STD1::uint8_t   byte;
+    typedef STD1::uint16_t  word;
+    typedef STD1::uint32_t  dword;
+
     STD1::uint8_t size;             // size of the entry
     STD1::uint8_t nestLevel  :4;    // nesting level
     STD1::uint8_t unknown    :1;
@@ -48,7 +55,7 @@ struct TocEntry {
     STD1::uint8_t hasChildren:1;    // following nodes are numerically higher
     STD1::uint8_t cellCount;        // number of Cells occupied by the text for this toc entry
     TocEntry() { std::memset( this, 0, sizeof( TocEntry ) ); };
-    STD1::uint32_t write( std::FILE* out ) const;
+    dword write( OutFile *out ) const;
     //variable length data follows:
     //if extended
     // ExtTocEntry + associated stuff
@@ -71,7 +78,7 @@ struct ExtTocEntry {
     STD1::uint16_t isParent:1;      //has child windows
     STD1::uint16_t unknown2:4;
     ExtTocEntry() { std::memset( this, 0, sizeof( ExtTocEntry ) ); };
-    void write( std::FILE* out ) const;
+    void write( OutFile *out ) const;
     enum Position {
         ABSOLUTE_CHAR = 0,
         RELATIVE_PERCENT,
@@ -95,7 +102,7 @@ struct PageOrigin {
     STD1::uint16_t xpos;
     STD1::uint16_t ypos;
     PageOrigin() { std::memset( this, 0, sizeof( PageOrigin ) ); };
-    void write( std::FILE* out ) const;
+    void write( OutFile *out ) const;
 };
 
 struct PageSize {
@@ -104,7 +111,7 @@ struct PageSize {
     STD1::uint16_t  width;
     STD1::uint16_t  height;
     PageSize() { std::memset( this, 0, sizeof( PageSize ) ); };
-    void write( std::FILE* out ) const;
+    void write( OutFile *out ) const;
 };
 
 //titlebar, scrollbars, and rules
@@ -124,20 +131,20 @@ struct PageStyle {
     };
     STD1::uint16_t word;
     PageStyle() : word( 0 ) { };
-    void write( std::FILE* out ) const;
+    void write( OutFile *out ) const;
 };
 
 struct PageGroup {
     STD1::uint16_t id;               //a panel number
     PageGroup() : id( 0 ) { };
-    void write( std::FILE* out ) const;
+    void write( OutFile *out ) const;
 };
 
 //ctrlarea and ctrlrefid?
 struct PageControls {
     STD1::uint16_t word;
     PageControls() : word( 0 ) { };
-    void write( std::FILE* out ) const;
+    void write( OutFile *out ) const;
 };
 
 // TOCOffset

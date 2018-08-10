@@ -39,20 +39,24 @@
 #include <vector>
 
 
-class Document;     // forward reference
+class OutFile;      // forward reference
 
 class StringTable {
+    typedef STD1::uint8_t   byte;
+    typedef STD1::uint16_t  word;
+    typedef STD1::uint32_t  dword;
+
 public:
     StringTable() : _bytes( 0 ) { _table.reserve( 3 ); };
     void add( const std::wstring& str ) { _table.push_back( str ); };
     //the number of bytes written to disk
-    STD1::uint32_t length() const { return _bytes; };
-    STD1::uint32_t write( std::FILE *out, Document *document );
+    dword length() const { return( static_cast< dword >( _bytes ) ); };
+    dword write( OutFile *out );
 private:
     std::vector< std::wstring > _table;
     typedef std::vector< std::wstring >::iterator TableIter;
     typedef std::vector< std::wstring >::const_iterator ConstTableIter;
-    STD1::uint32_t _bytes;
+    std::size_t _bytes;
 };
 
 #endif //STRINGS_INCLUDED

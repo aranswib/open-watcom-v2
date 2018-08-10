@@ -32,28 +32,29 @@
 #include "wipfc.hpp"
 #include "ctrlbtn.hpp"
 #include "errors.hpp"
-#include "document.hpp"
-#include "util.hpp"
+#include "outfile.hpp"
 
 
-STD1::uint32_t ControlButton::write( std::FILE *out, Document *document ) const
+ControlButton::dword ControlButton::write( OutFile *out ) const
 {
-    STD1::uint32_t bytes( sizeof( STD1::uint16_t ) * 2 );
-    STD1::uint16_t type( 1 );
-    if( std::fwrite( &type, sizeof( STD1::uint16_t), 1, out) != 1 )
+    std::size_t bytes( sizeof( word ) * 2 );
+
+    // type = 1
+    if( out->put( static_cast< word >( 1 ) ) )
         throw FatalError( ERR_WRITE );
-    if( std::fwrite( &res, sizeof( STD1::uint16_t), 1, out) != 1 )
+    if( out->put( _res ) )
         throw FatalError( ERR_WRITE );
     std::string buffer;
-    document->wtomb_string( txt, buffer );
+    out->wtomb_string( _txt, buffer );
     std::size_t length( buffer.size() );
     if( length > 255 ) {
         buffer.erase( 255 );
         length = 255;
     }
-    if( std::fputc( static_cast< STD1::uint8_t >( length ), out) == EOF ||
-        std::fwrite( buffer.data(), sizeof( char ), length, out ) != length )
+    if( out->put( static_cast< byte >( length ) ) )
+        throw FatalError( ERR_WRITE );
+    if( out->write( buffer.data(), sizeof( char ), length ) )
         throw FatalError( ERR_WRITE );
     bytes += length + 1;
-    return bytes;
+    return( static_cast< dword >( bytes ) );
 }

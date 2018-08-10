@@ -37,9 +37,13 @@
 #include <vector>
 
 
-class Document;     // forward reference
+class OutFile;      // forward reference
 
 class IndexItem {
+    typedef STD1::uint8_t   byte;
+    typedef STD1::uint16_t  word;
+    typedef STD1::uint32_t  dword;
+
 public:
     enum Type {
         CMD,
@@ -52,15 +56,16 @@ public:
     bool isGlobal() const { return _hdr.global; };
     void setSortKey( std::wstring& key ) { _hdr.sortKey = 1; _sortKey = key; };
     void setText( std::wstring& t ) { _text = t; };
-    void setTOC( STD1::uint16_t t ) { _hdr.tocPanelIndex = t; };
-    void addSynonym( STD1::uint32_t t ) { _synonyms.push_back( t ); };
-    std::size_t write( std::FILE* out, Document *document );
+    void setTOC( word t ) { _hdr.tocPanelIndex = t; };
+    void addSynonym( dword t ) { _synonyms.push_back( t ); };
+    dword write( OutFile *out );
     bool operator==( const IndexItem& rhs ) const;
     bool operator==( const std::wstring& rhs ) const;
     bool operator<( const IndexItem& rhs ) const;
 private:
     IndexItem( const IndexItem& rhs );              //no copy
     IndexItem& operator=( const IndexItem& rhs );   //no assignment
+    int wstricmp( const wchar_t *s, const wchar_t *t ) const;
 #pragma pack(push, 1)
     struct IndexHeader {
         STD1::uint8_t   size;               // size of item text
@@ -77,10 +82,9 @@ private:
     IndexHeader _hdr;
     std::wstring _sortKey;
     std::wstring _text;
-    std::vector< STD1::uint32_t > _synonyms;
-    typedef std::vector< STD1::uint32_t >::iterator SynIter;
-    typedef std::vector< STD1::uint32_t >::const_iterator ConstSynIter;
-    int wstricmp( const wchar_t *s, const wchar_t *t ) const;
+    std::vector< dword > _synonyms;
+    typedef std::vector< dword >::iterator SynIter;
+    typedef std::vector< dword >::const_iterator ConstSynIter;
 };
 
 #endif //INDEX_INCLUDED

@@ -33,25 +33,25 @@
 #include <cstdlib>
 #include "strings.hpp"
 #include "errors.hpp"
-#include "document.hpp"
 #include "util.hpp"
+#include "outfile.hpp"
 
 
-STD1::uint32_t StringTable::write( std::FILE *out, Document *document )
+StringTable::dword StringTable::write( OutFile *out )
 {
     if( _table.empty() )
         return 0L;
-    STD1::uint32_t start( std::ftell( out ) );
+    dword start( out->tell() );
     for( ConstTableIter itr = _table.begin(); itr != _table.end(); ++itr ) {
         char buffer[ 256 ];     // max len 255 + null
-        std::size_t written;
-        std::size_t length( document->wtomb_cstring( buffer, itr->c_str(), sizeof( buffer ) - 1 ) );
+        std::size_t length( out->wtomb_cstring( buffer, itr->c_str(), sizeof( buffer ) - 1 ) );
         if( length == ERROR_CNV )
             throw FatalError( ERR_T_CONV );
-        if( std::fputc( static_cast< STD1::uint8_t >( length + 1 ), out ) == EOF ||
-            ( written = std::fwrite( buffer, sizeof( char ), length, out ) ) != length)
+        if( out->put( static_cast< byte >( length + 1 ) ) )
             throw FatalError( ERR_WRITE );
-        _bytes += written + 1;
+        if( out->write( buffer, sizeof( char ), length ) )
+            throw FatalError( ERR_WRITE );
+        _bytes += length + 1;
     }
     return start;
 }

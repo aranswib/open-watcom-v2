@@ -37,29 +37,33 @@
 #include <cstdio>
 #include "gnames.hpp"
 #include "errors.hpp"
+#include "outfile.hpp"
 
-void GNames::insert( GlobalDictionaryWord* wordent, STD1::uint16_t toc )
+
+void GNames::insert( GlobalDictionaryWord* wordent, word toc )
 {
-    NameIter itr( names.find( wordent ) );   //look up word in names
-    if( itr != names.end() )
+    NameIter itr( _names.find( wordent ) );   //look up word in names
+    if( itr != _names.end() )
         throw Class3Error( ERR3_DUPID );
-    names.insert( std::map< GlobalDictionaryWord*, STD1::uint16_t, ptrLess< GlobalDictionaryWord* > >::value_type( wordent, toc ) );
+    _names.insert( std::map< GlobalDictionaryWord*, word, ptrLess< GlobalDictionaryWord* > >::value_type( wordent, toc ) );
 }
 /***************************************************************************/
-STD1::uint32_t GNames::write( std::FILE *out ) const
+GNames::dword GNames::write( OutFile *out ) const
 {
-    STD1::uint32_t start( 0 );
-    if( names.size() ) {
-        start = std::ftell( out );
-        for( ConstNameIter itr = names.begin(); itr != names.end(); ++itr ) {
-            STD1::uint16_t index = (itr->first)->index();
-            if( std::fwrite( &index, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+    dword start( 0 );
+    if( _names.size() ) {
+        start = out->tell();
+        for( ConstNameIter itr = _names.begin(); itr != _names.end(); ++itr ) {
+            // name index
+            if( out->put( itr->first->index() ) ) {
                 throw FatalError( ERR_WRITE );
+            }
         }
-        for( ConstNameIter itr = names.begin(); itr != names.end(); ++itr ) {
-            STD1::uint16_t toc = itr->second;
-            if( std::fwrite( &toc, sizeof( STD1::uint16_t ), 1, out ) != 1 )
+        for( ConstNameIter itr = _names.begin(); itr != _names.end(); ++itr ) {
+            // TOC index
+            if( out->put( itr->second ) ) {
                 throw FatalError( ERR_WRITE );
+            }
         }
     }
     return start;

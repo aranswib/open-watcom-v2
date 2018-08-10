@@ -34,6 +34,8 @@
 #include <cstdlib>
 #include "fts.hpp"
 #include "errors.hpp"
+#include "outfile.hpp"
+
 
 //struct FTS8Header {
 //    STD1::uint8_t   size;
@@ -47,11 +49,6 @@
 //    //variable length data follows
 //    //bitstring: 1 bit per panel
 //};
-
-#define putU8(d,o)          (std::fputc( d, o ) == EOF)
-#define putU16(d,o)         (std::fwrite( &d, sizeof( word ), 1, out ) != 1)
-#define putArray(d,s,c,o)   (std::fwrite( d, s, c, o ) != c)
-
 
 void FTSElement::setPages( std::size_t count )
 /********************************************/
@@ -72,8 +69,8 @@ void FTSElement::onPage( std::size_t i )
     }
 }
 
-STD1::uint16_t FTSElement::getPages( std::vector< word >& pg, bool absent ) const
-/*******************************************************************************/
+std::size_t FTSElement::getPages( std::vector< word >& pg, bool absent ) const
+/****************************************************************************/
 {
     word index = 0;
 
@@ -91,12 +88,14 @@ STD1::uint16_t FTSElement::getPages( std::vector< word >& pg, bool absent ) cons
             ++index;
         }
     }
-    return( static_cast< word >( pg.size() * sizeof( word ) ) );
+    return( pg.size() * sizeof( word ) );
 }
 
-void FTSElement::build()
-/**********************/
+void FTSElement::build( OutFile *out )
+/************************************/
 {
+    (void)out;
+
     if( _pageCount == 0 ) {
         _comp = NONE;
     } else if( _pageCount == _maxPage ) {
@@ -247,11 +246,11 @@ void FTSElement::encode( std::vector< byte >& rle )
     }
 }
 
-std::size_t FTSElement::write( std::FILE *out, bool big ) const
-/****************************************************************/
+FTSElement::dword FTSElement::write( OutFile *out, bool big ) const
+/*****************************************************************/
 {
     std::vector< word > pg;
-    word size;
+    std::size_t size;
 
     // calculate FTS data size
     switch( _comp ) {
@@ -262,7 +261,7 @@ std::size_t FTSElement::write( std::FILE *out, bool big ) const
     case RLE:
     case DBL_TRUNC:
     case TRUNC:
-        size = static_cast< word >( _pages.size() * sizeof( byte ) );
+        size = _pages.size() * sizeof( byte );
         if( _comp == RLE ) {
             size += sizeof( byte );
         } else if( _comp == DBL_TRUNC ) {
@@ -275,39 +274,39 @@ std::size_t FTSElement::write( std::FILE *out, bool big ) const
         size = 0;
         break;
     }
-    // output FTS data
+    // output FTS data, add header size and round it
     if( big ) {
-        size += sizeof( word ) + sizeof( byte );
-        if( putU16( size, out ) ) {
+        size = static_cast< word >( size + sizeof( word ) + sizeof( byte ) );
+        if( out->put( static_cast< word >( size ) ) ) {
             throw FatalError( ERR_WRITE );
         }
     } else {
         size = static_cast< byte >( size + sizeof( byte ) + sizeof( byte ) );
-        if( putU8(  static_cast< byte >( size ), out ) ) {
+        if( out->put( static_cast< byte >( size ) ) ) {
             throw FatalError( ERR_WRITE );
         }
     }
-    if( putU8( static_cast< byte >( _comp ), out ) )
+    if( out->put( static_cast< byte >( _comp ) ) )
         throw FatalError( ERR_WRITE );
     switch( _comp ) {
     case PRESENT:
     case ABSENT:
-        if( putArray( &pg[0], sizeof( word ), pg.size(), out ) )
+        if( out->write( &pg[0], sizeof( word ), pg.size() ) )
             throw FatalError( ERR_WRITE );
         break;
     case RLE:
     case DBL_TRUNC:
     case TRUNC:
         if( _comp == RLE ) {
-            if( putU8( 1, out ) ) {
+            if( out->put( static_cast< byte >( 1 ) ) ) {
                 throw FatalError( ERR_WRITE );
             }
         } else if( _comp == DBL_TRUNC ) {
-            if( putU16( _firstPage, out ) ) {
+            if( out->put( _firstPage ) ) {
                 throw FatalError( ERR_WRITE );
             }
         }
-        if( putArray( &_pages[0], sizeof( byte ), _pages.size(), out ) )
+        if( out->write( &_pages[0], sizeof( byte ), _pages.size() ) )
             throw FatalError( ERR_WRITE );
         break;
     case NONE:
@@ -315,5 +314,5 @@ std::size_t FTSElement::write( std::FILE *out, bool big ) const
     default:
         break;
     }
-    return( size );
+    return( static_cast< dword >( size ) );
 }
