@@ -35,26 +35,21 @@
 #include "outfile.hpp"
 
 
-ControlButton::dword ControlButton::write( OutFile *out ) const
+ControlButton::dword ControlButton::write( OutFile* out ) const
 {
-    std::size_t bytes( sizeof( word ) * 2 );
-
     // type = 1
     if( out->put( static_cast< word >( 1 ) ) )
         throw FatalError( ERR_WRITE );
     if( out->put( _res ) )
         throw FatalError( ERR_WRITE );
     std::string buffer;
-    out->wtomb_string( _txt, buffer );
-    std::size_t length( buffer.size() );
-    if( length > 255 ) {
+    out->wtomb_string( _text, buffer );
+    if( buffer.size() > 255 )
         buffer.erase( 255 );
-        length = 255;
-    }
+    std::size_t length( buffer.size() );
     if( out->put( static_cast< byte >( length ) ) )
         throw FatalError( ERR_WRITE );
     if( out->write( buffer.data(), sizeof( char ), length ) )
         throw FatalError( ERR_WRITE );
-    bytes += length + 1;
-    return( static_cast< dword >( bytes ) );
+    return( static_cast< dword >( sizeof( word ) + sizeof( _res ) + sizeof( byte ) + length * sizeof( char ) ) );
 }

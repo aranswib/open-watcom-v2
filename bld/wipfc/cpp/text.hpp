@@ -43,19 +43,20 @@ public:
         Element( d, p, f, r, c ), _text( 0 ), _whiteSpace( w ),
         _toggleSpacing( ts ) { };
     Text( Document* d, Element* p, const std::wstring* f, unsigned int r,
-        unsigned int c, const std::wstring& txt, bool ts );
+        unsigned int c, const std::wstring& text, bool ts );
     ~Text() { };
     std::pair< bool, bool > buildLocalDict( Page* page );
     void buildText( Cell* cell );
     void setToggleSpacing() { _toggleSpacing = true; };
     void clearToggleSpacing() { _toggleSpacing = false; };
-protected:
-    GlobalDictionaryWord* _text;
-    Tag::WsHandling _whiteSpace;
-    bool _toggleSpacing;
 private:
     Text( const Text& rhs );            //no copy
     Text& operator=( const Text& rhs ); //no assignment
+
+protected:
+    GlobalDictionaryWord*   _text;
+    Tag::WsHandling         _whiteSpace;
+    bool                    _toggleSpacing;
 };
 
 #endif //TEXT_INCLUDED

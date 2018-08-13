@@ -36,23 +36,23 @@
 #include "document.hpp"
 
 WhiteSpace::WhiteSpace( Document* d, Element* p, const std::wstring* f, unsigned int r,
-    unsigned int c, const std::wstring& tx, Tag::WsHandling w, bool ts ) :
+    unsigned int c, const std::wstring& text, Tag::WsHandling w, bool ts ) :
     Text( d, p, f, r, c, w, ts )
 {
-    if( tx[0] != L'\n' ) {
-        _spaces = static_cast< unsigned char >( tx.size() );
+    if( text[0] != L'\n' ) {
+        _spaces = static_cast< byte >( text.size() );
     } else {
         _spaces = 0;
     }
     if( w == Tag::SPACES ) {
-        _text = _document->addWord( new GlobalDictionaryWord( tx ) );   //insert into global dictionary
+        _text = _document->addWord( new GlobalDictionaryWord( text ) );   //insert into global dictionary
     }
 }
 /***************************************************************************/
 Lexer::Token WhiteSpace::parse( Lexer* lexer )
 {
     if( lexer->text()[0] != L'\n' ) {
-        _spaces = static_cast< unsigned char >( lexer->text().size() ); //number of spaces
+        _spaces = static_cast< byte >( lexer->text().size() ); //number of spaces
         if( _whiteSpace == Tag::SPACES ) {
             _text = _document->addWord( new GlobalDictionaryWord( lexer->text() ) );   //insert into global dictionary
         }
@@ -74,7 +74,7 @@ void WhiteSpace::buildText( Cell* cell )
         if( _whiteSpace == Tag::SPACES && _text ) {
             Text::buildText( cell );
         } else if( _col == 1 ) {
-            for( unsigned char count = 0; count < _spaces / 2; ++count )
+            for( byte count = 0; count < _spaces / 2; ++count )
                 cell->addByte( 0xFE );
             if( _spaces & 1 ) {
                 cell->addByte( 0xFC );
@@ -83,10 +83,10 @@ void WhiteSpace::buildText( Cell* cell )
             }
         } else if( _spaces > 1 ) {
             if( _spaces & 1 ) {
-                for( unsigned char count = 0; count < _spaces / 2; ++count )
+                for( byte count = 0; count < _spaces / 2; ++count )
                     cell->addByte( 0xFE );
             } else {
-                for( unsigned char count = 0; count < _spaces / 2 - 1; ++count )
+                for( byte count = 0; count < _spaces / 2 - 1; ++count )
                     cell->addByte( 0xFE );
                 cell->addByte( 0xFC );
                 cell->addByte( 0xFE );

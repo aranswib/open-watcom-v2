@@ -39,10 +39,11 @@
 #include "document.hpp"
 
 
-Lexer::Token Title::parse( Lexer* lexer )
+Lexer::Token Title::parse( Lexer* lexer, Document *document )
 {
     Lexer::Token tok;
 
+    _document = document;
     while( (tok = _document->getNextToken()) != Lexer::TAGEND ) {
         if( tok == Lexer::ATTRIBUTE ) {
             _document->printError( ERR1_ATTRNOTDEF );
@@ -54,25 +55,28 @@ Lexer::Token Title::parse( Lexer* lexer )
             _document->printError( ERR1_TAGSYNTAX );
         }
     }
-    std::wstring txt;
+    std::wstring text;
+    _fileName = _document->dataName();
+    _row = _document->lexerLine();
+    _col = _document->lexerCol();
     unsigned int startLine( _document->dataLine() );
     tok = _document->getNextToken();
     while(  _document->dataLine() == startLine ) {
         if( tok == Lexer::WHITESPACE ||
             tok == Lexer::WORD ||
             tok == Lexer::PUNCTUATION ) {
-            txt += lexer->text();
+            text += lexer->text();
         } else if( tok == Lexer::ENTITY ) {
             const std::wstring* exp( _document->nameit( lexer->text() ) );
             if( exp ) {
-                txt += *exp;
+                text += *exp;
             } else {
                 try {
                     wchar_t entityChar( _document->entityChar( lexer->text() ) );
-                    txt += entityChar;
+                    text += entityChar;
                 }
                 catch( Class2Error& e ) {
-                    _document->printError( e.code );
+                    _document->printError( e._code );
                 }
             }
         } else if( tok == Lexer::END ) {
@@ -82,6 +86,11 @@ Lexer::Token Title::parse( Lexer* lexer )
         }
         tok = _document->getNextToken();
     }
-    _document->setTitle( txt );
+    _text = text;
     return tok;
+}
+
+void Title::printError( ErrCode c )
+{
+    _document->printError( c, _fileName, _row, _col );
 }

@@ -75,7 +75,7 @@ Lexer::Token Table::parse( Lexer* lexer )
                 if( rowCount )
                     rowRule();
                 TableRow *tablerow = new TableRow( _document, this, _document->dataName(),
-                    _document->lexerLine(), _document->lexerCol(), colWidth, rules, frame );
+                    _document->lexerLine(), _document->lexerCol(), _colWidth, _rules, _frame );
                 appendChild( tablerow );
                 tok = tablerow->parse( lexer );
                 ++rowCount;
@@ -105,31 +105,30 @@ Lexer::Token Table::parseAttributes( Lexer* lexer )
                 std::wstring::size_type idx1( 0 );
                 std::wstring::size_type idx2( value.find( L' ' ) );
                 while( idx1 != std::wstring::npos ) { //split value on ' '
-                    colWidth.push_back(
-                        static_cast< unsigned char >(
-                            std::wcstoul( value.substr( idx1, idx2 - idx1 ).c_str(), 0, 10 ) ) );
+                    _colWidth.push_back(
+                        static_cast< byte >( std::wcstoul( value.substr( idx1, idx2 - idx1 ).c_str(), 0, 10 ) ) );
                     idx1 = idx2 == std::wstring::npos ? std::wstring::npos : idx2 + 1;
                     idx2 = value.find( L' ', idx1 );
                 }
             } else if( key == L"rules" ) {
                 if( value == L"none" ) {
-                    rules = NO_RULES;
+                    _rules = NO_RULES;
                 } else if( value == L"horiz" ) {
-                    rules = HORIZONTAL;
+                    _rules = HORIZONTAL;
                 } else if( value == L"vert" ) {
-                    rules = VERTICAL;
+                    _rules = VERTICAL;
                 } else if( value == L"both" ) {
-                    rules = BOTH;
+                    _rules = BOTH;
                 } else {
                     _document->printError( ERR2_VALUE );
                 }
             } else if( key == L"frame" ) {
                 if( value == L"none" ) {
-                    frame = NO_FRAME;
+                    _frame = NO_FRAME;
                 } else if( value == L"rules" ) {
-                    frame = RULES;
+                    _frame = RULES;
                 } else if( value == L"box" ) {
-                    frame = BOX;
+                    _frame = BOX;
                 } else {
                     _document->printError( ERR2_VALUE );
                 }
@@ -146,17 +145,17 @@ Lexer::Token Table::parseAttributes( Lexer* lexer )
             _document->printError( ERR1_TAGSYNTAX );
         }
     }
-    if( colWidth.empty() )
+    if( _colWidth.empty() )
         _document->printError( ERR1_NOCOLS );
 #if 0
     unsigned int total( 0 );
-    for( ConstColWidthIter itr = colWidth.begin(); itr != colWidth.end(); ++itr )
+    for( ConstColWidthIter itr = _colWidth.begin(); itr != _colWidth.end(); ++itr )
         total += *itr;
     if( total > 250 )
         _document->printError( ERR1_TABLEWIDTH );
 #else
     //this could overflow
-    if( std::accumulate( colWidth.begin(), colWidth.end(), 0 ) > 250 )
+    if( std::accumulate( _colWidth.begin(), _colWidth.end(), 0 ) > 250 )
         _document->printError( ERR1_TABLEWIDTH );
 #endif
     return _document->getNextToken();    //consume TAGEND
@@ -164,77 +163,77 @@ Lexer::Token Table::parseAttributes( Lexer* lexer )
 /***************************************************************************/
 void Table::tbBorder( bool bottom )
 {
-    if( frame  || ( rules & VERTICAL ) ) {
-        std::wstring txt1;
-        std::wstring txt2;
-        std::wstring txt3;
+    if( _frame || ( _rules & VERTICAL ) ) {
+        std::wstring text1;
+        std::wstring text2;
+        std::wstring text3;
         unsigned int count1( 0 );
         wchar_t      ch( L' ' );
         try {
-            if( frame ) {
+            if( _frame ) {
                 ch = _document->entityChar( L"&bxh." );
-                if( frame == BOX ) {
+                if( _frame == BOX ) {
                     if( bottom ) {
-                        txt1.push_back( _document->entityChar( L"&bxll." ) );
-                        txt3.push_back( _document->entityChar( L"&bxlr." ) );
-                        if( rules & VERTICAL ) {
-                            txt2.push_back( _document->entityChar( L"&bxas." ) );
+                        text1.push_back( _document->entityChar( L"&bxll." ) );
+                        text3.push_back( _document->entityChar( L"&bxlr." ) );
+                        if( _rules & VERTICAL ) {
+                            text2.push_back( _document->entityChar( L"&bxas." ) );
                         } else {
-                            txt2.push_back( ch );
+                            text2.push_back( ch );
                         }
                     } else {
-                        txt1.push_back( _document->entityChar( L"&bxul." ) );
-                        txt3.push_back( _document->entityChar( L"&bxur." ) );
-                        if( rules & VERTICAL ) {
-                            txt2.push_back( _document->entityChar( L"&bxde." ) );
+                        text1.push_back( _document->entityChar( L"&bxul." ) );
+                        text3.push_back( _document->entityChar( L"&bxur." ) );
+                        if( _rules & VERTICAL ) {
+                            text2.push_back( _document->entityChar( L"&bxde." ) );
                         } else {
-                            txt2.push_back( ch );
+                            text2.push_back( ch );
                         }
                     }
                 } else {
-                    txt1.push_back( ch );
-                    txt3.push_back( ch );
-                    if( rules & VERTICAL ) {
+                    text1.push_back( ch );
+                    text3.push_back( ch );
+                    if( _rules & VERTICAL ) {
                         if( bottom ) {
-                            txt2.push_back( _document->entityChar( L"&bxas." ) );
+                            text2.push_back( _document->entityChar( L"&bxas." ) );
                         } else {
-                            txt2.push_back( _document->entityChar( L"&bxde." ) );
+                            text2.push_back( _document->entityChar( L"&bxde." ) );
                         }
                     } else {
-                        txt2.push_back( ch );
+                        text2.push_back( ch );
                     }
                 }
             } else {
-                txt1.push_back( L' ' );
-                txt3.push_back( L' ' );
-                if( rules & VERTICAL ) {
-                    txt2.push_back( _document->entityChar( L"&bxv." ) );
+                text1.push_back( L' ' );
+                text3.push_back( L' ' );
+                if( _rules & VERTICAL ) {
+                    text2.push_back( _document->entityChar( L"&bxv." ) );
                 }
             }
         }
         catch( Class2Error& e ) {
-            printError( e.code );
+            printError( e._code );
         }
         //left frame edge
         appendChild( new Word( _document, this, _document->dataName(),
-            _document->lexerLine(), _document->lexerCol(), txt1) );
+            _document->lexerLine(), _document->lexerCol(), text1) );
         //the columns
-        if( !colWidth.empty() ) {
-            for( count1 = 0; count1 < colWidth.size() - 1; ++count1 ) {
-                std::wstring txt( colWidth[ count1 ], ch );
+        if( !_colWidth.empty() ) {
+            for( count1 = 0; count1 < _colWidth.size() - 1; ++count1 ) {
+                std::wstring text( _colWidth[ count1 ], ch );
                 appendChild( new Word( _document, this, _document->dataName(),
-                    _document->lexerLine(), _document->lexerCol(), txt) );
+                    _document->lexerLine(), _document->lexerCol(), text) );
                 appendChild( new Word( _document, this, _document->dataName(),
-                    _document->lexerLine(), _document->lexerCol(), txt2) );
+                    _document->lexerLine(), _document->lexerCol(), text2) );
             }
-            std::wstring txt( colWidth[ count1 ], ch );
+            std::wstring text( _colWidth[ count1 ], ch );
             appendChild( new Word( _document, this, _document->dataName(),
-                _document->lexerLine(), _document->lexerCol(), txt) );
+                _document->lexerLine(), _document->lexerCol(), text) );
         }
         //right frame edge
-        if( frame ) {
+        if( _frame ) {
             appendChild( new Word( _document, this, _document->dataName(),
-                _document->lexerLine(), _document->lexerCol(), txt3) );
+                _document->lexerLine(), _document->lexerCol(), text3) );
         }
     }
     appendChild( new BrCmd( _document, this, _document->dataName(),
@@ -243,60 +242,60 @@ void Table::tbBorder( bool bottom )
 /***************************************************************************/
 void Table::rowRule()
 {
-    if( rules || frame == BOX ) {
-        std::wstring txt1;
-        std::wstring txt2;
-        std::wstring txt3;
+    if( _rules || _frame == BOX ) {
+        std::wstring text1;
+        std::wstring text2;
+        std::wstring text3;
         unsigned int count1( 0 );
         wchar_t      ch( L' ' );
         try {
-            if( frame == BOX ) {
-                if( rules & HORIZONTAL ) {
-                    txt1.push_back( _document->entityChar( L"&bxlj." ) );
-                    txt3.push_back( _document->entityChar( L"&bxrj." ) );
+            if( _frame == BOX ) {
+                if( _rules & HORIZONTAL ) {
+                    text1.push_back( _document->entityChar( L"&bxlj." ) );
+                    text3.push_back( _document->entityChar( L"&bxrj." ) );
                 } else {
-                    txt1.push_back( _document->entityChar( L"&bxv." ) );
-                    txt3.push_back( _document->entityChar( L"&bxv." ) );
+                    text1.push_back( _document->entityChar( L"&bxv." ) );
+                    text3.push_back( _document->entityChar( L"&bxv." ) );
                 }
             } else {
-                txt1.push_back( L' ' );
-                txt3.push_back( L' ' );
+                text1.push_back( L' ' );
+                text3.push_back( L' ' );
             }
-            if( rules & HORIZONTAL ) {
+            if( _rules & HORIZONTAL ) {
                 ch = _document->entityChar( L"&bxh." );
-                if( rules & VERTICAL ) {
-                    txt2.push_back( _document->entityChar( L"&bxcr." ) );
+                if( _rules & VERTICAL ) {
+                    text2.push_back( _document->entityChar( L"&bxcr." ) );
                 } else {
-                    txt2.push_back( ch );
+                    text2.push_back( ch );
                 }
-            } else if( rules & VERTICAL ) {
-                txt2.push_back( _document->entityChar( L"&bxv." ) );
+            } else if( _rules & VERTICAL ) {
+                text2.push_back( _document->entityChar( L"&bxv." ) );
             } else {
-                txt2.push_back( L' ' );
+                text2.push_back( L' ' );
             }
         }
         catch( Class2Error& e ) {
-            printError( e.code );
+            printError( e._code );
         }
         //left frame edge
         appendChild( new Word( _document, this, _document->dataName(),
-            _document->lexerLine(), _document->lexerCol(), txt1) );
+            _document->lexerLine(), _document->lexerCol(), text1) );
         //the columns
-        if( !colWidth.empty() ) {
-            for( count1 = 0; count1 < colWidth.size() - 1; ++count1 ) {
-                std::wstring txt( colWidth[ count1 ], ch );
+        if( !_colWidth.empty() ) {
+            for( count1 = 0; count1 < _colWidth.size() - 1; ++count1 ) {
+                std::wstring text( _colWidth[ count1 ], ch );
                 appendChild( new Word( _document, this, _document->dataName(),
-                    _document->lexerLine(), _document->lexerCol(), txt) );
+                    _document->lexerLine(), _document->lexerCol(), text) );
                 appendChild( new Word( _document, this, _document->dataName(),
-                    _document->lexerLine(), _document->lexerCol(), txt2) );
+                    _document->lexerLine(), _document->lexerCol(), text2) );
             }
-            std::wstring txt( colWidth[ count1 ], ch );
+            std::wstring text( _colWidth[ count1 ], ch );
             appendChild( new Word( _document, this, _document->dataName(),
-                _document->lexerLine(), _document->lexerCol(), txt) );
+                _document->lexerLine(), _document->lexerCol(), text) );
         }
         //right frame edge
         appendChild( new Word( _document, this, _document->dataName(),
-            _document->lexerLine(), _document->lexerCol(), txt3) );
+            _document->lexerLine(), _document->lexerCol(), text3) );
     }
     appendChild( new BrCmd( _document, this, _document->dataName(),
             _document->lexerLine(), _document->lexerCol() ) );
@@ -324,7 +323,7 @@ void ETable::buildText( Cell* cell )
 /*****************************************************************************/
 TableRow::~TableRow()
 {
-    for( ColIter itr = columns.begin(); itr != columns.end(); ++itr ) {
+    for( ColIter itr = _columns.begin(); itr != _columns.end(); ++itr ) {
         delete *itr;
     }
 }
@@ -334,8 +333,8 @@ Lexer::Token TableRow::parse( Lexer* lexer )
     Lexer::Token tok( parseAttributes( lexer ) );
     unsigned int colCount( 0 );
     unsigned int rows( 0 );
-    std::wstring txt1( 1, frame == Table::BOX ? _document->entityChar( L"&bxv." ) : L' ' );
-    std::wstring txt2( 1, rules & Table::VERTICAL ? _document->entityChar( L"&bxv." ) : L' ' );
+    std::wstring text1( 1, _frame == Table::BOX ? _document->entityChar( L"&bxv." ) : L' ' );
+    std::wstring text2( 1, _rules & Table::VERTICAL ? _document->entityChar( L"&bxv." ) : L' ' );
     while( tok != Lexer::END && !( tok == Lexer::TAG && lexer->tagId() == Lexer::EUSERDOC ) ) {
         //allowed: '\n', command, :c.
         if( tok == Lexer::WHITESPACE && lexer->text()[ 0 ] == L'\n' ) {
@@ -347,15 +346,15 @@ Lexer::Token TableRow::parse( Lexer* lexer )
             if( lexer->tagId() == Lexer::ETABLE || lexer->tagId() == Lexer::TROW ) {
                 break;
             } else if( lexer->tagId() == Lexer::TCOL ) {
-                unsigned char width( 0 );
-                if( colCount < colWidth.size() ) {
-                    width = colWidth[ colCount ];
+                byte width( 0 );
+                if( colCount < _colWidth.size() ) {
+                    width = _colWidth[ colCount ];
                 } else {
                     _document->printError( ERR1_TABLECELLCOUNTHIGH );
                 }
                 TableCol* tablecol( new TableCol( _document, this, _document->dataName(),
                     _document->lexerLine(), _document->lexerCol(), width ) );
-                columns.push_back( tablecol );
+                _columns.push_back( tablecol );
                 ++colCount;
                 tok = tablecol->parse( lexer );
                 if( tablecol->rows() > rows ) {
@@ -370,39 +369,39 @@ Lexer::Token TableRow::parse( Lexer* lexer )
             tok = _document->getNextToken();
         }
     }
-    if( colCount < colWidth.size() ) {    //check for unspecified columns
+    if( colCount < _colWidth.size() ) {    //check for unspecified columns
         _document->printError( ERR1_TABLECELLCOUNTLOW );
-        while( colCount < colWidth.size() ) {
-            unsigned char width( colWidth[ colCount ] );
+        while( colCount < _colWidth.size() ) {
+            byte width( _colWidth[ colCount ] );
             TableCol* tablecol( new TableCol( _document, this, _document->dataName(),
                 _document->lexerLine(), _document->lexerCol(), width ) );
-            columns.push_back( tablecol );
+            _columns.push_back( tablecol );
             ++colCount;
         }
     }
     for( unsigned int count1 = 0; count1 < rows; ++count1 ) {
         appendChild( new Word( _document, this, _document->dataName(),
-            _document->lexerLine(), _document->lexerCol(), txt1) );
-        for( unsigned int count2 = 0; count2 < colWidth.size(); ++count2 ) {
-            if( count1 < columns[ count2 ]->rows() &&
-                columns[ count2 ]->rowData( count1 ).size() ) {
-                std::list< Element* >& data = columns[ count2 ]->rowData( count1 );
-                for( ChildrenIter itr = data.begin(); itr != data.end(); ++itr ) {
+            _document->lexerLine(), _document->lexerCol(), text1) );
+        for( unsigned int count2 = 0; count2 < _colWidth.size(); ++count2 ) {
+            if( count1 < _columns[ count2 ]->rows() &&
+                _columns[ count2 ]->rowData( count1 ).size() ) {
+                std::list< Element* >& _data = _columns[ count2 ]->rowData( count1 );
+                for( ChildrenIter itr = _data.begin(); itr != _data.end(); ++itr ) {
                     appendChild( *itr );
                 }
             } else {  //it's blank
-                std::wstring blank( colWidth[ count2 ], L' ' );
+                std::wstring blank( _colWidth[ count2 ], L' ' );
                 appendChild( new WhiteSpace( _document, this, _document->dataName(),
                     _document->lexerLine(), _document->lexerCol(), blank, _whiteSpace ) );
             }
-            if( count2 < colWidth.size() - 1 ) {
+            if( count2 < _colWidth.size() - 1 ) {
                 appendChild( new Word( _document, this, _document->dataName(),
-                    _document->lexerLine(), _document->lexerCol(), txt2 ) );
+                    _document->lexerLine(), _document->lexerCol(), text2 ) );
             }
         }
-        if( frame == Table::BOX )
+        if( _frame == Table::BOX )
             appendChild( new Word( _document, this, _document->dataName(),
-                _document->lexerLine(), _document->lexerCol(), txt1) );
+                _document->lexerLine(), _document->lexerCol(), text1) );
         appendChild( new BrCmd( _document, this, _document->dataName(),
             _document->lexerLine(), _document->lexerCol() ) );
     }
@@ -415,30 +414,30 @@ Lexer::Token TableCol::parse( Lexer* lexer )
     bool doneF( false );
     bool inLink( false );
     bool inLines( false );
-    std::size_t spaces( colWidth );
+    std::size_t spaces( _colWidth );
     unsigned int cellLine( 0 );
     unsigned int currentLine( _document->dataLine() );
     while( !doneF && tok != Lexer::END ) {
         if( tok == Lexer::WORD ) {
             if( inLines && currentLine < _document->dataLine() ) {
                 if( spaces > 0 ) {
-                    std::wstring txt( spaces, L' ' );
+                    std::wstring text( spaces, L' ' );
                     WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                        _document->lexerLine(), _document->lexerCol(), txt, _whiteSpace ) );
+                        _document->lexerLine(), _document->lexerCol(), text, _whiteSpace ) );
                     appendData( cellLine, ws );
                 }
                 currentLine = _document->dataLine();
                 std::list< Element* > lst;
-                data.push_back( lst );
+                _data.push_back( lst );
                 ++cellLine;
-                spaces = colWidth;
+                spaces = _colWidth;
             }
             bool nextIsPunct( false );
-            std::wstring txt( lexer->text() );  //get text from lexer
+            std::wstring text( lexer->text() );  //get text from lexer
             tok = _document->getNextToken();
             while( tok == Lexer::WORD || tok == Lexer::ENTITY ) {
                 if( tok == Lexer::WORD ) {
-                    txt += lexer->text();       //part of a compound ...-word-entity-word-...
+                    text += lexer->text();       //part of a compound ...-word-entity-word-...
                 } else if( tok == Lexer::ENTITY ) {
                     const std::wstring* exp( _document->nameit( lexer->text() ) );
                     if( exp ) {
@@ -452,143 +451,143 @@ Lexer::Token TableCol::parse( Lexer* lexer )
                                 nextIsPunct = true;
                                 break;
                             }
-                            txt += entityChar;
+                            text += entityChar;
                         }
                         catch( Class2Error& e ) {
-                            _document->printError( e.code );
+                            _document->printError( e._code );
                             break;
                         }
                     }
                 }
                 tok = _document->getNextToken();
             }
-            std::size_t txtSize( txt.size() );
+            std::size_t textSize( text.size() );
             if( inLines ) {
-                if( txt.size() > spaces ) {
-                    txt.erase( spaces );  //trim text
-                    txtSize = spaces;
+                if( text.size() > spaces ) {
+                    text.erase( spaces );  //trim text
+                    textSize = spaces;
                     _document->printError( ERR1_TABLECELLTEXTWIDTH );
                 }
-                if( txtSize > 0 ) {
-                    Word* word( new Word( _document, this, _document->dataName(),
-                        _document->lexerLine(), _document->lexerCol(), txt ) );
-                    appendData( cellLine, word );
-                    spaces -= txtSize;
+                if( textSize > 0 ) {
+                    Word* w( new Word( _document, this, _document->dataName(),
+                        _document->lexerLine(), _document->lexerCol(), text ) );
+                    appendData( cellLine, w );
+                    spaces -= textSize;
                 }
             } else {
-                if( txt.size() > colWidth ) {
-                    txt.erase( colWidth );  //trim text
-                    txtSize = colWidth;
+                if( text.size() > _colWidth ) {
+                    text.erase( _colWidth );  //trim text
+                    textSize = _colWidth;
                     _document->printError( ERR1_TABLECELLTEXTWIDTH );
                 }
-                Word* word( new Word( _document, this, _document->dataName(),
-                    _document->lexerLine(), _document->lexerCol(), txt ) );
-                if( txtSize < colWidth && ( nextIsPunct || tok == Lexer::PUNCTUATION ) )
-                    ++txtSize;              //keep puctuation together with word if possible
-                if( txtSize > spaces ) {    //need new line
+                Word* w( new Word( _document, this, _document->dataName(),
+                    _document->lexerLine(), _document->lexerCol(), text ) );
+                if( textSize < _colWidth && ( nextIsPunct || tok == Lexer::PUNCTUATION ) )
+                    ++textSize;              //keep puctuation together with word if possible
+                if( textSize > spaces ) {    //need new line
                     if( spaces > 0 ) {
-                        std::wstring spacetxt( spaces, L' ' );
+                        std::wstring spaceText( spaces, L' ' );
                         WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                            _document->lexerLine(), _document->lexerCol(), spacetxt, _whiteSpace ) );
+                            _document->lexerLine(), _document->lexerCol(), spaceText, _whiteSpace ) );
                         appendData( cellLine, ws );
                     }
                     std::list< Element* > lst;
-                    data.push_back( lst );
+                    _data.push_back( lst );
                     ++cellLine;
-                    spaces = colWidth;
+                    spaces = _colWidth;
                 }
-                appendData( cellLine, word );
-                spaces -= txtSize;
-                if( txtSize < colWidth && ( nextIsPunct || tok == Lexer::PUNCTUATION ) ) {
+                appendData( cellLine, w );
+                spaces -= textSize;
+                if( textSize < _colWidth && ( nextIsPunct || tok == Lexer::PUNCTUATION ) ) {
                     ++spaces;
                 }
             }
         } else if( tok == Lexer::ENTITY ) {
-            const std::wstring* nameittxt( _document->nameit( lexer->text() ) ); //lookup nameit
-            if( nameittxt ) {
+            const std::wstring* nameitText( _document->nameit( lexer->text() ) ); //lookup nameit
+            if( nameitText ) {
                 std::wstring* name( _document->prepNameitName( lexer->text() ) );
-                IpfBuffer* buffer( new IpfBuffer( name, _document->dataLine(), _document->dataCol(), *nameittxt ) );
+                IpfBuffer* buffer( new IpfBuffer( name, _document->dataLine(), _document->dataCol(), *nameitText ) );
                 _document->pushInput( buffer );
                 tok = _document->getNextToken();
                 continue;
             }
             if( inLines && currentLine < _document->dataLine() ) {
                 if( spaces > 0 ) {
-                    std::wstring spacetxt( spaces, L' ' );
+                    std::wstring spaceText( spaces, L' ' );
                     WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                        _document->lexerLine(), _document->lexerCol(), spacetxt, _whiteSpace ) );
+                        _document->lexerLine(), _document->lexerCol(), spaceText, _whiteSpace ) );
                     appendData( cellLine, ws );
                 }
                 currentLine = _document->dataLine();
                 std::list< Element* > lst;
-                data.push_back( lst );
+                _data.push_back( lst );
                 ++cellLine;
-                spaces = colWidth;
+                spaces = _colWidth;
             }
             bool nextIsPunct( false );
             try {
                 wchar_t entityChar( _document->entityChar( lexer->text() ) );    //lookup entity
-                std::wstring entitytxt( 1, entityChar );
+                std::wstring entityText( 1, entityChar );
                 tok = _document->getNextToken();
                 if( !std::iswpunct( entityChar ) ) {
                     while( tok == Lexer::WORD || tok == Lexer::ENTITY ) {
                         if( tok == Lexer::WORD ) {
-                            entitytxt += lexer->text();       //part of a compound ...-word-entity-word-...
+                            entityText += lexer->text();       //part of a compound ...-word-entity-word-...
                         } else if( tok == Lexer::ENTITY ) {
                             entityChar = _document->entityChar( lexer->text() );
                             if( std::iswpunct( entityChar ) ) {
                                 nextIsPunct = true;
                                 break;
                             }
-                            entitytxt += entityChar;
+                            entityText += entityChar;
                         }
                         tok = _document->getNextToken();
                     }
                 }
-                std::size_t txtSize( entitytxt.size() );
+                std::size_t textSize( entityText.size() );
                 if( inLines ) {
-                    if( entitytxt.size() > spaces ) {
-                        entitytxt.erase( spaces );  //trim text
-                        txtSize = spaces;
+                    if( entityText.size() > spaces ) {
+                        entityText.erase( spaces );  //trim text
+                        textSize = spaces;
                         _document->printError( ERR1_TABLECELLTEXTWIDTH );
                     }
-                    if( txtSize > 0 ) {
+                    if( textSize > 0 ) {
                         Entity *entity = new Entity( _document, this, _document->dataName(),
-                            _document->lexerLine(), _document->lexerCol(), entitytxt );
+                            _document->lexerLine(), _document->lexerCol(), entityText );
                         appendData( cellLine, entity );
-                        spaces -= txtSize;
+                        spaces -= textSize;
                     }
                 } else {
-                    if( entitytxt.size() > colWidth ) {
-                        entitytxt.erase( colWidth );  //trim text
-                        txtSize = colWidth;
+                    if( entityText.size() > _colWidth ) {
+                        entityText.erase( _colWidth );  //trim text
+                        textSize = _colWidth;
                         _document->printError( ERR1_TABLECELLTEXTWIDTH );
                     }
                     Entity *entity = new Entity( _document, this, _document->dataName(),
-                        _document->lexerLine(), _document->lexerCol(), entitytxt );
-                    if( txtSize < colWidth && ( nextIsPunct || tok == Lexer::PUNCTUATION ) )
-                        ++txtSize;              //keep text and punct on same line if possible
-                    if( txtSize > spaces ) {    //need new line
+                        _document->lexerLine(), _document->lexerCol(), entityText );
+                    if( textSize < _colWidth && ( nextIsPunct || tok == Lexer::PUNCTUATION ) )
+                        ++textSize;              //keep text and punct on same line if possible
+                    if( textSize > spaces ) {    //need new line
                         if( spaces > 0 ) {
-                            std::wstring spacetxt( spaces, L' ' );
+                            std::wstring spaceText( spaces, L' ' );
                             WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                                _document->lexerLine(), _document->lexerCol(), spacetxt, _whiteSpace ) );
+                                _document->lexerLine(), _document->lexerCol(), spaceText, _whiteSpace ) );
                             appendData( cellLine, ws );
                         }
                         std::list< Element* > lst;
-                        data.push_back( lst );
+                        _data.push_back( lst );
                         ++cellLine;
-                        spaces = colWidth;
+                        spaces = _colWidth;
                     }
                     appendData( cellLine, entity );
-                    spaces -= txtSize;
-                    if( txtSize < colWidth && ( nextIsPunct || tok == Lexer::PUNCTUATION ) ) {
+                    spaces -= textSize;
+                    if( textSize < _colWidth && ( nextIsPunct || tok == Lexer::PUNCTUATION ) ) {
                         ++spaces;
                     }
                 }
             }
             catch( Class2Error& e ) {
-                _document->printError( e.code );
+                _document->printError( e._code );
                 tok = _document->getNextToken();
             }
         } else if( tok == Lexer::PUNCTUATION ) {
@@ -596,15 +595,15 @@ Lexer::Token TableCol::parse( Lexer* lexer )
                 if( currentLine < _document->dataLine() ) {
                     currentLine = _document->dataLine();
                     if( spaces > 0 ) {
-                        std::wstring spacetxt( spaces, L' ' );
+                        std::wstring spaceText( spaces, L' ' );
                         WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                            _document->lexerLine(), _document->lexerCol(), spacetxt, _whiteSpace ) );
+                            _document->lexerLine(), _document->lexerCol(), spaceText, _whiteSpace ) );
                         appendData( cellLine, ws );
                     }
                     std::list< Element* > lst;
-                    data.push_back( lst );
+                    _data.push_back( lst );
                     ++cellLine;
-                    spaces = colWidth;
+                    spaces = _colWidth;
                 }
                 if( spaces > 0 ) {
                     Punctuation* punct( new Punctuation( _document, this, _document->dataName(),
@@ -615,9 +614,9 @@ Lexer::Token TableCol::parse( Lexer* lexer )
             } else {
                 if( spaces == 0 ) {
                     std::list< Element* > lst;
-                    data.push_back( lst );
+                    _data.push_back( lst );
                     ++cellLine;
-                    spaces = colWidth;
+                    spaces = _colWidth;
                 }
                 Punctuation* punct( new Punctuation( _document, this, _document->dataName(),
                     _document->lexerLine(), _document->lexerCol(), lexer->text(), false ) );
@@ -632,42 +631,42 @@ Lexer::Token TableCol::parse( Lexer* lexer )
                 if( currentLine < _document->dataLine() ) {
                     currentLine = _document->dataLine();
                     if( spaces > 0 ) {
-                        std::wstring spacetxt( spaces, L' ' );
+                        std::wstring spaceText( spaces, L' ' );
                         WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                            _document->lexerLine(), _document->lexerCol(), spacetxt, _whiteSpace ) );
+                            _document->lexerLine(), _document->lexerCol(), spaceText, _whiteSpace ) );
                         appendData( cellLine, ws );
                     }
                     std::list< Element* > lst;
-                    data.push_back( lst );
+                    _data.push_back( lst );
                     ++cellLine;
-                    spaces = colWidth;
+                    spaces = _colWidth;
                 }
                 if( spaces > 0 )  {
-                    std::wstring whitespacetxt( lexer->text() );
-                    if( whitespacetxt.size() > spaces ) {
-                        whitespacetxt.erase( spaces );        //trim text
+                    std::wstring whitespaceText( lexer->text() );
+                    if( whitespaceText.size() > spaces ) {
+                        whitespaceText.erase( spaces );        //trim text
                     }
                     WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                        _document->lexerLine(), _document->lexerCol(), whitespacetxt, _whiteSpace ) );
+                        _document->lexerLine(), _document->lexerCol(), whitespaceText, _whiteSpace ) );
                     appendData( cellLine, ws );
-                    spaces -= whitespacetxt.size();
+                    spaces -= whitespaceText.size();
                 }
                 tok = _document->getNextToken();
             } else {
-                std::wstring whitespacetxt( lexer->text() );  //get text from lexer
+                std::wstring whitespaceText( lexer->text() );  //get text from lexer
                 tok = _document->getNextToken();
                 while( tok == Lexer::WHITESPACE ) { //accumulate whitespace
                     if( lexer->text()[0] != L'\n' ) //ignore \n's
-                        whitespacetxt += lexer->text();
+                        whitespaceText += lexer->text();
                     tok = _document->getNextToken();
                 }
                 if( spaces > 0 ) {
-                    if( whitespacetxt.size() > spaces )
-                        whitespacetxt.erase( spaces );            //trim text
+                    if( whitespaceText.size() > spaces )
+                        whitespaceText.erase( spaces );            //trim text
                     WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                        _document->lexerLine(), _document->lexerCol(), whitespacetxt, _whiteSpace ) );
+                        _document->lexerLine(), _document->lexerCol(), whitespaceText, _whiteSpace ) );
                     appendData( cellLine, ws );
-                    spaces -= whitespacetxt.size();
+                    spaces -= whitespaceText.size();
                 }
             }
         } else if( tok == Lexer::COMMAND ) {
@@ -882,9 +881,9 @@ Lexer::Token TableCol::parse( Lexer* lexer )
                     printError( ERR1_TABLEELINK );
                 }
                 if( spaces > 0 ) {
-                    std::wstring spacetxt( spaces, L' ' );
+                    std::wstring spaceText( spaces, L' ' );
                     WhiteSpace* ws( new WhiteSpace( _document, this, _document->dataName(),
-                        _document->lexerLine(), _document->lexerCol(), spacetxt, _whiteSpace ) );
+                        _document->lexerLine(), _document->lexerCol(), spaceText, _whiteSpace ) );
                     appendData( cellLine, ws );
                 }
                 break;

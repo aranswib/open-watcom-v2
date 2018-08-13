@@ -303,8 +303,7 @@ void Document::parse( Lexer* lexer )
         //instructions for the document
         if( tok == Lexer::TAG) {
             if( lexer->tagId() == Lexer::TITLE ) {
-                Title title( this );
-                tok = title.parse( lexer );
+                tok = _title.parse( lexer, this );
             } else if( lexer->tagId() == Lexer::DOCPROF ) {
                 DocProf dp( this );
                 tok = dp.parse( lexer );
@@ -431,13 +430,12 @@ void Document::parse( Lexer* lexer )
 void Document::build()
 {
     //build Title
-    std::string title;
-    _out->wtomb_string( _title, title );
-    if( title.size() > TITLE_SIZE - 1 ) {
-        printError( ERR2_TEXTTOOLONG );
-        title.erase( TITLE_SIZE - 1 );
-    }
-    std::strncpy( _hdr->title, title.c_str(), TITLE_SIZE );
+    std::string buffer;
+    _out->wtomb_string( _title.text(), buffer );
+    if( buffer.size() > TITLE_SIZE - 1 )
+        _title.printError( ERR2_TEXTTOOLONG );
+    std::strncpy( _hdr->title, buffer.c_str(), TITLE_SIZE - 1 );
+    _hdr->title[TITLE_SIZE - 1] = '\0';
     //build the TOC
     unsigned int visiblePages = 0;
     for( PageIter itr = _pages.begin(); itr != _pages.end(); ++itr ) {
@@ -634,11 +632,11 @@ void Document::makeBitmaps()
                     }
                     catch( FatalError& e ) {
                         if( count == _ipfcartwork_paths.size() - 1 ) {
-                            throw FatalIOError( e.code, itr->first );
+                            throw FatalIOError( e._code, itr->first );
                         }
                     }
                     catch( Class1Error& e ) {
-                        printError( e.code, itr->first );
+                        printError( e._code, itr->first );
                     }
                 }
             }
@@ -671,14 +669,14 @@ Document::dword Document::writeBitmaps()
             for( length = std::ftell( _tmpBitmaps ); length > BUFSIZ; length -= BUFSIZ ) {
                 if( std::fread( &buffer[0], sizeof( byte ), BUFSIZ, _tmpBitmaps ) != BUFSIZ )
                     throw FatalIOError( ERR_READ, L"(temporary file for bitmaps)" );
-                if( _out->write( &buffer[0], sizeof( byte ), BUFSIZ ) ) {
+                if( _out->write( buffer.data(), sizeof( byte ), BUFSIZ ) ) {
                     throw FatalError( ERR_WRITE );
                 }
             }
             if( length ) {
                 if( std::fread( &buffer[0], sizeof( byte ), length, _tmpBitmaps ) != length )
                     throw FatalIOError( ERR_READ, L"(temporary file for bitmaps)" );
-                if( _out->write( &buffer[0], sizeof( byte ), length ) ) {
+                if( _out->write( buffer.data(), sizeof( byte ), length ) ) {
                     throw FatalError( ERR_WRITE );
                 }
             }
@@ -755,7 +753,7 @@ Document::dword Document::writeTOCOffsets()
     dword offset = 0;
     if( !_tocOffsets.empty() ) {
         offset = _out->tell();
-        if( _out->write( &_tocOffsets[0], sizeof( dword ), _tocOffsets.size() ) ) {
+        if( _out->write( _tocOffsets.data(), sizeof( dword ), _tocOffsets.size() ) ) {
             throw FatalError( ERR_WRITE );
         }
     }
@@ -776,7 +774,7 @@ Document::dword Document::writeCellOffsets()
     dword offset = 0;
     if( !_cellOffsets.empty() ) {
         offset = _out->tell();
-        if( _out->write( &_cellOffsets[0], sizeof( dword ), _cellOffsets.size() ) ) {
+        if( _out->write( _cellOffsets.data(), sizeof( dword ), _cellOffsets.size() ) ) {
             throw FatalError( ERR_WRITE );
         }
     }
@@ -906,10 +904,10 @@ void Document::parseCommand( Lexer* lexer, Tag* parent )
         std::wstring::size_type idx4( lexer->text()[ idx3 + 5 ] == L'\'' ?
             lexer->text().find( L'\'', idx3  + 6 ) :
             lexer->text().find( L' ', idx3 + 5 ) );
-        std::wstring txt( lexer->text().substr( idx3 + 5, idx4 - idx3 - 5 ) );
-        killQuotes( txt );
+        std::wstring text( lexer->text().substr( idx3 + 5, idx4 - idx3 - 5 ) );
+        killQuotes( text );
         if( !_nls->isEntity( sym ) && _nameIts.find( sym ) == _nameIts.end() ) {   //add it to the list
-            _nameIts.insert( std::map< std::wstring, std::wstring >::value_type( sym, txt ) );
+            _nameIts.insert( std::map< std::wstring, std::wstring >::value_type( sym, text ) );
         } else {
             printError( ERR3_DUPSYMBOL );
         }

@@ -45,17 +45,17 @@ GlobalDictionary::~GlobalDictionary()
     }
 }
 /***************************************************************************/
-GlobalDictionaryWord* GlobalDictionary::insert( GlobalDictionaryWord *wordent )
+GlobalDictionaryWord* GlobalDictionary::insert( GlobalDictionaryWord *gdentry )
 {
-    std::pair< WordIter, bool > status( _words.insert( wordent ) );
+    std::pair< WordIter, bool > status( _words.insert( gdentry ) );
     if( !status.second )
-        delete wordent;
+        delete gdentry;
     return( *status.first );
 }
 /***************************************************************************/
-GlobalDictionaryWord* GlobalDictionary::insert( const std::wstring& wordtxt )
+GlobalDictionaryWord* GlobalDictionary::insert( const std::wstring& text )
 {
-    return( insert( new GlobalDictionaryWord( wordtxt ) ) );
+    return( insert( new GlobalDictionaryWord( text ) ) );
 }
 /***************************************************************************/
 // Call after parsing, but before local dictionary construction
@@ -68,19 +68,19 @@ void GlobalDictionary::convert( std::size_t count )
     }
 }
 /***************************************************************************/
-GlobalDictionary::word GlobalDictionary::findIndex( const std::wstring& wordtxt )
+GlobalDictionary::word GlobalDictionary::findIndex( const std::wstring& text )
 {
-    GlobalDictionaryWord wordent( wordtxt );
-    return( findIndex( &wordent ) );
+    GlobalDictionaryWord gdentry( text );
+    return( findIndex( &gdentry ) );
 }
 /***************************************************************************/
-GlobalDictionaryWord* GlobalDictionary::findWord( const std::wstring& wordtxt )
+GlobalDictionaryWord* GlobalDictionary::findWord( const std::wstring& text )
 {
-    GlobalDictionaryWord wordent( wordtxt );
-    return( findWord( &wordent ) );
+    GlobalDictionaryWord gdentry( text );
+    return( findWord( &gdentry ) );
 }
 /***************************************************************************/
-GlobalDictionary::dword GlobalDictionary::write( OutFile *out )
+GlobalDictionary::dword GlobalDictionary::write( OutFile* out )
 {
     dword start = out->tell();
     for( ConstWordIter itr = _words.begin(); itr != _words.end(); ++itr )
@@ -88,7 +88,7 @@ GlobalDictionary::dword GlobalDictionary::write( OutFile *out )
     return( start );
 }
 /***************************************************************************/
-bool GlobalDictionary::buildFTS( OutFile *out )
+bool GlobalDictionary::buildFTS( OutFile* out )
 {
     bool big( false );
     for( ConstWordIter itr = _words.begin(); itr != _words.end(); ++itr ) {
@@ -100,7 +100,7 @@ bool GlobalDictionary::buildFTS( OutFile *out )
     return( big );
 }
 /***************************************************************************/
-GlobalDictionary::dword GlobalDictionary::writeFTS( OutFile *out, bool big )
+GlobalDictionary::dword GlobalDictionary::writeFTS( OutFile* out, bool big )
 {
     dword start = out->tell();
     for( ConstWordIter itr = _words.begin(); itr != _words.end(); ++itr )
