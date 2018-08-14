@@ -263,6 +263,13 @@ Document::~Document()
     _ipfcartwork_paths.resize( 0 );
     _ipfcimbed_paths.resize( 0 );
 }
+
+void Document::setTitle( std::string& buffer )
+{
+    std::strncpy( _hdr->title, buffer.c_str(), TITLE_SIZE - 1 );
+    _hdr->title[TITLE_SIZE - 1] = '\0';
+}
+
 /***************************************************************************/
 // Reads the input file and builds the DOM tree
 void Document::parse( Lexer* lexer )
@@ -303,7 +310,9 @@ void Document::parse( Lexer* lexer )
         //instructions for the document
         if( tok == Lexer::TAG) {
             if( lexer->tagId() == Lexer::TITLE ) {
-                tok = _title.parse( lexer, this );
+                Title title( this, dataName(), lexerLine(), lexerCol() );
+                tok = title.parse( lexer );
+                title.build( _out );
             } else if( lexer->tagId() == Lexer::DOCPROF ) {
                 DocProf dp( this );
                 tok = dp.parse( lexer );
@@ -429,13 +438,6 @@ void Document::parse( Lexer* lexer )
 // Iterate through the DOM tree to build output data
 void Document::build()
 {
-    //build Title
-    std::string buffer;
-    _out->wtomb_string( _title.text(), buffer );
-    if( buffer.size() > TITLE_SIZE - 1 )
-        _title.printError( ERR2_TEXTTOOLONG );
-    std::strncpy( _hdr->title, buffer.c_str(), TITLE_SIZE - 1 );
-    _hdr->title[TITLE_SIZE - 1] = '\0';
     //build the TOC
     unsigned int visiblePages = 0;
     for( PageIter itr = _pages.begin(); itr != _pages.end(); ++itr ) {
@@ -702,13 +704,12 @@ Document::dword Document::writeResMap()
     dword offset = 0;
     if( !_resMap.empty() ) {
         offset = _out->tell();
-        ConstResMapIter itr;
-        for( itr = _resMap.begin(); itr != _resMap.end(); ++itr ) {
+        for( ConstResMapIter itr = _resMap.begin(); itr != _resMap.end(); ++itr ) {
             if( _out->put( itr->first ) ) {
                 throw FatalError( ERR_WRITE );
             }
         }
-        for( itr = _resMap.begin(); itr != _resMap.end(); ++itr ) {
+        for( ConstResMapIter itr = _resMap.begin(); itr != _resMap.end(); ++itr ) {
             if( _out->put( itr->second.index() ) ) {
                 throw FatalError( ERR_WRITE );
             }
@@ -722,13 +723,12 @@ Document::dword Document::writeNameMap()
     dword offset = 0;
     if( !isInf() && !_nameMap.empty() ) {
         offset = _out->tell();
-        ConstNameMapIter itr;
-        for( itr = _nameMap.begin(); itr != _nameMap.end(); ++itr ) {
+        for( ConstNameMapIter itr = _nameMap.begin(); itr != _nameMap.end(); ++itr ) {
             if( _out->put( itr->first->index() ) ) {
                 throw FatalError( ERR_WRITE );
             }
         }
-        for( itr = _nameMap.begin(); itr != _nameMap.end(); ++itr ) {
+        for( ConstNameMapIter itr = _nameMap.begin(); itr != _nameMap.end(); ++itr ) {
             if( _out->put( itr->second.index() ) ) {
                 throw FatalError( ERR_WRITE );
             }
