@@ -614,8 +614,7 @@ void Document::makeBitmaps()
             throw FatalIOError( ERR_OPEN, L"(temporary file for bitmaps)" );
         try {
             for( BitmapNameIter itr = _bitmapNames.begin(); itr != _bitmapNames.end(); ++itr ) {
-                std::string fname;
-                def_wtomb_string( itr->first, fname );
+                std::string fname( def_wtomb_string( itr->first ) );
                 for( std::size_t count = 0; count < _ipfcartwork_paths.size(); ++count ) {
                     std::string fullname( _ipfcartwork_paths[count] );
                     fullname += fname;
@@ -662,13 +661,12 @@ Document::dword Document::writeBitmaps()
     dword offset = 0;
     if( !_bitmapNames.empty() && _tmpBitmaps != NULL ) {
         offset = _out->tell();
-        std::fseek( _tmpBitmaps, 0L, SEEK_END );
-        dword length;
-        std::fseek( _tmpBitmaps, 0L, SEEK_SET );
         std::vector< byte > buffer( BUFSIZ );
-        //copy the temporary file into this one
+        //copy the temporary file to the output file
         try {
-            for( length = std::ftell( _tmpBitmaps ); length > BUFSIZ; length -= BUFSIZ ) {
+            dword length = std::ftell( _tmpBitmaps );
+            std::rewind( _tmpBitmaps );
+            for( ; length > BUFSIZ; length -= BUFSIZ ) {
                 if( std::fread( &buffer[0], sizeof( byte ), BUFSIZ, _tmpBitmaps ) != BUFSIZ )
                     throw FatalIOError( ERR_READ, L"(temporary file for bitmaps)" );
                 if( _out->write( buffer.data(), sizeof( byte ), BUFSIZ ) ) {
@@ -865,8 +863,7 @@ void Document::parseCommand( Lexer* lexer, Tag* parent )
         cecmd->parseCommand( lexer );
     } else if( lexer->cmdId() == Lexer::IMBED ) {
         for( std::size_t count = 0; count < _ipfcimbed_paths.size(); ++count ) {
-            std::string sname;
-            def_wtomb_string( lexer->text(), sname );
+            std::string sname( def_wtomb_string( lexer->text() ) );
             std::string sfname( _ipfcimbed_paths[count] + sname );
 #if !defined( __UNIX__ ) && !defined( __APPLE__ )
             if( sfname.size() > PATH_MAX ) {

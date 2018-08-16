@@ -146,8 +146,9 @@ Lexer::Token AcViewport::parseAttributes( Lexer* lexer )
                         _document->printError( ERR2_VALUE );
                     }
                 }
-                if( dy && _origin.yPosType == ExtTocEntry::DYNAMIC && _size.heightType != ExtTocEntry::RELATIVE_PERCENT )
+                if( dy && _origin.yPosType == ExtTocEntry::DYNAMIC && _size.heightType != ExtTocEntry::RELATIVE_PERCENT ) {
                     _document->printError( ERR3_MIXEDUNITS );
+                }
             } else if( key == L"vpcx" ) {
                 _doSize = true;
                 dx = true;
@@ -173,8 +174,9 @@ Lexer::Token AcViewport::parseAttributes( Lexer* lexer )
                         _document->printError( ERR2_VALUE );
                     }
                 }
-                if( xorg && _origin.xPosType == ExtTocEntry::DYNAMIC && _size.widthType != ExtTocEntry::RELATIVE_PERCENT )
+                if( xorg && _origin.xPosType == ExtTocEntry::DYNAMIC && _size.widthType != ExtTocEntry::RELATIVE_PERCENT ) {
                     _document->printError( ERR3_MIXEDUNITS );
+                }
             } else if( key == L"vpcy" ) {
                 _doSize = true;
                 dy = true;
@@ -200,8 +202,9 @@ Lexer::Token AcViewport::parseAttributes( Lexer* lexer )
                         _document->printError( ERR2_VALUE );
                     }
                 }
-                if( yorg && _origin.yPosType == ExtTocEntry::DYNAMIC && _size.heightType != ExtTocEntry::RELATIVE_PERCENT )
+                if( yorg && _origin.yPosType == ExtTocEntry::DYNAMIC && _size.heightType != ExtTocEntry::RELATIVE_PERCENT ) {
                     _document->printError( ERR3_MIXEDUNITS );
+                }
             } else {
                 _document->printError( ERR1_ATTRNOTDEF );
             }
@@ -222,47 +225,37 @@ void AcViewport::buildText( Cell* cell )
         // convert wide strings to mbcs
         std::string objectName;
         if( !_objectName.empty() ) {
-            cell->out()->wtomb_string( _objectName, objectName );
+            objectName = cell->out()->wtomb_string( _objectName );
         }
         std::string dll;
         if( !_dll.empty() ) {
-            cell->out()->wtomb_string( _dll, dll );
+            dll = cell->out()->wtomb_string( _dll );
         }
         std::string objectInfo;
         if( !_objectInfo.empty() ) {
-            cell->out()->wtomb_string( _objectInfo, objectInfo );
+            objectInfo = cell->out()->wtomb_string( _objectInfo );
         }
         byte dataSize = static_cast< byte >( objectName.size() + 1 + dll.size() + 1 + objectInfo.size() + 1 );
-        // process esc text        
-        std::vector< byte > esc;
-        esc.reserve( 3 + 4 + dataSize + 2 + sizeof( PageOrigin ) + sizeof( PageSize ) );
-        esc.push_back( 0xFF );          //ESC
-        esc.push_back( 2 );             //size
-        esc.push_back( 0x21 );          //type
-        esc.push_back( 0 );             //reserved
-        esc.push_back( dataSize );
-        esc.push_back( static_cast< byte >( _objectId ) );
-        esc.push_back( static_cast< byte >( _objectId >> 8 ) );
-        esc.push_back( static_cast< byte >( objectName.size() + 1 ) );
+        // process text
+        std::size_t start( cell->getPos() );
+        cell->reserve( 3 + 4 + dataSize + 2 + sizeof( PageOrigin ) + sizeof( PageSize ) );
+        cell->addByte( Cell::ESCAPE );  //ESC
+        cell->addByte( 2 );             //size
+        cell->addByte( 0x21 );          //type
+        cell->addByte( 0 );             //reserved
+        cell->addByte( dataSize );
+        cell->addWord( _objectId );
+        cell->addByte( static_cast< byte >( objectName.size() + 1 ) );
         if( !objectName.empty() ) {
-            std::size_t bytes( objectName.size() );
-            for( std::size_t count1 = 0; count1 < bytes; ++count1 ) {
-                esc.push_back( static_cast< byte >( objectName[count1] ) );
-            }
+            cell->addString( objectName );
         }
-        esc.push_back( static_cast< byte >( dll.size() + 1 ) );
+        cell->addByte( static_cast< byte >( dll.size() + 1 ) );
         if( !dll.empty() ) {
-            std::size_t bytes( dll.size() );
-            for( std::size_t count1 = 0; count1 < bytes; ++count1 ) {
-                esc.push_back( static_cast< byte >( dll[count1] ) );
-            }
+            cell->addString( dll );
         }
-        esc.push_back( static_cast< byte >( objectInfo.size() + 1 ) );
+        cell->addByte( static_cast< byte >( objectInfo.size() + 1 ) );
         if( !objectInfo.empty() ) {
-            std::size_t bytes( objectInfo.size() );
-            for( std::size_t count1 = 0; count1 < bytes; ++count1 ) {
-                esc.push_back( static_cast< byte >( objectInfo[count1] ) );
-            }
+            cell->addString( objectInfo );
         }
         if( _doOrigin || _doSize ) {
             byte flag( 0xC0 );
@@ -270,23 +263,16 @@ void AcViewport::buildText( Cell* cell )
                 flag |= 0x01;
             if( _doSize )
                 flag |= 0x02;
-            esc.push_back( flag );
-            esc.push_back( 0 );
+            cell->addByte( flag );
+            cell->addByte( 0 );
             if( _doOrigin ) {
-                byte* src = reinterpret_cast< byte* >( &_origin );
-                for( std::size_t count1 = 0; count1 < sizeof( PageOrigin ); ++count1, ++src ) {
-                    esc.push_back( *src );
-                }
+                cell->addArray( reinterpret_cast< byte* >( &_origin ), sizeof( PageOrigin ) );
             }
             if( _doSize ) {
-                byte* src = reinterpret_cast< byte* >( &_size );
-                for( std::size_t count1 = 0; count1 < sizeof( PageSize ); ++count1, ++src ) {
-                    esc.push_back( *src );
-                }
+                cell->addArray( reinterpret_cast< byte* >( &_size ), sizeof( PageSize ) );
             }
         }
-        esc[1] = static_cast< byte >( esc.size() - 1 );
-        cell->addEsc( esc );
+        cell->updateByte( start + 1, static_cast< byte >( cell->getPos( start ) - 1 ) );
     }
 }
 

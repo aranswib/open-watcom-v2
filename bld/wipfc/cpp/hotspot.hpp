@@ -24,45 +24,32 @@
 *
 *  ========================================================================
 *
-* Description:  Font data
+* Description:  Hypergraphic hotspot data
 *
 ****************************************************************************/
 
 
-#include "wipfc.hpp"
-#include <cstring>
-#include "errors.hpp"
-#include "fnt.hpp"
-#include "outfile.hpp"
+#ifndef HOTSPOT_INCLUDED
+#define HOTSPOT_INCLUDED
 
+struct Hotspot {                        //hypergraphic hotspot
+    typedef STD1::uint8_t   byte;
+    typedef STD1::uint16_t  word;
+    typedef STD1::uint32_t  dword;
 
-FontEntry::dword FontEntry::write( OutFile* out ) const
-{
-    char            faceName[MAX_FACENAME_SIZE];    //null terminated
-    std::string     buffer( out->wtomb_string( _faceName ) );
-    std::strncpy( faceName, buffer.c_str(), MAX_FACENAME_SIZE - 1 );
-    faceName[MAX_FACENAME_SIZE - 1] = '\0';
-    if( out->write( faceName, sizeof( faceName ), 1 ) )
-        throw FatalError( ERR_WRITE );
-    if( out->put( _height ) )
-        throw FatalError( ERR_WRITE );
-    if( out->put( _width ) )
-        throw FatalError( ERR_WRITE );
-    if( out->codePage( _codePage ) )
-        throw FatalError( ERR_WRITE );
-    return( static_cast< dword >( sizeof( faceName ) + sizeof( _height ) + sizeof( _width ) + sizeof( word ) ) );
-}
+    Hotspot( word x, word y, word cx, word cy ) {
+        this->x = x;
+        this->y = y;
+        this->cx = cx;
+        this->cy = cy;
+    };
+    bool isDef( bool flag ) { return( flag && (x || y || cx || cy) ); };
+    std::size_t size( bool flag ) { return( ( isDef( flag ) ) ? 4 * sizeof( word ) : 0 ); };
 
-bool FontEntry::operator==( const FontEntry &rhs ) const
-{
-    const wchar_t *s1 = _faceName.c_str();
-    const wchar_t *s2 = rhs._faceName.c_str();
-    while( *s1 == *s2 && *s1 != L'\0' ) {
-        s1++;
-        s2++;
-    }
-    return *s1 == *s2 &&
-        _height == rhs._height &&
-        _width == rhs._width &&
-        _codePage == rhs._codePage;
-}
+    word                x;
+    word                y;
+    word                cx;
+    word                cy;
+};
+
+#endif
