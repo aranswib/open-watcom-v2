@@ -62,8 +62,8 @@ public:
 
     //add a word to the local dictionary
     void addTextToLD( word index );
-    //add a word to the encoded text
-    void addText( word index );
+    //get a Local Dictionary index for a word
+    byte LDIndex( word index );
     //set the cell's index (position in the list of cells)
     void setIndex( std::size_t i ) { _index = i; };
     std::size_t index() const { return _index; };
@@ -93,13 +93,11 @@ private:
 
 /*
 // EscSeq:
-#pragma pack(push, 1)
 struct EscSeq {
     STD1::uint8_t esc;                  //=0xFF
     STD1::uint8_t size;                 //2 + optional arguments
     STD1::uint8_t type;
     //variable length data follows:
-#pragma pack(pop)
 */
 /*
 Type    Meaning

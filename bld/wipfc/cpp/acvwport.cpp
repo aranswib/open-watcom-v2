@@ -223,39 +223,42 @@ void AcViewport::buildText( Cell* cell )
 {
     if( _objectId && !_objectName.empty() ) {
         // convert wide strings to mbcs
+        byte dataSize = 3;
         std::string objectName;
         if( !_objectName.empty() ) {
             objectName = cell->out()->wtomb_string( _objectName );
+            dataSize += static_cast< byte >( objectName.size() );
         }
         std::string dll;
         if( !_dll.empty() ) {
             dll = cell->out()->wtomb_string( _dll );
+            dataSize += static_cast< byte >( dll.size() );
         }
         std::string objectInfo;
         if( !_objectInfo.empty() ) {
             objectInfo = cell->out()->wtomb_string( _objectInfo );
+            dataSize += static_cast< byte >( objectInfo.size() );
         }
-        byte dataSize = static_cast< byte >( objectName.size() + 1 + dll.size() + 1 + objectInfo.size() + 1 );
         // process text
         std::size_t start( cell->getPos() );
-        cell->reserve( 3 + 4 + dataSize + 2 + _origin.size() + _size.size() );
+        cell->reserve( 3 + 2 + 2 + dataSize + 2 + _origin.size() + _size.size() );
         cell->addByte( Cell::ESCAPE );  //ESC
         cell->addByte( 2 );             //size
         cell->addByte( 0x21 );          //type
         cell->addByte( 0 );             //reserved
-        cell->addByte( dataSize );
-        cell->addWord( _objectId );
-        cell->addByte( static_cast< byte >( objectName.size() + 1 ) );
+        cell->add( dataSize );
+        cell->add( _objectId );
+        cell->add( static_cast< byte >( objectName.size() + 1 ) );
         if( !objectName.empty() ) {
-            cell->addString( objectName );
+            cell->add( objectName );
         }
-        cell->addByte( static_cast< byte >( dll.size() + 1 ) );
+        cell->add( static_cast< byte >( dll.size() + 1 ) );
         if( !dll.empty() ) {
-            cell->addString( dll );
+            cell->add( dll );
         }
-        cell->addByte( static_cast< byte >( objectInfo.size() + 1 ) );
+        cell->add( static_cast< byte >( objectInfo.size() + 1 ) );
         if( !objectInfo.empty() ) {
-            cell->addString( objectInfo );
+            cell->add( objectInfo );
         }
         if( _doOrigin || _doSize ) {
             byte flag( 0xC0 );
@@ -263,7 +266,7 @@ void AcViewport::buildText( Cell* cell )
                 flag |= 0x01;
             if( _doSize )
                 flag |= 0x02;
-            cell->addByte( flag );
+            cell->add( flag );
             cell->addByte( 0 );
             if( _doOrigin ) {
                 _origin.buildText( cell );
@@ -275,4 +278,3 @@ void AcViewport::buildText( Cell* cell )
         cell->updateByte( start + 1, static_cast< byte >( cell->getPos( start ) - 1 ) );
     }
 }
-
