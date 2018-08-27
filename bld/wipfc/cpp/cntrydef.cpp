@@ -57,14 +57,14 @@ void CountryDef::nlsConfig( const char *loc )
         throw FatalError( ERR_NLSCONF );
     while( (fn1 = fn2 = fn3 = std::fgets( buffer, sizeof( buffer ), nlsconf )) != NULL ) {
         std::size_t len = std::strlen( buffer );
-        killEOL( buffer + len - 1 );
+        killEOL( buffer + len - 1, true );
         char *p = skipWS( buffer );
         if( p[0] == '\0' )
             continue;                       // skip blank lines
         if( p[0] == '#' )
             continue;                       // skip comment lines
         p = std::strtok( buffer, " \t" );   // get locale
-        if( p == NULL || std::strcmp( p, loc ) != 0 && std::strcmp( p, "default" ) != 0 )
+        if( p == NULL || ( std::strcmp( p, loc ) != 0 && std::strcmp( p, "default" ) != 0 ) )
             continue;
         p = std::strtok( NULL, " \t" );     // get nls file
         if( p == NULL )

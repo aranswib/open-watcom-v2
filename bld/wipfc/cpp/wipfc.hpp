@@ -49,3 +49,8 @@
     #include <cstdint>
     #define STD1 std
 #endif
+#if defined( __cplusplus ) && __cplusplus < 201103L
+typedef STD1::uint16_t char16_t;
+#define explicit
+#endif
+

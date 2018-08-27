@@ -35,12 +35,14 @@
 #include "ipfdata.hpp"
 
 class Nls;     // forward reference
+class ICULoader;
+struct UConverter;
 
 class IpfFile : public IpfData {
 public:
     IpfFile( const std::wstring* wfname, Nls *nls );
     IpfFile( const std::string& sfname, const std::wstring* wfname, Nls *nls );
-    ~IpfFile() { if( _stream ) std::fclose( _stream ); };
+    ~IpfFile();
     //Set the file name for use in error messages
     void setName( const std::wstring* fileName ) { _fileName = fileName; }
     //Returns the file or buffer name for use in error messages
@@ -52,19 +54,21 @@ public:
     //Un-read a character
     virtual
     void unget( wchar_t ch );
-    const wchar_t *gets( std::wstring& wbuffer );
+    const std::wstring *gets( bool removeEOL );
 
 private:
     IpfFile( const IpfFile& rhs );              //no copy
     IpfFile& operator=( const IpfFile& rhs );   //no assignment
     std::wint_t  getwc();
-    // MBCS->UNICODE conversion
-    void         mbtow_string( const std::string& input, std::wstring& output );
 
     const std::wstring*     _fileName;
     std::FILE*              _stream;
     wchar_t                 _ungottenChar;
     bool                    _ungotten;
+    std::wstring            _wbuffer;
+    std::size_t             _pos;
+    ICULoader               *_icu;
+    UConverter              *_converter;
 };
 
 #endif
