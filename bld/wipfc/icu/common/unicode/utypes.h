@@ -1,4 +1,11 @@
-// © 2016 and later: Unicode, Inc. and others.
+/* =========================================================================
+ *
+ *                          Open Watcom Project
+ *
+ * Copyright (c) 2018-2018 The Open Watcom Contributors. All Rights Reserved.
+ *
+ * ========================================================================= */
+// (c) 2016 and later: Unicode, Inc. and others.
 // License & terms of use: http://www.unicode.org/copyright.html
 /*
 **********************************************************************
@@ -33,8 +40,6 @@
 
 #ifndef UTYPES_H
 #define UTYPES_H
-
-#include "wipfc.hpp"
 
 #include "unicode/umachine.h"
 #include "unicode/uversion.h"

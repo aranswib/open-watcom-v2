@@ -1,4 +1,4 @@
-// © 2016 and later: Unicode, Inc. and others.
+// (c) 2016 and later: Unicode, Inc. and others.
 // License & terms of use: http://www.unicode.org/copyright.html
 /*
 ******************************************************************************
@@ -12,25 +12,7 @@
 *
 *                            Open Watcom Project
 *
-* Copyright (c) 2009-2018 The Open Watcom Contributors. All Rights Reserved.
-*
-*  ========================================================================
-*
-*    This file contains Original Code and/or Modifications of Original
-*    Code as defined in and that are subject to the Sybase Open Watcom
-*    Public License version 1.0 (the 'License'). You may not use this file
-*    except in compliance with the License. BY USING THIS FILE YOU AGREE TO
-*    ALL TERMS AND CONDITIONS OF THE LICENSE. A copy of the License is
-*    provided with the Original Code and Modifications, and is also
-*    available at www.sybase.com/developer/opensource.
-*
-*    The Original Code and all software distributed under the License are
-*    distributed on an 'AS IS' basis, WITHOUT WARRANTY OF ANY KIND, EITHER
-*    EXPRESS OR IMPLIED, AND SYBASE AND ALL CONTRIBUTORS HEREBY DISCLAIM
-*    ALL SUCH WARRANTIES, INCLUDING WITHOUT LIMITATION, ANY WARRANTIES OF
-*    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, QUIET ENJOYMENT OR
-*    NON-INFRINGEMENT. Please see the License for the specific language
-*    governing rights and limitations under the License.
+* Copyright (c) 2018-2018 The Open Watcom Contributors. All Rights Reserved.
 *
 *  ========================================================================
 *
@@ -88,7 +70,7 @@ static bool mapFile( UDataMemory *dataMemory, const char *name )
             p = new char[fileSize];
             if( p != NULL ) {
                 if( fileSize != std::fread( p, 1, fileSize, fp ) ) {
-                    delete p;
+                    delete[] p;
                 } else {
                     dataMemory->map = p;
                     dataMemory->pHeader = (const DataHeader *)p;
@@ -106,7 +88,7 @@ static bool mapFile( UDataMemory *dataMemory, const char *name )
 static void unmapFile( UDataMemory *dataMemory )
 {
     if( dataMemory != NULL && dataMemory->map != NULL ) {
-        delete (char *)dataMemory->map;
+        delete[] (char *)dataMemory->map;
         dataReset( dataMemory );
     }
 }
@@ -266,7 +248,7 @@ void  ICULoader::close( UConverter *converter )
     }
 
     if( converter->subChars != (uint8_t *)converter->subUChars ) {
-        delete converter->subChars;
+        delete[] converter->subChars;
     }
 
     if( converter->sharedData->isReferenceCounted ) {
@@ -332,7 +314,7 @@ UConverter* ICULoader::clone( UErrorCode *err )
 
     if( localConverter == NULL || U_FAILURE( *err ) ) {
         if( allocatedConverter != NULL && allocatedConverter->subChars != (uint8_t *)allocatedConverter->subUChars ) {
-            delete allocatedConverter->subChars;
+            delete[] allocatedConverter->subChars;
         }
         delete allocatedConverter;
         return NULL;
