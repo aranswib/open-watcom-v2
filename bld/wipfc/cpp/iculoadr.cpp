@@ -51,7 +51,7 @@ static void dataReset( UDataMemory *dataMemory )
 static bool mapFile( UDataMemory *dataMemory, const char *name )
 {
     std::FILE       *fp;
-    uint32_t        fileSize;
+    dword           fileSize;
     char            *p;
     bool            ok = false;
 
@@ -114,7 +114,7 @@ void ICULoader::unloadSharedData( UConverter *converter )
     }
 }
 
-static uint16_t dataGetHeaderSize(const DataHeader *udh)
+static word dataGetHeaderSize(const DataHeader *udh)
 {
     if( udh == NULL ) {
         return 0;
@@ -123,8 +123,8 @@ static uint16_t dataGetHeaderSize(const DataHeader *udh)
         return udh->dataHeader.headerSize;
     } else {
         /* opposite endianness */
-        uint16_t x = udh->dataHeader.headerSize;
-        return (uint16_t)(( x << 8 ) | ( x >> 8 ));
+        word x = udh->dataHeader.headerSize;
+        return (word)(( x << 8 ) | ( x >> 8 ));
     }
 }
 
@@ -138,7 +138,7 @@ static UConverterSharedData *unFlattenClone( UConverterLoadArgs *pArgs, UDataMem
     if( U_FAILURE( *err ) )
         return NULL;
 
-    if( (uint16_t)type > UCNV_MBCS ||
+    if( (word)type > UCNV_MBCS ||
         converterData[type] == NULL ||
         !converterData[type]->isReferenceCounted ||
         converterData[type]->referenceCounter != 1 ||
@@ -343,6 +343,11 @@ UChar32 ICULoader::getNextUChar( UConverter *converter, const char **start, cons
 void ICULoader::fromUnicodeToMBCS( UConverter *converter, char **target, const char *target_end, const UChar **source, const UChar *source_end, int32_t *offset, UBool flush, UErrorCode *err )
 {
     ucnv_fromUnicode( converter, target, target_end, source, source_end, offset, flush, err );
+}
+
+bool ICULoader::useDBCS()
+{
+    return _converter.sharedData->staticData->minBytesPerChar == 1 && _converter.sharedData->staticData->maxBytesPerChar == 2;
 }
 
 ICULoader::ICULoader( const char *name )

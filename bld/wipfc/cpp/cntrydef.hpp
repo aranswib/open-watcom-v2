@@ -40,14 +40,10 @@
 class OutFile;
 
 class CountryDef {
-    typedef STD1::uint8_t   byte;
-    typedef STD1::uint16_t  word;
-    typedef STD1::uint32_t  dword;
-
 public:
     CountryDef() : _size( sizeof( word ) + 2 * sizeof( byte ) + 4 * sizeof( word ) ),
         _type( WIPFC::CONTROL ), _format( 0 ), _value( 256 ), _country( 1 ),
-        _codePage( 850 ), _reserved( 0 ), _useDBCS( false ) {};
+        _codePage( 850 ), _reserved( 0 ) {};
 
     void nlsConfig( const char *loc );
     dword write( OutFile* out ) const;
@@ -56,7 +52,6 @@ public:
     const std::string nlsFileName() const { return _nlsFileName; }
     const std::string entityFileName() const { return _entityFileName; }
     const std::string icuConverter() const { return _icuConverter; }
-    bool useDBCS() const { return _useDBCS; }
 
 private:
     word                _size;      // 12
@@ -66,7 +61,6 @@ private:
     word                _country;   // from config file / 1
     word                _codePage;  // from config file / 850
     word                _reserved;  // 0
-    bool                _useDBCS;
     std::string         _nlsFileName;
     std::string         _entityFileName;
     std::string         _icuConverter;

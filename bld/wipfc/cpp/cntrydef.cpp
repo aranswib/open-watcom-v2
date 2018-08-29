@@ -86,11 +86,6 @@ void CountryDef::nlsConfig( const char *loc )
         if( p == NULL )
             continue;                       // skip incorrect lines
         _codePage = static_cast< word >( std::strtoul( skipWS( p ), NULL, 10 ) );
-        _useDBCS = false;
-        p = std::strtok( NULL, " \t" );     // get dbcs flag
-        if( p != NULL ) {
-            _useDBCS = ( std::strtoul( skipWS( p ), NULL, 10 ) != 0 );
-        }
         break;
     }
     std::fclose( nlsconf );
@@ -101,8 +96,8 @@ void CountryDef::nlsConfig( const char *loc )
     _icuConverter = std::string( fn3 );
 }
 
-CountryDef::dword CountryDef::write( OutFile* out ) const
-/*********************************************************/
+dword CountryDef::write( OutFile* out ) const
+/*******************************************/
 {
     dword start = out->tell();
     if( out->put( _size ) )
