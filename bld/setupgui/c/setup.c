@@ -44,12 +44,13 @@
 #include "genvbl.h"
 #include "utils.h"
 #include "guiutil.h"
+#include "guistat.h"
+#include "guiutils.h"
 
 #include "clibext.h"
 
 
 extern void DoSpawn( when_time );
-extern void SetupTitle();
 extern void DeleteObsoleteFiles();
 extern void ResetDiskInfo( void );
 
@@ -142,108 +143,6 @@ static bool SetupOperations( void )
 }
 
 #define MAX_DIAGS 20
-
-#ifdef __WINDOWS__
-static bool CheckForSetup32( int argc, char **argv )
-{
-    DWORD       version = GetVersion();
-    int         winver;
-    char        *buff;
-    size_t      mem_needed;
-    int         i;
-    char        new_exe[_MAX_PATH];
-    char        drive[_MAX_DRIVE];
-    char        path[_MAX_PATH];
-    char        name[_MAX_FNAME];
-    char        ext[_MAX_EXT];
-    char        *os;
-
-    winver = LOBYTE( LOWORD( version ) ) * 100 + HIBYTE( LOWORD( version ) );
-    os = getenv( "OS" );
-    if( winver >= 390 || ( os != NULL && stricmp( os, "Windows_NT" ) == 0 ) ) {
-        _splitpath( argv[0], drive, path, name, ext );
-        _makepath( new_exe, drive, path, "SETUP32", ext );
-        mem_needed = strlen( new_exe );
-        for( i = 1; i < argc; i++ ) {
-            mem_needed += strlen( argv[i] ); // command line arguments
-        }
-        mem_needed += i; // spaces between arguments + terminating null
-        buff = malloc( mem_needed );
-        if( buff == NULL ) {
-            return( false );
-        }
-        strcpy( buff, new_exe );
-        if( access( buff, F_OK ) == 0 ) {
-            for( i = 1; i < argc; i++ ) {
-                strcat( buff, " " );
-                strcat( buff, argv[i] );
-            }
-            WinExec( buff, SW_SHOW );
-            return( true );
-        }
-    }
-    return( false );
-}
-#endif
-
-#if defined( __NT__ ) && !defined( _M_X64 )
-static bool CheckWin95Uninstall( int argc, char **argv )
-{
-// The Windows 95 version of setup gets installed as the
-// uninstall utility. So that it can erase itself, the setup
-// program gets copied to the Windows directory, and run from
-// there. The version in the Windows directory gets erased by
-// the WININIT program.
-
-    size_t              len;
-    char                buff[2 * _MAX_PATH];
-    char                drive[_MAX_DRIVE];
-    char                dir[_MAX_DIR];
-    char                name[_MAX_FNAME];
-
-    if( argc > 1 && stricmp( argv[ 1 ], "-u" ) == 0 ) {
-        // copy setup program to unsetup.exe in system directory
-        GetWindowsDirectory( buff, _MAX_PATH );
-        strcat( buff, "\\UnSetup.exe" );
-        if( DoCopyFile( argv[0], buff, false ) == CFE_NOERROR ) {
-            // add entry to wininit.ini to erase unsetup.exe
-            WritePrivateProfileString( "rename", "NUL", buff, "wininit.ini" );
-            // setup.inf should be in same directory as setup.exe
-            len = strlen( buff );
-            buff[len] = ' ';
-            buff[len + 1] = '\"';
-            _splitpath( argv[0], drive, dir, name, NULL );
-            _makepath( &buff[len + 2], drive, dir, name, "inf" );
-            strcat( buff, "\"" );
-            // execute unsetup
-            WinExec( buff, SW_SHOW );
-            return( true );
-        }
-    }
-    return( false );
-}
-
-static bool CheckWow64( void )
-{
-    DWORD   version = GetVersion();
-    if( version < 0x80000000 && LOBYTE( LOWORD( version ) ) >= 5 && IsWOW64() ) {
-        char *msg = "You are using 32-bit installer on 64-bit host\n"
-                    "It is recommended to use 64-bit installer\n"
-                    "\ton 64-bit host\n"
-                    "Press OK button to continue with installation\n"
-                    "\tor Cancel button to abort it\n";
-
-        InitGlobalVarList();
-        SetVariableByName( "IDS_USEINST64BIT", "%s");
-        if( MsgBox( NULL, "IDS_USEINST64BIT", GUI_OK_CANCEL, msg ) != GUI_RET_OK ) {
-            /* return true to terminate installer */
-            return( true );
-        }
-    }
-    return( false );
-}
-#endif
-
 
 static bool DirParamStack( char **inf_name, char **src_path, DIR_PARAM_STACK_OPS function )
 /*****************************************************************************************/
@@ -403,101 +302,85 @@ void GUImain( void )
     char                *arc_name;
     char                *new_inf;
     char                current_dir[_MAX_PATH];
-    bool                ret = false;
+    bool                ok;
     dlg_state           state;
 
     GUIMemOpen();
     GUIGetArgs( &argv, &argc );
-#if defined( __NT__ ) && !defined( _M_X64 )
-    if( CheckWin95Uninstall( argc, argv ) )
-        return;
-    if( CheckWow64() )
-        return;
-#endif
-#ifdef __WINDOWS__
-    if( CheckForSetup32( argc, argv ) )
-        return;
-#endif
 
     // initialize paths and env. vbls.
 
-    if( !SetupPreInit() )
-        return;
-    if( !GetDirParams( argc, argv, &inf_name, &src_path, &arc_name ) )
-        return;
-    if( !SetupInit() ) {
+    if( SetupPreInit( argc, argv ) ) {
+        if( GetDirParams( argc, argv, &inf_name, &src_path, &arc_name ) ) {
+            SetupInit();
+            StatusInit();
+            GUIDrainEvents();   // push things along
+            FileInit( arc_name );
+            InitGlobalVarList();
+            strcpy( current_dir, src_path );
+            ConcatDirSep( current_dir );
+            ok = false;
+            while( !ok && InitInfo( inf_name, src_path ) ) {
+
+                ok = DoMainLoop( &state );
+
+                if( state == DLG_DONE ) {
+                    ok = true;
+                } else if( CancelSetup ) {
+                    ok = true;
+                } else if( GetVariableByName( "SetupPath" ) == NO_VAR ) {
+                    // look for another SETUP.INF
+                    if( !DirParamStack( &inf_name, &src_path, Stack_IsEmpty ) ) {   // "IsEmpty"?
+                        // pop script from stack
+                        DirParamStack( &inf_name, &src_path, Stack_Pop );           // "Pop"
+                        CloseDownMessage( ok );
+                        // process next script
+                        CancelSetup = false;
+                        ok = false;
+                    } else {
+                        CloseDownMessage( ok );
+                        // finish
+                        ok = true;
+                    }
+                } else {
+                    if( GetVariableIntVal( "IsMultiInstall" ) ) {
+                        // push current script on stack
+                        DirParamStack( &inf_name, &src_path, Stack_Push );          // "Push"
+                    }
+                    new_inf = GUIMemAlloc( _MAX_PATH );
+                    drive = GUIMemAlloc( _MAX_DRIVE );
+                    dir = GUIMemAlloc( _MAX_PATH );
+                    ok = ( new_inf != NULL && drive != NULL && dir != NULL );
+                    if( ok ) {
+                        // construct new path relative to previous
+                        ReplaceVars( new_inf, _MAX_PATH, GetVariableStrVal( "SetupPath" ) );
+                        _splitpath( current_dir, drive, dir, NULL, NULL );
+                        _makepath( inf_name, drive, dir, new_inf, NULL );
+                        _splitpath( inf_name, drive, dir, NULL, NULL );
+                        _makepath( src_path, drive, dir, NULL, NULL );
+                        RemoveDirSep( src_path );
+//                        strcpy( current_dir, src_path );
+//                        ConcatDirSep( current_dir );
+                    }
+                    GUIMemFree( new_inf );
+                    GUIMemFree( drive );
+                    GUIMemFree( dir );
+                } /* if */
+
+                FreeGlobalVarList( false );
+                FreeDefaultDialogs();
+                FreeAllStructs();
+                ConfigModified = false;
+            } /* while */
+
+            FileFini();
+            FreeGlobalVarList( true );
+            FreeDefaultDialogs();
+            FreeAllStructs();
+            StatusFini();
+            SetupFini();
+        }
         FreeDirParams( &inf_name, &src_path, &arc_name );
-        return;
     }
-    GUIDrainEvents();   // push things along
-    FileInit( arc_name );
-    InitGlobalVarList();
-    strcpy( current_dir, src_path );
-    ConcatDirSep( current_dir );
-    while( InitInfo( inf_name, src_path ) ) {
-
-        ret = DoMainLoop( &state );
-
-        if( state == DLG_DONE )
-            break;
-//        if( CancelSetup || !ret ) break;
-        if( CancelSetup )
-            break;
-//        if( !ret ) break;
-
-        // look for another SETUP.INF
-        if( GetVariableByName( "SetupPath" ) == NO_VAR ) {
-            if( !DirParamStack( &inf_name, &src_path, Stack_IsEmpty ) ) {  // "IsEmpty"?
-                DirParamStack( &inf_name, &src_path, Stack_Pop ); // "Pop"
-                CloseDownMessage( ret );
-                CancelSetup = false;
-                ret = true;
-            } else {
-                CloseDownMessage( ret );
-                break;
-            }
-        } else {
-            if( GetVariableIntVal( "IsMultiInstall" ) ) {
-                // push current script on stack
-                DirParamStack( &inf_name, &src_path, Stack_Push ); // "Push"
-            }
-            new_inf = GUIMemAlloc( _MAX_PATH );
-            drive = GUIMemAlloc( _MAX_DRIVE );
-            dir = GUIMemAlloc( _MAX_PATH );
-            if( new_inf == NULL || drive == NULL || dir == NULL ) {
-                GUIMemFree( new_inf );
-                GUIMemFree( drive );
-                GUIMemFree( dir );
-                break;
-            }
-            // construct new path relative to previous
-            ReplaceVars( new_inf, _MAX_PATH, GetVariableStrVal( "SetupPath" ) );
-            _splitpath( current_dir, drive, dir, NULL, NULL );
-            _makepath( inf_name, drive, dir, new_inf, NULL );
-
-            _splitpath( inf_name, drive, dir, NULL, NULL );
-            _makepath( src_path, drive, dir, NULL, NULL );
-            RemoveDirSep( src_path );
-//            strcpy( current_dir, src_path );
-//            ConcatDirSep( current_dir );
-
-            GUIMemFree( new_inf );
-            GUIMemFree( drive );
-            GUIMemFree( dir );
-        } /* if */
-
-        FreeGlobalVarList( false );
-        FreeDefaultDialogs();
-        FreeAllStructs();
-        ConfigModified = false;
-    } /* while */
-
-
-    FileFini();
-    FreeGlobalVarList( true );
-    FreeDefaultDialogs();
-    FreeAllStructs();
-    FreeDirParams( &inf_name, &src_path, &arc_name );
-    CloseDownProgram();
+    GUIMemClose();
 }
-

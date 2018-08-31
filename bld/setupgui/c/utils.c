@@ -56,6 +56,7 @@
 #include "genvbl.h"
 #include "gendlg.h"
 #include "guiutil.h"
+#include "guiutils.h"
 #include "utils.h"
 #include "setupio.h"
 #include "iopath.h"
@@ -2624,14 +2625,6 @@ void CloseDownMessage( bool installed_ok )
             MsgBox( NULL, "IDS_SETUPNOGOOD", GUI_OK );
         }
     }
-}
-
-
-void CloseDownProgram( void )
-/***************************/
-{
-    StatusFini();
-    SetupFini();
 }
 
 
