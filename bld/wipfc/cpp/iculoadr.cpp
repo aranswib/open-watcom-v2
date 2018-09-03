@@ -28,7 +28,9 @@
 #include <cstring>
 #include <string>
 #include "env.hpp"
+#include "util.hpp"
 #include "iculoadr.hpp"
+
 
 /*
  * Minimised version of ICU loader for one converter only
@@ -57,7 +59,7 @@ static bool mapFile( UDataMemory *dataMemory, const char *name )
 
     std::string path( Environment.value( "WIPFC" ) );
     if( path.length() )
-        path += U_FILE_SEP_CHAR;
+        path += PATH_SEPARATOR;
     path += name;
     path += ".cnv";
     dataReset( dataMemory );
@@ -313,10 +315,10 @@ UConverter* ICULoader::clone( UErrorCode *err )
     }
 
     if( localConverter == NULL || U_FAILURE( *err ) ) {
-        if( allocatedConverter != NULL && allocatedConverter->subChars != NULL ) {
+        if( allocatedConverter != NULL && allocatedConverter->subChars != (uint8_t *)allocatedConverter->subUChars ) {
             delete[] allocatedConverter->subChars;
         }
-        delete allocatedConverter;
+        delete[] (char *)allocatedConverter;
         return NULL;
     }
 
