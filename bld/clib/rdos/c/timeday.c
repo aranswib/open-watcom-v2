@@ -2,7 +2,6 @@
 *
 *                            Open Watcom Project
 *
-* Copyright (c) 2017-2017 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -25,61 +24,43 @@
 *
 *  ========================================================================
 *
-* Description:  Implementation of rand() and srand().
+* Description:  RDOS gettimeofday() implementation.
 *
 ****************************************************************************/
 
 
 #include "variety.h"
-#include <stdlib.h>
-#if defined( __NT__ )
-    #include <windows.h>
-#elif defined( __OS2__ )
-    #include <wos2.h>
-#elif defined( __RDOS__ )
-    #include <rdos.h>
-#endif
-#include "rtdata.h"
-#include "randnext.h"
-#include "thread.h"
+#include <time.h>
+#include <sys/time.h>
+#include "rdos.h"
+#include "_rdos.h"
 
-#ifndef __RDOS__
-
-static unsigned long *initrandnext( void )
+_WCRTLINK int gettimeofday( struct timeval *tv, struct timezone *tz )
 {
-    _INITRANDNEXT( RETURN_ARG( unsigned long *, NULL ) );
-    return( (unsigned long *)&_RWD_randnext );
-}
+    long long longtime;
+    long long basetime;
+    unsigned long msb;
 
-#endif
+    msb = RdosCodeMsbTics( 2010, 1, 1, 0 );
+    basetime = (long long)msb;
+    basetime = basetime << 32;
+    longtime = RdosGetLongTime();
+    longtime -= basetime;
 
-_WCRTLINK int rand( void )
-/************************/
-{
-#if defined( __RDOS__ )
-    return( (int)( RdosGetLongRandom() & 0x7FFF ) );
-#else
-    unsigned long   *randptr;
+    tv->tv_sec = (long)(longtime / 1193182);
+    longtime = longtime - (long long)(tv->tv_sec) * 1193182;
+    longtime = longtime * 1000000 / 1193182;
+    tv->tv_usec = (long)longtime;
 
-    randptr = initrandnext();
-    if( randptr == NULL ) {
-        return( 0 );
+    while( tv->tv_usec < 0 ) {
+        tv->tv_usec += 1000000;
+        tv->tv_sec--;
     }
-    *randptr = *randptr * 1103515245 + 12345;
-    return( (int)( (*randptr >> 16) & 0x7FFF ) );
-#endif
-}
 
-
-_WCRTLINK void srand( unsigned int seed )
-/***************************************/
-{
-#ifndef __RDOS__
-    unsigned long   *randptr;
-
-    randptr = initrandnext();
-    if( randptr != NULL ) {
-        *randptr = seed;
+    while( tv->tv_usec >= 1000000 ) {
+        tv->tv_usec -= 1000000;
+        tv->tv_sec++;
     }
-#endif
+
+    return( 0 );
 }
