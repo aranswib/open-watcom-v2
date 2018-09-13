@@ -931,8 +931,8 @@ static target_size FieldAlign( target_size next_offset, FIELDPTR field, align_ty
 
 static DATA_TYPE UnQualifiedType( TYPEPTR typ )
 {
-    SKIP_TYPEDEFS( typ );
-    SKIP_ENUM( typ );
+    // skip typedefs, go into enum base
+    typ = SkipTypeFluff( typ );
     switch( typ->decl_type ) {
     case TYPE_BOOL:
         return( TYPE_BOOL );
@@ -1343,8 +1343,10 @@ static TYPEPTR ComplexDecl( DATA_TYPE decl_typ, bool packed )
 
 static void CheckBitfieldType( TYPEPTR typ )
 {
+    // skip typedefs
     SKIP_TYPEDEFS( typ );
     if( CompFlags.extensions_enabled ) {
+        // go into enum base
         SKIP_ENUM( typ );
     }
     switch( typ->decl_type ) {
