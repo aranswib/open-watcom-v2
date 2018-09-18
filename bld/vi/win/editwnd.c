@@ -115,7 +115,7 @@ void SetWindowTitle( window_id wid )
             if( cinfo->CurrentFile->dup_count > 0 ) {
                 MySprintf( buff, "%s [%d]", cinfo->CurrentFile->name,
                            cinfo->DuplicateID );
-                 SetWindowText( cinfo->current_window_id, buff );
+                SetWindowText( cinfo->current_window_id, buff );
             } else {
                 SetWindowText( cinfo->current_window_id, cinfo->CurrentFile->name );
             }
@@ -826,12 +826,12 @@ WINEXPORT LRESULT CALLBACK EditWindowProc( window_id wid, UINT msg, WPARAM wpara
     case WM_SYSKEYUP:
         return( SendMessage( root_window_id, msg, wparam, lparam ) );
     case WM_SYSKEYDOWN:
-        if( WindowsKeyPush( wparam, HIWORD( lparam ) ) ) {
+        if( WindowsKeyPush( LOWORD( wparam ), HIWORD( lparam ) ) ) {
             return( 0 );
         }
         return( SendMessage( root_window_id, msg, wparam, lparam ) );
     case WM_KEYDOWN:
-        if( WindowsKeyPush( wparam, HIWORD( lparam ) ) ) {
+        if( WindowsKeyPush( LOWORD( wparam ), HIWORD( lparam ) ) ) {
             return( 0 );
         }
         break;

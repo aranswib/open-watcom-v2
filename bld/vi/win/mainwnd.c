@@ -47,7 +47,7 @@ WINEXPORT LRESULT CALLBACK MainWindowProc( HWND, UINT, WPARAM, LPARAM );
 void    DefaultWindows( RECT *, RECT * );
 
 RECT    RootRect;
-int     RootState;
+WORD    RootState;
 
 /*
  * RegisterMainWindow - register the main (root) window class
@@ -92,7 +92,7 @@ static void setDefault( void )
  */
 window_id CreateMainWindow( HANDLE inst )
 {
-    window_id   root;
+    window_id   wid;
     int         maxx, maxy;
 
     if( initHeight <= 0 || initWidth <= 0 ) {
@@ -118,11 +118,11 @@ window_id CreateMainWindow( HANDLE inst )
         }
     }
 
-    root = CreateWindow( EditorName, EditorName,
+    wid = CreateWindow( EditorName, EditorName,
                          WS_OVERLAPPEDWINDOW | WS_CLIPCHILDREN,
                          initX, initY, initWidth, initHeight,
                          NO_WINDOW, (HMENU)NULLHANDLE, inst, NULL );
-    return( root );
+    return( wid );
 
 } /* CreateMainWindow */
 
@@ -255,18 +255,18 @@ WINEXPORT LRESULT CALLBACK MainWindowProc( HWND hwnd, UINT msg, WPARAM wparam, L
         UpdateStatusWindow();
         break;
     case WM_KEYDOWN:
-        if( WindowsKeyPush( wparam, HIWORD( lparam ) ) ) {
+        if( WindowsKeyPush( LOWORD( wparam ), HIWORD( lparam ) ) ) {
             return( 0 );
         }
         break;
     case WM_SIZE:
         DefFrameProc( hwnd, edit_container_window_id, msg, wparam, lparam );
-        RootState = wparam;
+        RootState = LOWORD( wparam );
         if( wparam != SIZE_MINIMIZED ) {
             ResizeRoot();
             GetWindowRect( hwnd, &RootRect );
             if( wparam != SIZE_MAXIMIZED ) {
-                RootState = 0;
+                RootState = SIZE_RESTORED;
             }
         }
         return( 0 );
