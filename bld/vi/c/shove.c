@@ -62,19 +62,18 @@ vi_rc Shift( linenum s, linenum e, char dir, bool msgflag )
         return( rc );
     }
 
+    shv = EditVars.ShiftWidth;
+    if( dir != '>' ) {
+        shv *= -1;
+    }
     /*
      * process all lines
      */
     for( CurrentPos.line = s; CurrentPos.line <= e; CurrentPos.line++ ) {
-
         /*
          * Add/Subtract leading tab space
          */
         GetCurrentLine();
-        shv = EditVars.ShiftWidth;
-        if( dir != '>' ) {
-            shv *= -1;
-        }
         if( AddLeadingTabSpace( &WorkLine->len, WorkLine->data, shv ) ) {
             ++fullcnt;
         }
@@ -87,7 +86,6 @@ vi_rc Shift( linenum s, linenum e, char dir, bool msgflag )
                 return( rc );
             }
         }
-
     }
 
     /*
