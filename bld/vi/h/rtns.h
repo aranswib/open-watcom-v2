@@ -763,9 +763,9 @@ vi_rc   NewStatusWindow( void );
 /* tab_hell.c */
 vi_rc   ExpandWhiteSpace( void );
 vi_rc   CompressWhiteSpace( void );
-bool    ExpandTabsInABufferUpToColumn( int, char *, int, char *, int );
-bool    ExpandTabsInABuffer( const char *, int, char *, int );
-int     InsertTabSpace( int, char *, bool * );
+bool    ExpandTabsInABufferUpToColumn( size_t, char *, size_t, char *, size_t );
+bool    ExpandTabsInABuffer( const char *, size_t, char *, size_t );
+size_t  InsertTabSpace( size_t, char *, bool * );
 int     GetVirtualCursorPosition( char *, int );
 int     VirtualColumnOnCurrentLine( int );
 int     RealColumnOnCurrentLine( int );

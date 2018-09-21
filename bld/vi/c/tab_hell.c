@@ -72,16 +72,20 @@ static bool getNextPos( int ch, int *opos )
 /*
  * InsertTabSpace - insert tabs and white space
  */
-int InsertTabSpace( int j, char *buff, bool *tabme )
+size_t InsertTabSpace( size_t j, char *buff, bool *tabme )
 {
-    int n, extra, m, i;
-    int k = 0;
+    size_t  extra;
+    size_t  i;
+    size_t  k;
+    size_t  m;
+    size_t  n;
 
+    k = 0;
     if( *tabme ) {
         *tabme = false;
         n = EditVars.HardTab - Tab( j + 1, EditVars.HardTab );
-        extra = j - n;
-        if( extra > 0 ) {
+        if( j > n ) {
+            extra = j - n;
             m = extra / EditVars.HardTab;
             if( extra % EditVars.HardTab > 0 ) {
                 m++;
@@ -112,18 +116,19 @@ int InsertTabSpace( int j, char *buff, bool *tabme )
 /*
  * ExpandTabsInABufferUpToColumn - expand tabs only up to specified column
  */
-bool ExpandTabsInABufferUpToColumn( int endcol, char *in, int inlen, char *out, int outsize )
+bool ExpandTabsInABufferUpToColumn( size_t endcol, char *in, size_t inlen, char *out, size_t outsize )
 {
-    int         i, j;
+    size_t      i;
+    size_t      j;
     bool        res;
 
     if( outsize > 0 ) {
         res = ExpandTabsInABuffer( in, endcol, out, outsize );
         outsize--;  /* reserve space for '\0' terminator */
-        j = inlen - endcol;
         i = strlen( out );
-        if( i + j > outsize ) {
-            inlen = outsize - i + endcol;
+        j = outsize - i + endcol;
+        if( inlen > j ) {
+            inlen = j;
         }
         for( j = endcol; j < inlen; j++ ) {
             out[i++] = in[j];
@@ -138,9 +143,11 @@ bool ExpandTabsInABufferUpToColumn( int endcol, char *in, int inlen, char *out, 
 /*
  * ExpandTabsInABuffer - do all tabs in a buffer
  */
-bool ExpandTabsInABuffer( const char *in, int inlen, char *out, int outsize )
+bool ExpandTabsInABuffer( const char *in, size_t inlen, char *out, size_t outsize )
 {
-    int             j, k, tb;
+    size_t          j;
+    size_t          k;
+    size_t          tb;
     bool            tabme;
     int             c;
 
@@ -420,20 +427,25 @@ int VirtualLineLen( char *buff )
 bool AddLeadingTabSpace( short *len, char *buff, int amount )
 {
     char        *tmp;
-    int         start = 0, i = 0;
-    int         j, k, l;
+    int         i;
+    int         j;
+    int         k;
+    int         l;
+    int         start;
     bool        tabme;
-    bool        full = false;
+    bool        full;
 
     /*
      * expand leading stuff into spaces
      */
-    j = *len;
+    start = 0;
     while( isspace( buff[start] ) ) {
         start++;
     }
     tmp = StaticAlloc();
+    j = *len;
     ExpandTabsInABuffer( buff, j, tmp, EditVars.MaxLine + 1 );
+    i = 0;
     while( tmp[i] == ' ' ) {
         i++;
     }
@@ -441,17 +453,26 @@ bool AddLeadingTabSpace( short *len, char *buff, int amount )
     /*
      * subtract/add extra spaces
      */
-    if( amount <= 0 ) {
-        k = i + amount;
-        if( k < 0 ) {
+    full = false;
+    if( amount == 0 ) {
+        // no shift
+        k = i;
+    } else if( amount < 0 ) {
+        // shift left, amount < 0
+        l = -amount;
+        if( i < l ) {
             k = 0;
+        } else {
+            k = i - l;
         }
     } else {
-        if( i + amount >= EditVars.MaxLine ) {
+        // shift right, amount > 0
+        l = i + amount;
+        if( l >= EditVars.MaxLine ) {
             full = true;
             k = i;
         } else {
-            for( k = i; k < i + amount; k++ ) {
+            for( k = i; k < l; k++ ) {
                 tmp[k] = ' ';
             }
         }

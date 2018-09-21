@@ -81,20 +81,21 @@ static void doneWithCurrentLine( void )
  */
 static int trimWorkLine( void )
 {
-    int i, len;
+    int     i;
+    int     len;
 
     len = 0;
     if( EditFlags.CMode || EditFlags.RemoveSpaceTrailing ) {
-        for( i = WorkLine->len - 1; i >= 0; --i ) {
-            if( !WHITE_SPACE( WorkLine->data[i] ) ) {
+        for( i = WorkLine->len; i > 0; --i ) {
+            if( !WHITE_SPACE( WorkLine->data[i - 1] ) ) {
                 break;
             }
         }
-        if( i == -1 ) {
+        if( i == 0 ) {
             len = VirtualLineLen( WorkLine->data );
         }
-        WorkLine->len = i + 1;
-        WorkLine->data[i + 1] = '\0';
+        WorkLine->len = i;
+        WorkLine->data[i] = '\0';
     }
     return( len );
 
@@ -275,8 +276,11 @@ vi_rc IMEsc( void )
  */
 vi_rc IMEnter( void )
 {
-    char        *buff, *buffx;
-    int         len, col, el;
+    char        *buff;
+    char        *buffx;
+    int         len;
+    int         col;
+    int         el;
 
     if( CurrentFile == NULL ) {
         return( ERR_NO_FILE );
@@ -291,11 +295,12 @@ vi_rc IMEnter( void )
      */
     buff = StaticAlloc();
     buffx = StaticAlloc();
-    el = WorkLine->len - CurrentPos.column + 1;
-    if( el > 0 && WorkLine->len > 0 ) {
-        memcpy( buff, &WorkLine->data[CurrentPos.column - 1], el + 1 );
-        WorkLine->len -= el;
-        WorkLine->data[CurrentPos.column - 1] = '\0';
+    len = CurrentPos.column - 1;
+    if( WorkLine->len > len && WorkLine->len > 0 ) {
+        el = WorkLine->len - len;
+        memcpy( buff, &WorkLine->data[len], el + 1 );
+        WorkLine->len = len;
+        WorkLine->data[len] = '\0';
     } else {
         el = 0;
         buff[0] = '\0';
@@ -360,7 +365,6 @@ vi_rc IMBackSpace( void )
         abbrevCnt--;
     }
     if( CurrentPos.column == 1 ) {
-
         if( !EditFlags.WrapBackSpace ) {
             return( ERR_NO_ERR );
         }
@@ -387,10 +391,11 @@ vi_rc IMBackSpace( void )
     }
     killedChar = WorkLine->data[CurrentPos.column - 2];
     overChar = WorkLine->data[CurrentPos.column - 1];
-    for( i = CurrentPos.column - 1; i <= WorkLine->len + 1; i++ ) {
+    for( i = CurrentPos.column - 1; i < WorkLine->len; i++ ) {
         WorkLine->data[i - 1] = WorkLine->data[i];
     }
     WorkLine->len--;
+    WorkLine->data[WorkLine->len] = '\0';
     GoToColumn( CurrentPos.column - 1, WorkLine->len + 1 );
     DisplayWorkLine( SSKillsFlags( killedChar ) || SSKillsFlags( overChar ) );
     return( ERR_NO_ERR );
