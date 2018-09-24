@@ -141,8 +141,8 @@ vi_rc   ConditionalChangeDirectory( const char * );
 void    FormatDirToFile( file *cfile, bool add_drives );
 
 /* dirdisp.c */
-vi_rc   StartFileComplete( char *, int, int, vi_key );
-vi_rc   ContinueFileComplete( char *data, int start, int max, vi_key what );
+vi_rc   StartFileComplete( char *data, size_t start, size_t max, vi_key what );
+vi_rc   ContinueFileComplete( char *data, size_t start, size_t max, vi_key what );
 void    PauseFileComplete( void );
 void    FinishFileComplete( void );
 
@@ -273,28 +273,28 @@ void    FreeErrorMsgData( void );
 void    ErrorFini( void );
 
 /* expandfn.c */
-int ExpandFileNames( char *, char *** );
+int     ExpandFileNames( char *, char *** );
 
 /* fcb.c */
 vi_rc   OpenFcbData( file * );
 vi_rc   ReadFcbData( file *, bool * );
-void    CreateFcbData( file *, int );
-int     FcbSize( fcb * );
+void    CreateFcbData( file *, size_t );
+size_t  FcbSize( fcb * );
 
 /* fcb2.c */
-vi_rc FindFcbWithLine( linenum, file *, fcb ** );
+vi_rc   FindFcbWithLine( linenum, file *, fcb ** );
 
 /* fcb3.c */
-vi_rc MergeFcbs( fcb_list *, fcb *, fcb * );
-vi_rc MergeAllFcbs( fcb_list * );
+vi_rc   MergeFcbs( fcb_list *, fcb *, fcb * );
+vi_rc   MergeAllFcbs( fcb_list * );
 
 /* fcbdmp.c */
-vi_rc WalkUndo( void );
-vi_rc HeapCheck( void );
-vi_rc FcbDump( void );
-vi_rc FcbThreadDump( void );
-vi_rc LineInfo( void );
-vi_rc SanityCheck( void );
+vi_rc   WalkUndo( void );
+vi_rc   HeapCheck( void );
+vi_rc   FcbDump( void );
+vi_rc   FcbThreadDump( void );
+vi_rc   LineInfo( void );
+vi_rc   SanityCheck( void );
 
 /* fcbdup.c */
 void    CreateDuplicateFcbList( fcb *, fcb_list * );
@@ -306,8 +306,8 @@ void    FreeEntireFcb( fcb * );
 void    FreeFcbList( fcb * );
 
 /* fcbsplit.c */
-vi_rc SplitFcbAtLine( linenum, file *, fcb * );
-vi_rc CheckCurrentFcbCapacity( void );
+vi_rc   SplitFcbAtLine( linenum, file *, fcb * );
+vi_rc   CheckCurrentFcbCapacity( void );
 
 /* fcbswap.c */
 void    FetchFcb( fcb * );
@@ -479,8 +479,8 @@ void    KeyAddString( const char *str );
 void    AddCurrentMouseEvent( void );
 
 /* linecfb.c */
-bool    CreateLinesFromBuffer( int, line_list *, int *, int *, short * );
-bool    CreateLinesFromFileBuffer( int, line_list *, int *, int *, short *, bool * );
+bool    CreateLinesFromBuffer( size_t, line_list *, size_t *, int *, short * );
+bool    CreateLinesFromFileBuffer( size_t, line_list *, size_t *, int *, short *, bool * );
 
 /* linedel.c */
 void    UpdateLineNumbers( linenum amt, fcb *cfcb  );
@@ -608,7 +608,7 @@ void    FiniMem( void );
 
 /* misc.c */
 long    ExecCmd( const char *, const char *, const char * );
-vi_rc   GetResponse( char *, char * );
+vi_rc   GetResponse( char *, char *, size_t );
 bool    ExitWithVerify( void );
 bool    ExitWithPrompt( bool, bool );
 bool    PromptFilesForSave( void );
@@ -677,9 +677,9 @@ void    MyFprintf( FILE *,const char *, ... );
 void    Lead( char c, int num, char *buff );
 
 /* readstr.c */
-bool    ReadStringInWindow( window_id, int, char *, char *, int, history_data * );
-vi_rc   PromptForString( char *prompt, char *buff, int maxbuff, history_data *h );
-bool    GetTextForSpecialKey( vi_key event, char *buff, int buffsize );
+bool    ReadStringInWindow( window_id, int, char *, char *, size_t, history_data * );
+vi_rc   PromptForString( char *prompt, char *buff, size_t maxbuff, history_data *h );
+bool    GetTextForSpecialKey( vi_key event, char *buff, size_t buffsize );
 void    InsertTextForSpecialKey( vi_key event, char *buff );
 
 /* replace.c */
@@ -705,7 +705,7 @@ void    FiniSavebufs( void );
 
 /* select.c */
 vi_rc   SelectItem( selectitem *si );
-vi_rc   SelectItemAndValue( window_info *, char *, char **, int , vi_rc (*)(const char *, char *, int * ), int, char **, int );
+vi_rc   SelectItemAndValue( window_info *, char *, char **, int , vi_rc (*)(const char *, char *, int * ), size_t, char **, int );
 
 /* selrgn.c */
 void    UpdateDrag( window_id, int, int );
@@ -774,8 +774,8 @@ int     RealCursorPositionOnLine( linenum, int );
 int     WinRealCursorPosition( char *, int );
 int     WinVirtualCursorPosition( char *, int );
 int     VirtualLineLen( char * );
-bool    AddLeadingTabSpace( short *, char *, int );
-bool    ConvertSpacesToTabsUpToColumn( int, char *, int, char *, int );
+bool    AddLeadingTabSpace( size_t *, char *, int );
+bool    ConvertSpacesToTabsUpToColumn( size_t, char *, size_t, char *, size_t );
 bool    CursorPositionOffRight( int vc );
 
 
@@ -841,7 +841,7 @@ void    ResetAllWindows( void );
 void    InitWordSearch( char *regword );
 vi_rc   FindColumnOfNextWordForward( line *, int *, bool, bool );
 vi_rc   FindColumnOfNextWordBackwards( line *, int *, bool, bool );
-vi_rc   GimmeCurrentWord( char *, int, bool );
+vi_rc   GimmeCurrentWord( char *, size_t, bool );
 vi_rc   GetWordBound( line *, int, bool, int *, int * );
 vi_rc   GimmeCurrentEntireWordDim( int *sc, int *ec, bool big );
 vi_rc   MarkStartOfNextWordForward( i_mark *, i_mark *, bool );

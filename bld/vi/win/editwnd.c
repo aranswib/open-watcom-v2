@@ -44,7 +44,7 @@
 
 /* Local Windows CALLBACK function prototypes */
 WINEXPORT LRESULT CALLBACK EditWindowProc( HWND, UINT, WPARAM, LPARAM );
-WINEXPORT BOOL CALLBACK ResizeExtra( HWND hwnd, LPARAM l );
+WINEXPORT BOOL CALLBACK ResizeExtra( HWND hwnd, LPARAM lparam );
 
 extern HWND hColorbar, hFontbar, hSSbar;
 
@@ -482,17 +482,17 @@ typedef void (*func)( HWND, int, int, bool );
 /*
  * mouseEvent - handle all mouse events in an edit window
  */
-static void mouseEvent( HWND hwnd, LPARAM l, bool flag, func f )
+static void mouseEvent( HWND hwnd, LPARAM lparam, bool flag, func f )
 {
     if( EditFlags.HoldEverything ) {
         return;
     }
     if( EditFlags.InsertModeActive ) {
         PushMode();
-        f( hwnd, GET_X( l ), GET_Y( l ), flag );
+        f( hwnd, GET_X( lparam ), GET_Y( lparam ), flag );
         PopMode();
     } else {
-        f( hwnd, GET_X( l ), GET_Y( l ), flag );
+        f( hwnd, GET_X( lparam ), GET_Y( lparam ), flag );
     }
     DCUpdate();
     SetWindowCursorForReal();
@@ -613,7 +613,7 @@ static void doVScroll( window_id wid, WPARAM wparam, LPARAM lparam )
     int         diff;
 
 #ifdef __NT__
-    lparam = lparam;
+    (void)lparam;
 #endif
     wd = DATA_FROM_ID( wid );
 
@@ -679,7 +679,7 @@ static void doHScroll( HWND hwnd, WPARAM wparam, LPARAM lparam )
     int newLeftColumn;
 
 #ifdef __NT__
-    lparam = lparam;
+    (void)lparam;
 #endif
     EditFlags.ScrollCommand = true;
     switch( GET_WM_HSCROLL_CODE( wparam, lparam ) ) {
@@ -729,13 +729,14 @@ WINEXPORT LRESULT CALLBACK EditWindowProc( window_id wid, UINT msg, WPARAM wpara
     HDC         hdc;
     RECT        rect;
     window_data *wd;
-    HWND        win;
-    HWND        tbwin;
+    window_id   parent_wid;
+    window_id   toolbar_wid;
     bool        killsel;
     info        *cinfo;
     info        *sinfo;
 
     w = WINDOW_FROM_ID( wid );
+
     switch( msg ) {
     case WM_CREATE:
         wd = MemAlloc( sizeof( window_data ) );
@@ -769,13 +770,13 @@ WINEXPORT LRESULT CALLBACK EditWindowProc( window_id wid, UINT msg, WPARAM wpara
             // losing focus
             cancelDrag();
             killsel = true;
-            win = (HWND)wparam;
-            if( win != NULL ) {
-                tbwin = GetToolbarWindow();
-                if( win == root_window_id || win == tbwin || win == command_window_id ||
-                    (!BAD_ID( hColorbar ) && IsChild( hColorbar, win )) ||
-                    (!BAD_ID( hFontbar ) && IsChild( hFontbar, win )) ||
-                    (!BAD_ID( hSSbar ) && IsChild( hSSbar, win )) ) {
+            parent_wid = (window_id)wparam;
+            if( parent_wid != NULL ) {
+                toolbar_wid = GetToolbarWindow();
+                if( parent_wid == root_window_id || parent_wid == toolbar_wid || parent_wid == command_window_id ||
+                    (!BAD_ID( hColorbar ) && IsChild( hColorbar, parent_wid )) ||
+                    (!BAD_ID( hFontbar ) && IsChild( hFontbar, parent_wid )) ||
+                    (!BAD_ID( hSSbar ) && IsChild( hSSbar, parent_wid )) ) {
                     killsel = false;
                 }
             }
@@ -888,8 +889,7 @@ WINEXPORT LRESULT CALLBACK EditWindowProc( window_id wid, UINT msg, WPARAM wpara
         }
         /* either way we remember to reset extra */
         GetClientRect( wid, &wd->extra );
-        wd->extra.top = WindowAuxInfo( wid, WIND_INFO_TEXT_LINES ) *
-                                         FontHeight( WIN_TEXT_FONT( &EditWindow ) );
+        wd->extra.top = WindowAuxInfo( wid, WIND_INFO_TEXT_LINES ) * FontHeight( WIN_TEXT_FONT( &EditWindow ) );
         break;
     default:
         break;
@@ -901,13 +901,13 @@ WINEXPORT LRESULT CALLBACK EditWindowProc( window_id wid, UINT msg, WPARAM wpara
 /*
  * ResizeExtra - reset the left over rectange for an edit window
  */
-WINEXPORT BOOL CALLBACK ResizeExtra( window_id wid, LPARAM l )
+WINEXPORT BOOL CALLBACK ResizeExtra( window_id wid, LPARAM lparam )
 {
     window_data         *wd;
     char                class[MAX_STR];
     int                 len;
 
-    l = l;
+    (void)lparam;
     len = GetClassName( wid, class, sizeof( class ) );
     class[len] = '\0';
     if( stricmp( EditWindowClassName, class ) ) {
@@ -916,8 +916,7 @@ WINEXPORT BOOL CALLBACK ResizeExtra( window_id wid, LPARAM l )
 
     wd = DATA_FROM_ID( wid );
     GetClientRect( wid, &wd->extra );
-    wd->extra.top = WindowAuxInfo( wid, WIND_INFO_TEXT_LINES ) *
-                                     FontHeight( WIN_TEXT_FONT( &EditWindow ) );
+    wd->extra.top = WindowAuxInfo( wid, WIND_INFO_TEXT_LINES ) * FontHeight( WIN_TEXT_FONT( &EditWindow ) );
 
     return( TRUE );
 

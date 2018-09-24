@@ -424,14 +424,14 @@ int VirtualLineLen( char *buff )
 /*
  * AddLeadingTabSpace - make leading spaces tabs (if possible)
  */
-bool AddLeadingTabSpace( short *len, char *buff, int amount )
+bool AddLeadingTabSpace( size_t *len, char *buff, int amount )
 {
     char        *tmp;
-    int         i;
-    int         j;
-    int         k;
-    int         l;
-    int         start;
+    size_t      i;
+    size_t      j;
+    size_t      k;
+    size_t      l;
+    size_t      start;
     bool        tabme;
     bool        full;
 
@@ -439,16 +439,14 @@ bool AddLeadingTabSpace( short *len, char *buff, int amount )
      * expand leading stuff into spaces
      */
     start = 0;
-    while( isspace( buff[start] ) ) {
+    while( isspace( buff[start] ) )
         start++;
-    }
     tmp = StaticAlloc();
     j = *len;
     ExpandTabsInABuffer( buff, j, tmp, EditVars.MaxLine + 1 );
     i = 0;
-    while( tmp[i] == ' ' ) {
+    while( tmp[i] == ' ' )
         i++;
-    }
 
     /*
      * subtract/add extra spaces
@@ -500,9 +498,16 @@ bool AddLeadingTabSpace( short *len, char *buff, int amount )
 /*
  * ConvertSpacesToTabsUpToColumn - add tabs only up to specified column
  */
-bool ConvertSpacesToTabsUpToColumn( int endcol, char *in, int inlen, char *out, int outlen )
+bool ConvertSpacesToTabsUpToColumn( size_t endcol, char *in, size_t inlen, char *out, size_t outlen )
 {
-    int         first_blank, j, extra, l, n, k, m, i;
+    size_t      extra;
+    size_t      first_blank;
+    size_t      i;
+    size_t      j;
+    size_t      k;
+    size_t      l;
+    size_t      m;
+    size_t      n;
     bool        blanks_inprog, tabme;
     char        oc;
     char        c;
@@ -527,7 +532,6 @@ bool ConvertSpacesToTabsUpToColumn( int endcol, char *in, int inlen, char *out, 
     oc = in[endcol];
     in[endcol] = '\0';
     for( j = 0; j <= endcol; j++ ) {
-
         c = in[j];
         if( c != ' ' || in_quotes || in_single_quotes ) {
 
@@ -543,12 +547,11 @@ bool ConvertSpacesToTabsUpToColumn( int endcol, char *in, int inlen, char *out, 
                 l = j - first_blank;
                 if( l > 1 ) {
                     n = EditVars.HardTab - Tab( j + 1, EditVars.HardTab );
-                    extra = l - n;
-
                     /*
                      * add tabs, then spaces
                      */
-                    if( extra > 0 ) {
+                    if( l > n ) {
+                        extra = l - n;
                         m = extra / EditVars.HardTab;
                         if( extra % EditVars.HardTab > 0 ) {
                             m++;
@@ -615,7 +618,7 @@ bool ConvertSpacesToTabsUpToColumn( int endcol, char *in, int inlen, char *out, 
      */
     k--;
     in[endcol] = oc;
-    if( k + inlen >= outlen ) {
+    if( inlen > outlen - k ) {
         inlen = outlen - k;
     }
     for( j = endcol; j < inlen; j++ ) {
