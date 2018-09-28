@@ -2,7 +2,7 @@
 *
 *                            Open Watcom Project
 *
-*    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *
 *  ========================================================================
 *
@@ -1948,27 +1948,6 @@ int unsetenv( const char *name )
     return( 0 );
 }
 
-void _dos_getdrive( unsigned *drive )
-{
-    char        buff[MAX_PATH];
-
-    GetCurrentDirectory( sizeof( buff ), buff );
-    *drive = tolower( buff[0] ) - 'a'+1;
-}
-
-void _dos_setdrive( unsigned drivenum, unsigned *drives )
-{
-    char        dir[4];
-
-    dir[0] = (char)drivenum + 'a' - 1;
-    dir[1] = ':';
-    dir[2] = '.';
-    dir[3] = 0;
-
-    SetCurrentDirectory( dir );
-    *drives = (unsigned)-1;
-}
-
 unsigned _dos_getfileattr( const char *path, unsigned *attribute )
 {
     HANDLE              h;
@@ -2363,59 +2342,6 @@ static BOOL __NTFindNextFileWithAttr( HANDLE h, DWORD attr, LPWIN32_FIND_DATA ff
             return( FALSE );
         }
     }
-}
-
-unsigned _dos_findfirst( const char *path, unsigned attr, struct find_t *buf )
-{
-    HANDLE              h;
-    int                 error;
-    WIN32_FIND_DATA     ffd;
-
-    h = FindFirstFile( (LPTSTR)path, &ffd );
-    if( h == INVALID_HANDLE_VALUE ) {
-        DTAXXX_HANDLE_OF( buf->reserved ) = h;
-        __set_errno( ENOENT );
-        return( (unsigned)-1 );
-    }
-    if( !__NTFindNextFileWithAttr( h, attr, &ffd ) ) {
-        error = GetLastError();
-        DTAXXX_HANDLE_OF( buf->reserved ) = INVALID_HANDLE_VALUE;
-        FindClose( h );
-        __set_errno( ENOENT );
-        return( (unsigned)-1 );
-    }
-    DTAXXX_HANDLE_OF( buf->reserved ) = h;
-    DTAXXX_ATTR_OF( buf->reserved ) = attr;
-    __GetNTDirInfo( (struct dirent *)buf, &ffd );
-    return( 0 );
-}
-
-unsigned _dos_findnext( struct find_t *buf )
-{
-    WIN32_FIND_DATA     ffd;
-
-    if( !FindNextFile( DTAXXX_HANDLE_OF( buf->reserved ), &ffd ) ) {
-        __set_errno( ENOENT );
-        return( (unsigned)-1 );
-    }
-    if( !__NTFindNextFileWithAttr( DTAXXX_HANDLE_OF( buf->reserved ), DTAXXX_ATTR_OF( buf->reserved ), &ffd ) ) {
-        __set_errno( ENOENT );
-        return( (unsigned)-1 );
-    }
-    __GetNTDirInfo( (struct dirent *)buf, &ffd );
-
-    return( 0 );
-}
-
-unsigned _dos_findclose( struct find_t *buf )
-{
-    if( DTAXXX_HANDLE_OF( buf->reserved ) != INVALID_HANDLE_VALUE ) {
-        if( !FindClose( DTAXXX_HANDLE_OF( buf->reserved ) ) ) {
-            __set_errno( ENOENT );
-            return( (unsigned)-1 );
-        }
-    }
-    return( 0 );
 }
 
 char        *optarg;            // pointer to option argument

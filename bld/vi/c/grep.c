@@ -502,15 +502,11 @@ static vi_rc doGREP( const char *dirlist )
             memcpy( &wi_disp, &dirw_info, sizeof( window_info ) );
             wi_disp.area.x1 = 14;
             wi_disp.area.x2 = EditVars.WindMaxWidth - 2;
-            i = wi_disp.area.y2 - wi_disp.area.y1 + 1;
-            if( wi_disp.has_border ) {
-                i -= 2;
-            }
+            i = wi_disp.area.y2 - wi_disp.area.y1 + BORDERDIFF( wi_disp );
             if( clist < i ) {
                 wi_disp.area.y2 -= ( i - clist );
             }
             show_lineno = ( clist > i );
-
             /*
              * build options window
              */
@@ -523,24 +519,25 @@ static vi_rc doGREP( const char *dirlist )
                  * process selections
                  */
                 for( ;; ) {
-                    if( n + 1 > clist ) {
+                    if( n > clist - 1 ) {
                         n = clist - 1;
                     }
-                    memset( &si, 0, sizeof( si ) );
+                    si.is_menu = false;
+                    si.show_lineno = show_lineno;
                     si.wi = &wi_disp;
                     si.title = "Files With Matches";
                     si.list = list;
                     si.maxlist = clist;
+                    si.result = NULL;
                     si.num = n;
+                    si.allowrl = NULL;
+                    si.hilite = NULL;
                     si.retevents = editopts_evlist;
                     si.event = VI_KEY( DUMMY );
-                    si.show_lineno = show_lineno;
                     si.cln = n + 1;
                     si.event_wid = wid;
-
                     rc = SelectItem( &si );
                     n = si.num;
-
                     if( rc != ERR_NO_ERR || n < 0 ) {
                         break;
                     }

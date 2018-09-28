@@ -2,7 +2,7 @@
 *
 *                            Open Watcom Project
 *
-*    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
+* Copyright (c) 2018-2018 The Open Watcom Contributors. All Rights Reserved.
 *
 *  ========================================================================
 *
@@ -24,25 +24,31 @@
 *
 *  ========================================================================
 *
-* Description:  Get DOS extended error.
+* Description:  <dosfunc.h> header file extensions
 *
 ****************************************************************************/
 
 
-#include "variety.h"
-#include <dos.h>
-#include "dosfuncx.h"
+#include <dosfunc.h>
 
-
-_WCRTLINK int dosexterr( struct _DOSERROR *doserr )
-{
-    union REGS  regs;
-
-    regs.h.ah = DOS_EXT_ERR;
-    regs.w.bx = 0;                  /* DOS version 3.00 */
-    intdos( &regs, &regs );         /* get extended error */
-    doserr->errclass = regs.h.bh;
-    doserr->action = regs.h.bl;
-    doserr->locus = regs.h.ch;
-    return( doserr->exterror = regs.w.ax );
-}
+#define DOS_GET_CHAR_ECHO_CHECK     0x01
+#define DOS_GET_CHAR_NO_ECHO_CHECK  0x08
+#define DOS_BUFF_INPUT              0x0A
+#define DOS_SET_DRIVE               0x0E
+#define DOS_DELETE_FCB              0x13
+#define DOS_CREATE_PSP              0x26
+#define DOS_PARSE_FCB               0x29
+#define DOS_GET_DTA                 0x2F
+#define DOS_TERM_STAY_RESID         0x31
+#define DOS_FREE_SPACE              0x36
+#define DOS_COUNTRY_INFO            0x38
+#define DOS_SET_PSP                 0x50
+#define DOS_GET_PSP                 0x51
+#define DOS_GET_LIST_OF_LIST        0x52
+#define DOS_EXT_ERR                 0x59
+#define DOS_CREATE_TMP              0x5A
+#define DOS_CREATE_NEW              0x5B
+#define DOS_RECORD_LOCK             0x5C
+#define DOS_TRUENAME                0x60
+#define DOS_SET_HCOUNT              0x67
+#define DOS_EXT_CREATE              0x6C

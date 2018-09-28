@@ -129,28 +129,27 @@ static int PickATag( int tag_count, char **tag_list, const char *tagname )
     memcpy( &wi, &dirw_info, sizeof( window_info ) );
     wi.area.x1 = 12;
     wi.area.x2 = EditVars.WindMaxWidth - 12;
-    i = wi.area.y2 - wi.area.y1 + 1;
-    if( wi.has_border ) {
-        i -= 2;
-    }
+    i = wi.area.y2 - wi.area.y1 + BORDERDIFF( wi );
     if( tag_count < i ) {
         wi.area.y2 -= i - tag_count;
     }
     show_lineno = ( tag_count > i );
     MySprintf( title, "Pick A File For Tag \"%s\"", tagname );
 
-    memset( &si, 0, sizeof( si ) );
+    si.is_menu = false;
+    si.show_lineno = show_lineno;
     si.wi = &wi;
     si.title = title;
     si.list = tag_list;
     si.maxlist = tag_count;
+    si.result = NULL;
     si.num = 0;
+    si.allowrl = NULL;
+    si.hilite = NULL;
     si.retevents = NULL;
     si.event = VI_KEY( DUMMY );
-    si.show_lineno = show_lineno;
     si.cln = 1;
     si.event_wid = NO_WINDOW;
-
     rc = SelectItem( &si );
     if( rc != ERR_NO_ERR ) {
         return( -1 );

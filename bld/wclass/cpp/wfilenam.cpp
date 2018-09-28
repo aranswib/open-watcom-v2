@@ -38,7 +38,6 @@ extern "C" {
     #include <stdlib.h>
 #ifndef __UNIX__
     #include <direct.h>
-    #include <dos.h>
 #endif
     #include <time.h>
 #ifdef __UNIX__
@@ -66,15 +65,13 @@ typedef struct fullName {
 } FullName;
 
 #ifndef __UNIX__
-static bool setdrive( const char* drive, unsigned* olddrive )
+static bool setdrive( const char* drive, int* olddrive )
 {
     if( strlen( drive ) > 0 ) {
-        _dos_getdrive( olddrive );
-        unsigned drv = toupper( drive[0]) - 'A' + 1;    //1='A'; 2='B'; ...
+        *olddrive = _getdrive();
+        int drv = toupper( drive[0]) - 'A' + 1;    // 1='A'; 2='B'; ...
         if( *olddrive != drv ) {
-            unsigned total; _dos_setdrive( drv, &total );
-            unsigned newdrive; _dos_getdrive( &newdrive );
-            if( drv != newdrive ) {
+            if( _chdrive( drv ) ) {
                 return( false );
             }
         }
@@ -281,15 +278,14 @@ bool WEXPORT WFileName::setCWD() const
 bool WEXPORT WFileName::setCWD() const
 {
     splitpath( *this, _x.drive, _x.dir, _x.fname, _x.ext, PATHSEP_STR );
-    unsigned olddrive;
+    int olddrive;
     if( setdrive( _x.drive, &olddrive ) ) {
         if( strlen( _x.dir ) > 0 ) {
             int ret = chdir( _x.dir );
             if( ret == 0 ) {
                 return( true );
             }
-            unsigned total;
-            _dos_setdrive( olddrive, &total );
+            _chdrive( olddrive );
             return( false );
         }
         return( true );
@@ -321,11 +317,10 @@ bool WEXPORT WFileName::makeDir() const
 {
     splitpath( *this, _x.drive, _x.dir, _x.fname, _x.ext, PATHSEP_STR );
     if( strlen( _x.dir ) > 0 ) {
-        unsigned olddrive;
+        int olddrive;
         if( setdrive( _x.drive, &olddrive ) ) {
             int ret = mkdir( _x.dir );
-            unsigned total;
-            _dos_setdrive( olddrive, &total );
+            _chdrive( olddrive );
             return( ret == 0 );
         }
         return( false );
@@ -346,7 +341,7 @@ bool WEXPORT WFileName::dirExists() const
 }
 
 #ifdef __UNIX__
-bool WEXPORT WFileName::attribs( char* attribs ) const
+bool WEXPORT WFileName::attribs( unsigned* attribs ) const
 {
     /* XXX needs to be fixed: just to get it going */
     struct stat st;
@@ -356,21 +351,25 @@ bool WEXPORT WFileName::attribs( char* attribs ) const
     return( stat( *this, &st ) == 0 );
 }
 #else
-bool WEXPORT WFileName::attribs( char* attribs ) const
+bool WEXPORT WFileName::attribs( unsigned* attribs ) const
 {
-    struct find_t fileinfo;
+    struct _finddata_t fileinfo;
+    long handle;
+    long rc;
+
     #define FIND_STYLE _A_NORMAL
-    int rc = _dos_findfirst( *this, FIND_STYLE, &fileinfo );
-    if( rc == 0 ) {
+    rc = handle = _findfirst( *this, &fileinfo );
+    while( rc != -1 && (fileinfo.attrib & FIND_STYLE) == 0 ) {
+        rc = _findnext( handle, &fileinfo );
+    }
+    #undef FIND_STYLE
+    if( rc != -1 ) {
         if( attribs != NULL ) {
             *attribs = fileinfo.attrib;
         }
     }
-    #undef FIND_STYLE
-    #ifndef __WINDOWS__
-    _dos_findclose( &fileinfo );
-    #endif
-    return( rc == 0 );
+    _findclose( handle );
+    return( rc != -1 );
 }
 #endif
 
