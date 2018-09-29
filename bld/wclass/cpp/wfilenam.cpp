@@ -69,7 +69,7 @@ static bool setdrive( const char* drive, int* olddrive )
 {
     if( strlen( drive ) > 0 ) {
         *olddrive = _getdrive();
-        int drv = toupper( drive[0]) - 'A' + 1;    // 1='A'; 2='B'; ...
+        int drv = toupper( (unsigned char)drive[0] ) - 'A' + 1;    // 1='A'; 2='B'; ...
         if( *olddrive != drv ) {
             if( _chdrive( drv ) ) {
                 return( false );
@@ -354,8 +354,8 @@ bool WEXPORT WFileName::attribs( unsigned* attribs ) const
 bool WEXPORT WFileName::attribs( unsigned* attribs ) const
 {
     struct _finddata_t fileinfo;
-    long handle;
-    long rc;
+    intptr_t handle;
+    intptr_t rc;
 
     #define FIND_STYLE _A_NORMAL
     rc = handle = _findfirst( *this, &fileinfo );
