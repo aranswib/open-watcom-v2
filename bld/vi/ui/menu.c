@@ -200,17 +200,17 @@ static menu *findMenu( const char *str, menu ***predef_menu )
 {
 //    int         len;
     menu        *res;
-    int         num;
+    int         flt_id;
 
 //    len = strlen( str );
     *predef_menu = NULL;
     res = NULL;
     if( str[0] == 'f' || str[0] == 'w' ) {
         if( strnicmp( str, "float", 5 ) == 0 ) {
-            num = str[5] - '0';
-            if( num >= 0 && num < MAX_FLOAT_MENUS ) {
-                res = floatMenus[num];
-                *predef_menu = &floatMenus[num];
+            flt_id = str[5] - '0';
+            if( flt_id >= 0 && flt_id < MAX_FLOAT_MENUS ) {
+                res = floatMenus[flt_id];
+                *predef_menu = &floatMenus[flt_id];
             }
         } else if( stricmp( str, "windowgadget" ) == 0 ) {
             res = windowGadgetMenu;
@@ -601,15 +601,15 @@ vi_rc InitMenu( void )
 void FiniMenu( void )
 {
     menu        *menu;
-    int         i;
+    int         flt_id;
 
     while( (menu = menuHead) != NULL ) {
         menuHead = menuHead->next;
         freeMenu( menu );
     }
-    for( i = 0; i < MAX_FLOAT_MENUS; i++ ) {
-        if( floatMenus[i] != NULL ) {
-            freeMenu( floatMenus[i] );
+    for( flt_id = 0; flt_id < MAX_FLOAT_MENUS; flt_id++ ) {
+        if( floatMenus[flt_id] != NULL ) {
+            freeMenu( floatMenus[flt_id] );
         }
     }
     freeMenu( windowGadgetMenu );
@@ -874,17 +874,17 @@ vi_rc DoWindowGadgetMenu( void )
 /*
  * DoFloatMenu - handle floating menus
  */
-vi_rc DoFloatMenu( int id, int slen, windim x1, windim y1 )
+vi_rc DoFloatMenu( int flt_id, int slen, windim x1, windim y1 )
 {
     vi_rc       rc;
 
-    if( id < 0 || id >= MAX_FLOAT_MENUS ) {
+    if( flt_id < 0 || flt_id >= MAX_FLOAT_MENUS ) {
         return( ERR_INVALID_MENU );
     }
-    if( floatMenus[id] == NULL ) {
+    if( floatMenus[flt_id] == NULL ) {
         return( ERR_INVALID_MENU );
     }
-    rc = processMenu( -1, floatMenus[id], x1, y1, slen );
+    rc = processMenu( -1, floatMenus[flt_id], x1, y1, slen );
     return( rc );
 
 } /* DoFloatMenu */
@@ -895,7 +895,7 @@ vi_rc DoFloatMenu( int id, int slen, windim x1, windim y1 )
 vi_rc ActivateFloatMenu( const char *data )
 {
     char        str[MAX_STR];
-    int         id, slen, x1, y1;
+    int         flt_id, slen, x1, y1;
 
     /*
      * get input syntax :
@@ -905,7 +905,7 @@ vi_rc ActivateFloatMenu( const char *data )
     if( *str == '\0' ) {
         return( ERR_INVALID_MENU );
     }
-    id = atoi( str );
+    flt_id = atoi( str );
     data = GetNextWord1( data, str );
     if( *str == '\0' ) {
         return( ERR_INVALID_MENU );
@@ -921,7 +921,7 @@ vi_rc ActivateFloatMenu( const char *data )
         return( ERR_INVALID_MENU );
     }
     y1 = atoi( str );
-    return( DoFloatMenu( id, slen, x1, y1 ) );
+    return( DoFloatMenu( flt_id, slen, x1, y1 ) );
 
 } /* ActivateFloatMenu */
 
