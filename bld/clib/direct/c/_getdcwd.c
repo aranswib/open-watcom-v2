@@ -41,26 +41,29 @@
   #ifdef __BIG_DATA__
     #define AUX_INFO    \
         parm caller     [si ax] [dl] \
-        modify exact    [ax si];
+        value           [ax] \
+        modify exact    [ax si]
   #else
     #define AUX_INFO    \
         parm caller     [si] [dl] \
-        modify exact    [ax];
+        value           [ax] \
+        modify exact    [ax]
   #endif
 #else
     #define AUX_INFO    \
         parm caller     [esi] [dl] \
-        modify exact    [eax];
+        value           [eax] \
+        modify exact    [eax]
 #endif
 
 extern unsigned __getdcwd_sfn( char *buff, unsigned char drv );
 #pragma aux __getdcwd_sfn = \
-        _SET_DSSI       \
-        _MOV_AH DOS_GETCWD \
-        _INT_21         \
-        _RST_DS         \
-        "call __doserror_" \
-        AUX_INFO
+        _SET_DSSI           \
+        _MOV_AH DOS_GETCWD  \
+        _INT_21             \
+        _RST_DS             \
+        "call __doserror_"  \
+    AUX_INFO
 
 #ifdef __WATCOM_LFN__
 static tiny_ret_t __getdcwd_lfn( char *buff, unsigned char drv )
