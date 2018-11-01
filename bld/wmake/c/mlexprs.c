@@ -40,8 +40,6 @@
 #include "msg.h"
 #include "mvecstr.h"
 
-#include "clibext.h"
-
 
 char    *targ_path;
 char    *dep_path;
@@ -602,11 +600,11 @@ STATIC char *DeMacroDoubleQuote( bool IsDoubleQuote )
     buffer[pos] = NULLCHAR;
     UnGetCHR( s );
     OutString = StartVec();
-    CatStrToVec( OutString, p );
+    WriteVec( OutString, p );
     FreeSafe( p );
-    CatStrToVec( OutString, buffer );
+    WriteVec( OutString, buffer );
     p = DeMacroDoubleQuote( true );
-    CatStrToVec( OutString, p );
+    WriteVec( OutString, p );
     FreeSafe( p );
     return( FinishVec( OutString ) );
 }

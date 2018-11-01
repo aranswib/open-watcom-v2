@@ -52,6 +52,7 @@
     #include "idedrv.h"
 #endif
 #include "make.h"
+#include "wio.h"
 #include "mtarget.h"
 #include "macros.h"
 #include "mcache.h"
@@ -108,7 +109,7 @@ typedef struct {
 STATIC  UINT8   lastErrorLevel;
 STATIC  UINT16  tmpFileNumber;          /* temp file number         */
 STATIC  char    tmpFileChar  ;          /* temp file number chari   */
-STATIC  int     currentFileHandle;      /* %write, %append, %create */
+STATIC  FILE    *currentFileHandle;     /* %write, %append, %create */
 STATIC  char    *currentFileName;
 
 static bool     RecursiveRM( const char *dir, const rm_flags *flags );
@@ -254,9 +255,8 @@ STATIC char *createTmpFileName( void )
 }
 
 
-STATIC RET_T processInlineFile( int handle, const char *body,
-    const char *fileName, bool writeToFile )
-/***********************************************************/
+STATIC RET_T processInlineFile( FILE *fp, const char *body, const char *fileName )
+/********************************************************************************/
 {
     int         index;
     RET_T       ret;
@@ -279,13 +279,13 @@ STATIC RET_T processInlineFile( int handle, const char *body,
             InsString( body + currentSent, false );
             DeMacroBody = ignoreWSDeMacro( false, ForceDeMacro() );
             currentSent = index;
-            if( writeToFile ) {
+            if( fp != NULL ) {
                 size_t bytes = strlen( DeMacroBody );
 
-                if( bytes != (size_t)posix_write( handle, DeMacroBody, bytes ) ) {
+                if( bytes != fwrite( DeMacroBody, 1, bytes, fp ) ) {
                     ret = RET_ERROR;
                 }
-                if( 1 != posix_write( handle, "\n", 1 ) ) {
+                if( 1 != fwrite( "\n", 1, 1, fp ) ) {
                     ret = RET_ERROR;
                 }
             } else {
@@ -316,10 +316,10 @@ STATIC RET_T processInlineFile( int handle, const char *body,
     return( ret );
 }
 
-STATIC RET_T writeLineByLine( int handle, const char *body )
-/**********************************************************/
+STATIC RET_T writeLineByLine( FILE *fp, const char *body )
+/********************************************************/
 {
-    return( processInlineFile( handle, body, NULL, true ) );
+    return( processInlineFile( fp, body, NULL ) );
 }
 
 
@@ -360,7 +360,7 @@ STATIC RET_T VerbosePrintTempFile( const FLIST *head )
 
     for( current = head; current != NULL; current = current->next ) {
         assert( current->fileName != NULL );
-        ret = processInlineFile( 0, current->body, current->fileName, false );
+        ret = processInlineFile( NULL, current->body, current->fileName );
     }
     return( ret );
 }
@@ -371,7 +371,7 @@ STATIC RET_T createFile( const FLIST *head )
  */
 {
     NKLIST  *temp;
-    int     handle;
+    FILE    *fp;
     char    *fileName = NULL;
     char    *tmpFileName = NULL;
     RET_T   ret;
@@ -393,13 +393,13 @@ STATIC RET_T createFile( const FLIST *head )
 
     if( ret != RET_ERROR ) {
         tmpFileName = RemoveBackSlash( fileName );
-        handle = open( tmpFileName, O_TEXT | O_WRONLY | O_CREAT | O_TRUNC, PMODE_RW );
-        if( handle != -1 ) {
-            if( writeLineByLine( handle, head->body ) == RET_ERROR ) {
+        fp = fopen( tmpFileName, "w" );
+        if( fp != NULL ) {
+            if( writeLineByLine( fp, head->body ) == RET_ERROR ) {
                 PrtMsg( ERR | ERROR_WRITING_FILE, tmpFileName );
                 ret = RET_ERROR;
             }
-            if( close( handle ) != -1 ) {
+            if( fclose( fp ) == 0 ) {
                 if( !head->keep ) {
                     temp = NewNKList();
                     temp->fileName = StrDupSafe( tmpFileName );
@@ -442,7 +442,6 @@ STATIC RET_T writeInlineFiles( FLIST *head, char **commandIn )
     cmdText    = *commandIn;
     ret        = RET_SUCCESS;
     newCommand = StartVec();
-    WriteVec( newCommand, "" );
     index      = 0;
     start      = index;
 
@@ -469,12 +468,12 @@ STATIC RET_T writeInlineFiles( FLIST *head, char **commandIn )
             if( ret == RET_ERROR ) {
                 break;
             }
-            CatNStrToVec( newCommand, cmdText + start, index - start - 2 );
+            WriteNVec( newCommand, cmdText + start, index - start - 2 );
             start = index;
             FreeSafe( current->fileName );
             current->fileName = createTmpFileName();
 
-            CatStrToVec( newCommand, current->fileName );
+            WriteVec( newCommand, current->fileName );
         }
         if( !Glob.noexec ) {
             ret = createFile( current );
@@ -487,7 +486,7 @@ STATIC RET_T writeInlineFiles( FLIST *head, char **commandIn )
             }
         }
     }
-    CatNStrToVec( newCommand, cmdText+start, strlen( cmdText ) - start );
+    WriteNVec( newCommand, cmdText+start, strlen( cmdText ) - start );
     FreeSafe( cmdText );
     *commandIn = FinishVec( newCommand );
     return( ret );
@@ -588,9 +587,9 @@ STATIC RET_T percentMake( char *arg )
 STATIC void closeCurrentFile( void )
 /**********************************/
 {
-    if( currentFileHandle != -1 ) {
-        close( currentFileHandle );
-        currentFileHandle = -1;
+    if( currentFileHandle != NULL ) {
+        fclose( currentFileHandle );
+        currentFileHandle = NULL;
     }
     if( currentFileName != NULL ) {
         FreeSafe( currentFileName );
@@ -607,7 +606,7 @@ STATIC RET_T percentWrite( char *arg, enum write_type type )
     char const  *text;
     char        *fn;
     char const  *cmd_name;
-    int         open_flags;
+    char const  *open_flags;
     size_t      len;
 
     assert( arg != NULL );
@@ -667,15 +666,14 @@ STATIC RET_T percentWrite( char *arg, enum write_type type )
     if( type == WR_CREATE || currentFileName == NULL || !FNameEq( currentFileName, fn ) ) {
         closeCurrentFile();
         currentFileName = StrDupSafe( fn );
-        open_flags = O_WRONLY | O_CREAT | O_TEXT;
         if( type == WR_APPEND ) {
-            open_flags |= O_APPEND;
+            open_flags = "a";
         } else {
-            open_flags |= O_TRUNC;
+            open_flags = "w";
         }
 
-        currentFileHandle = open( fn, open_flags, PMODE_RW );
-        if( currentFileHandle == -1 ) {
+        currentFileHandle = fopen( fn, open_flags );
+        if( currentFileHandle == NULL ) {
             PrtMsg( ERR | OPENING_FOR_WRITE, fn );
             closeCurrentFile();
             return( RET_ERROR );
@@ -685,7 +683,7 @@ STATIC RET_T percentWrite( char *arg, enum write_type type )
     if( type != WR_CREATE ) {
         *p = '\n';          /* replace null terminator with newline */
         len = ( p - text ) + 1;
-        if( (size_t)posix_write( currentFileHandle, text, len ) != len ) {
+        if( fwrite( text, 1, len, currentFileHandle ) != len ) {
             PrtMsg( ERR | DOING_THE_WRITE );
             closeCurrentFile();
             return( RET_ERROR );
@@ -2121,7 +2119,7 @@ void ExecInit( void )
 {
     lastErrorLevel = 0;
     currentFileName = NULL;
-    currentFileHandle = -1;
+    currentFileHandle = NULL;
     /* Take any number first */
     tmpFileNumber = (UINT16)( time( NULL ) % 100000 );
 }
