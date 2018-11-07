@@ -49,13 +49,19 @@ jobs:
   include:
     #################################
     - stage: Initialize
+      name: "Initialize stages shared environment"
       os: linux
       before_script:
         - travis/envinfo.sh
         - travis/cacheinf.sh
+        echo "OWOSXBUILD"
+        echo env(OWOSXBUILD)
+        echo "OWOSX"
+        echo env(OWOSX)
       script: travis/tinit.sh
     #################################
     - stage: Bootstrap
+      name: "Build minimal set of build tools"
       os: linux
       install:
         - export OWTOOLS=GCC
@@ -74,6 +80,7 @@ jobs:
       script: travis/build.sh boot
     #################################
     - stage: Build
+      name: "OW tools build"
       os: linux
       install:
         - export OWTOOLS=GCC
@@ -84,6 +91,7 @@ jobs:
         - sudo apt-get install -y dosemu
       script: travis/build.sh build
     - # ...
+      name: "OW Documentation build"
       os: linux
       install:
         - export OWTOOLS=GCC
@@ -107,7 +115,8 @@ jobs:
         - export OWDOSBOX=dosbox
       script: travis/build.sh build
     #################################
-    - stage: Test1
+    - stage: Tests
+      name: "Test wasm assembler"
       os: linux
       install:
         - export OWTOOLS=WATCOM
@@ -118,8 +127,35 @@ jobs:
         - export OWTRAVISJOB=TEST
         - export OWDOCBUILD=0
         - export OWVERBOSE=0
-      script: travis/test.sh
-    - stage: Test2
+      script: travis/test.sh wasm
+    - # ...
+      name: "Test C compiler"
+      os: linux
+      install:
+        - export OWTOOLS=WATCOM
+        - export WATCOM=$OWROOT/test
+        - export PATH=$WATCOM/binl:$PATH
+        - export INCLUDE=$WATCOM/lh
+        - unset LIB
+        - export OWTRAVISJOB=TEST
+        - export OWDOCBUILD=0
+        - export OWVERBOSE=0
+      script: travis/test.sh c
+    - # ...
+      name: "Test FORTRAN 77 compiler"
+      os: linux
+      install:
+        - export OWTOOLS=WATCOM
+        - export WATCOM=$OWROOT/test
+        - export PATH=$WATCOM/binl:$PATH
+        - export INCLUDE=$WATCOM/lh
+        - unset LIB
+        - export OWTRAVISJOB=TEST
+        - export OWDOCBUILD=0
+        - export OWVERBOSE=0
+      script: travis/test.sh f77
+    - # ...
+      name: "Test C++ compiler"
       os: linux
       install:
         - export OWTOOLS=WATCOM
@@ -131,7 +167,8 @@ jobs:
         - export OWDOCBUILD=0
         - export OWVERBOSE=0
       script: travis/test.sh cpp
-    - stage: Test3
+    - # ...
+      name: "Test C run-time library"
       os: linux
       install:
         - export OWTOOLS=WATCOM
@@ -145,6 +182,7 @@ jobs:
       script: travis/test.sh crtl
     #################################
     - stage: Finalize
+      name: "Clean stages shared environment"
       os: linux
       before_script:
         - travis/envinfo.sh
