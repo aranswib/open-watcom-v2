@@ -2,7 +2,7 @@
 *
 *                            Open Watcom Project
 *
-* Copyright (c) 2015-2016 The Open Watcom Contributors. All Rights Reserved.
+* Copyright (c) 2015-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -25,7 +25,7 @@
 *
 *  ========================================================================
 *
-* Description:  GUI library window proc and other assorted guts.
+* Description:  GUI library main window procedure and other assorted guts
 *
 ****************************************************************************/
 
@@ -44,11 +44,8 @@
 #include "guisysin.h"
 #include "guisysfi.h"
 #include "guitool.h"
-#include "guixdraw.h"
-#include "guifloat.h"
 #include "guiscrol.h"
 #include "guiwinlp.h"
-#include "guifont.h"
 #include "guistr.h"
 #include "guixhook.h"
 #include "ctl3dcvr.h"
@@ -58,11 +55,11 @@
 #include "guixdlg.h"
 #include "guistyle.h"
 #include "guifront.h"
-#include "guiwinlp.h"
 #include "guisystr.h"
 #include "guixmain.h"
 #include "guirdlg.h"
 #include "guimdi.h"
+#include "guistat.h"
 
 
 #if !defined(__NT__)
@@ -85,8 +82,6 @@ typedef struct wmcreate_info {
     gui_window          *wnd;
     gui_create_info     *dlg_info;
 } wmcreate_info;
-
-extern bool     GUIMainTouched;
 
 bool            EditControlHasFocus = false;
 
@@ -128,7 +123,7 @@ static void GUISetWindowClassName( void )
 {
     char        *class_name;
 
-    class_name = GUIGetWindowClassName();
+    class_name = GUIGetWindowClassName();           /* user replaceable stub function */
     if( class_name == NULL || *class_name == '\0' ) {
         class_name = GUIDefaultClassName;
     }
@@ -228,14 +223,14 @@ static bool SetupClass( void )
 
 void GUICleanup( void )
 {
-    GUIDeath();
+    GUIDeath();                 /* user replaceable stub function */
     GUICleanupHotSpots();
     GUIFreeStatus();
+    GUI3DDialogFini();
+    GUIFiniDialog();
+    GUISysFini();
     GUIFiniInternalStringTable();
     GUILoadStrFini();
-    GUISysFini();
-    GUIFiniDialog();
-    GUI3DDialogFini();
 }
 
 #ifdef __OS2_PM__
@@ -281,6 +276,8 @@ int GUIXMain( int argc, char *argv[],
 
     GUIMainTouched = true;
 
+    GUIMemOpen();
+
     GUIStoreArgs( argv, argc );
 
     _wpi_setwpiinst( inst, 0, &GUIMainHInst );
@@ -289,9 +286,8 @@ int GUIXMain( int argc, char *argv[],
     ok = true;
 
     GUISetWindowClassName();
-    GUIMemOpen();
 
-    ok = GUIFirstCrack();
+    ok = GUIFirstCrack();       /* user replaceable stub function */
 
     if( ok ) {
         if( !register_done ) {
@@ -325,7 +321,7 @@ int GUIXMain( int argc, char *argv[],
     WinTerminate( inst );
 #endif
     GUICleanup();
-    GUIDead();
+    GUIDead();                  /* user replaceable stub function */
     GUIMemClose();
     return( ret );
 }
@@ -378,7 +374,6 @@ void GUIShowWindowNA( gui_window *wnd )
 
 bool GUIWndInit( unsigned DClickInterval, gui_window_styles style )
 {
-    GUIMemOpen();
     Style = style;
     GUISysInit( INIT_MOUSE_INITIALIZED );
     _wpi_setdoubleclicktime( DClickInterval );

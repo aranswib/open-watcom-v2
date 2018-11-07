@@ -24,74 +24,26 @@
 *
 *  ========================================================================
 *
-* Description:  WHEN YOU FIGURE OUT WHAT THIS FILE DOES, PLEASE
-*               DESCRIBE IT HERE!
+* Description:  Implementation of inet_lnaof() for RDOS.
 *
 ****************************************************************************/
 
 
-/*
-    Use as follows for initializing arrays that index via type->id
+#include "variety.h"
+#include <stdio.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-    #define ENTRY_ERROR blah_error,
-    ...
-    #define ENTRY_FREE  blah_free,
+_WCRTLINK in_addr_t inet_lnaof( struct in_addr __in )
+{
+    unsigned long a = ntohl( __in.s_addr );
 
-    #include "type_arr.h"
-*/
-ENTRY_ERROR
-ENTRY_BOOL
-ENTRY_CHAR
-ENTRY_SCHAR
-ENTRY_UCHAR
-ENTRY_WCHAR
-ENTRY_SSHORT
-ENTRY_USHORT
-ENTRY_SINT
-ENTRY_UINT
-ENTRY_SLONG
-ENTRY_ULONG
-ENTRY_SLONG64
-ENTRY_ULONG64
-ENTRY_FLOAT
-ENTRY_DOUBLE
-ENTRY_LONG_DOUBLE
-ENTRY_ENUM
-ENTRY_POINTER
-ENTRY_TYPEDEF
-ENTRY_CLASS
-ENTRY_BITFIELD
-ENTRY_FUNCTION
-ENTRY_ARRAY
-ENTRY_DOT_DOT_DOT
-ENTRY_VOID
-ENTRY_MODIFIER
-ENTRY_MEMBER_POINTER
-ENTRY_GENERIC
+    if( IN_CLASSA( a ) )
+        return( a & IN_CLASSA_HOST );
 
-#undef ENTRY_ERROR
-#undef ENTRY_CHAR
-#undef ENTRY_SCHAR
-#undef ENTRY_UCHAR
-#undef ENTRY_WCHAR
-#undef ENTRY_SSHORT
-#undef ENTRY_USHORT
-#undef ENTRY_SINT
-#undef ENTRY_UINT
-#undef ENTRY_SLONG
-#undef ENTRY_ULONG
-#undef ENTRY_FLOAT
-#undef ENTRY_DOUBLE
-#undef ENTRY_LONG_DOUBLE
-#undef ENTRY_ENUM
-#undef ENTRY_POINTER
-#undef ENTRY_TYPEDEF
-#undef ENTRY_CLASS
-#undef ENTRY_BITFIELD
-#undef ENTRY_FUNCTION
-#undef ENTRY_ARRAY
-#undef ENTRY_DOT_DOT_DOT
-#undef ENTRY_VOID
-#undef ENTRY_MODIFIER
-#undef ENTRY_MEMBER_POINTER
-#undef ENTRY_GENERIC
+    if( IN_CLASSB( a ) )
+        return( a & IN_CLASSB_HOST );
+
+    return( a & IN_CLASSC_HOST );
+}

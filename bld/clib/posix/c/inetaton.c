@@ -24,15 +24,23 @@
 *
 *  ========================================================================
 *
-* Description:  WHEN YOU FIGURE OUT WHAT THIS FILE DOES, PLEASE
-*               DESCRIBE IT HERE!
+* Description:  Implementation of inet_aton() for RDOS.
 *
 ****************************************************************************/
 
 
-#ifndef WDIS_DWARF_INCLUDED
-#define WDIS_DWARF_INCLUDED
+#include "variety.h"
+#include <stdio.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 
-extern orl_table_index          GetDwarfLines( section_ptr section );
+_WCRTLINK int inet_aton( const char *cp, struct in_addr *__inp )
+{
+    unsigned long int ip = inet_addr( cp );
 
-#endif
+    if (__inp)
+        __inp->s_addr = ip;
+    return( ip );
+}
+

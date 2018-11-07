@@ -8,7 +8,6 @@ dist: trusty
 
 env:
   global:
-    - OWOSX=$OWOSXBUILD
     - OWROOT=$TRAVIS_BUILD_DIR
     - OWOBJDIR=binbuild
     - OWDOCBUILD=0
@@ -23,7 +22,9 @@ cache:
   directories:
     - build/$OWOBJDIR
     - bld/watcom/$OWOBJDIR
+#    - bld
     - test
+    - build1
 
 before_script:
    # initialize OW build environment variables
@@ -54,10 +55,6 @@ jobs:
       before_script:
         - travis/envinfo.sh
         - travis/cacheinf.sh
-        echo "OWOSXBUILD"
-        echo env(OWOSXBUILD)
-        echo "OWOSX"
-        echo env(OWOSX)
       script: travis/tinit.sh
     #################################
     - stage: Bootstrap
@@ -68,18 +65,19 @@ jobs:
         - export OWTRAVISJOB=BOOTSTRAP
         - export OWDOCBUILD=0
         - export OWVERBOSE=1
-      script: travis/build.sh boot
+      script: travis/build.sh
     - # ...
-      if: env(OWOSX) = 1
+      name: "Build minimal set of build tools"
+      if: env(OWOSXBUILD) = 1
       os: osx
       install:
-        - export OWTOOLS=GCC
+        - export OWTOOLS=CLANG
         - export OWTRAVISJOB=BOOTSTRAP
         - export OWDOCBUILD=0
         - export OWVERBOSE=1
-      script: travis/build.sh boot
+      script: travis/build.sh
     #################################
-    - stage: Build
+    - stage: Build1
       name: "OW tools build"
       os: linux
       install:
@@ -89,7 +87,7 @@ jobs:
         - export OWVERBOSE=0
           # install DOS Emulator
         - sudo apt-get install -y dosemu
-      script: travis/build.sh build
+      script: travis/build.sh
     - # ...
       name: "OW Documentation build"
       os: linux
@@ -101,19 +99,31 @@ jobs:
         - export OWGHOSTSCRIPTPATH=$PATH
           # install DOS Emulator + Ghostscript
         - sudo apt-get install -y dosemu ghostscript
-      script: travis/build.sh docpdf
+      script: travis/build.sh
     - # ...
-      if: env(OWOSX) = 1
+      name: "OW tools OSX build 1"
+      if: env(OWOSXBUILD) = 1
       os: osx
       install:
-        - export OWTOOLS=GCC
-        - export OWTRAVISJOB=BUILD
+        - export OWTOOLS=CLANG
+        - export OWTRAVISJOB=BUILD1
+        - export OWDOCBUILD=0
+        - export OWVERBOSE=0
+      script: travis/build.sh
+    #################################
+    - stage: Build2
+      name: "OW tools OSX build 2"
+      if: env(OWOSXBUILD) = 1
+      os: osx
+      install:
+        - export OWTOOLS=CLANG
+        - export OWTRAVISJOB=BUILD2
         - export OWDOCBUILD=0
         - export OWVERBOSE=0
           # install DOS Emulator
         - brew install dosbox
         - export OWDOSBOX=dosbox
-      script: travis/build.sh build
+      script: travis/build.sh
     #################################
     - stage: Tests
       name: "Test wasm assembler"
@@ -184,13 +194,6 @@ jobs:
     - stage: Finalize
       name: "Clean stages shared environment"
       os: linux
-      before_script:
-        - travis/envinfo.sh
-        - travis/cacheinf.sh
-      script: travis/tfini.sh
-    - # ...
-      if: env(OWOSX) = 1
-      os: osx
       before_script:
         - travis/envinfo.sh
         - travis/cacheinf.sh

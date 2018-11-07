@@ -1334,7 +1334,7 @@ static void SetSymAssigned( TREEPTR opnd )
 {
     SYM_ENTRY   sym;
 
-    while( opnd->op.opr == OPR_INDEX )
+    while( opnd->op.opr == OPR_DOT || opnd->op.opr == OPR_INDEX )
         opnd = opnd->left;
     if( opnd->op.opr == OPR_PUSHADDR ) {
         SymGet( &sym, opnd->op.u2.sym_handle );
@@ -1984,14 +1984,14 @@ static TYPEPTR MergedType( TYPEPTR typ1, TYPEPTR typ2 )
     type_modifiers  flags, new_flags;
     TYPEPTR         typ;
 /*
-(type huge *) : (type *)                        -> (type huge *)
-(type *) : (type huge *)                        -> (type huge *)
-(type far *) : (type *)                 -> (type far *)
-(type *) : (type far *)                 -> (type far *)
-(type const *) : (type *)                       -> (type const *)
-(type *) : (type const *)                       -> (type const *)
-(type volatile *) : (type *)                    -> (type volatile *)
-(type *) : (type volatile *)                    -> (type volatile *)
+(type huge *) : (type *)            -> (type huge *)
+(type *) : (type huge *)            -> (type huge *)
+(type far *) : (type *)             -> (type far *)
+(type *) : (type far *)             -> (type far *)
+(type const *) : (type *)           -> (type const *)
+(type *) : (type const *)           -> (type const *)
+(type volatile *) : (type *)        -> (type volatile *)
+(type *) : (type volatile *)        -> (type volatile *)
             etc.
 */
     typ = typ1;

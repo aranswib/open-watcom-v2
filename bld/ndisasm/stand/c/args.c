@@ -72,14 +72,14 @@ static void printUsage( int msg )
     const char * const  *text;
     char                buff[MAX_RESOURCE_SIZE];
 
-    ChangePrintDest( STDERR_FILENO );
+    ChangePrintDest( stderr );
     if( msg != 0 ) {
         BufferMsg( msg );
         BufferConcatNL();
         BufferConcatNL();
         BufferPrint();
     }
-    for( text = banner; *text != '\0'; ++text ) {
+    for( text = banner; *text != NULL; ++text ) {
         Print( *text );
         Print( "\n" );
     }

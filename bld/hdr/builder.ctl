@@ -9,12 +9,12 @@ set PROJDIR=<CWD>
 
 [ INCLUDE <OWROOT>/build/defrule.ctl ]
 
-[ BLOCK <1> rel ]
-#================
+[ BLOCK <BLDRULE> rel ]
+#======================
     cdsay <PROJDIR>
 
-[ BLOCK <1> rel cprel ]
-#======================
+[ BLOCK <BLDRULE> rel cprel ]
+#============================
     <CCCMD> dos/*.h*           <OWRELROOT>/h/
     <CCCMD> dos/*.cnv          <OWRELROOT>/h/
     <CCCMD> dos/sys/*          <OWRELROOT>/h/sys/
@@ -95,6 +95,8 @@ set PROJDIR=<CWD>
     <CCCMD> rdos/*.h*          <OWRELROOT>/rh/
     <CCCMD> rdos/*.cnv         <OWRELROOT>/rh/
     <CCCMD> rdos/sys/*         <OWRELROOT>/rh/sys/
+    <CCCMD> rdos/arpa/*        <OWRELROOT>/rh/arpa/
+    <CCCMD> rdos/netinet/*     <OWRELROOT>/rh/netinet/
     <CCCMD> rdos/algorith      <OWRELROOT>/rh/
     <CCCMD> rdos/array         <OWRELROOT>/rh/
     <CCCMD> rdos/atomic        <OWRELROOT>/rh/

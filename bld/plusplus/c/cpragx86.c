@@ -353,6 +353,7 @@ static void GetSaveInfo(
         unsigned f_list         : 1;
     } have;
 
+    HW_CAsgn( modlist, HW_EMPTY );
     have.f_exact    = 0;
     have.f_nomemory = 0;
     have.f_list     = 0;
@@ -388,77 +389,80 @@ void PragAux(                   // #PRAGMA AUX ...
     void )
 {
     struct {
-        unsigned f_call   : 1;
-        unsigned f_loadds : 1;
-        unsigned f_rdosdev: 1;
-        unsigned f_export : 1;
-        unsigned f_parm   : 1;
-        unsigned f_value  : 1;
-        unsigned f_modify : 1;
-        unsigned f_frame  : 1;
-        unsigned uses_auto: 1;
+        unsigned f_call         : 1;
+        unsigned f_loadds       : 1;
+        unsigned f_rdosdev      : 1;
+        unsigned f_export       : 1;
+        unsigned f_parm         : 1;
+        unsigned f_value        : 1;
+        unsigned f_modify       : 1;
+        unsigned f_frame        : 1;
+        unsigned uses_auto      : 1;
     } have;
 
-    if( !GetPragAuxAliasInfo() )
-        return;
-    CurrEntry = NULL;
-    if( !IS_ID_OR_KEYWORD( CurToken ) )
-        return;
-    SetCurrInfo();
+    PPCTL_ENABLE_MACROS();
     NextToken();
-    AuxCopy( CurrInfo, CurrAlias );
-    PragObjNameInfo();
-    have.f_call   = 0;
-    have.f_loadds = 0;
-    have.f_rdosdev = 0;
-    have.f_export = 0;
-    have.f_parm   = 0;
-    have.f_value  = 0;
-    have.f_modify = 0;
-    have.f_frame = 0;
-    have.uses_auto = 0;
-    for( ;; ) {
-        if( !have.f_call && CurToken == T_EQUAL ) {
-            have.uses_auto = GetByteSeq();
-            have.f_call = 1;
-        } else if( !have.f_call && PragRecog( "far" ) ) {
-            CurrInfo->cclass |= FAR_CALL;
-            have.f_call = 1;
-        } else if( !have.f_call && PragRecog( "near" ) ) {
-            CurrInfo->cclass &= ~FAR_CALL;
-            have.f_call = 1;
-        } else if( !have.f_loadds && PragRecog( "loadds" ) ) {
-            CurrInfo->cclass |= LOAD_DS_ON_ENTRY;
-            have.f_loadds = 1;
-        } else if( !have.f_rdosdev && PragRecog( "rdosdev" ) ) {
-            CurrInfo->cclass |= LOAD_RDOSDEV_ON_ENTRY;
-            have.f_rdosdev = 1;
-        } else if( !have.f_export && PragRecog( "export" ) ) {
-            CurrInfo->cclass |= DLL_EXPORT;
-            have.f_export = 1;
-        } else if( !have.f_parm && PragRecog( "parm" ) ) {
-            GetParmInfo();
-            have.f_parm = 1;
-        } else if( !have.f_value && PragRecog( "value" ) ) {
-            GetRetInfo();
-            have.f_value = 1;
-        } else if( !have.f_value && PragRecog( "aborts" ) ) {
-            CurrInfo->cclass |= SUICIDAL;
-            have.f_value = 1;
-        } else if( !have.f_modify && PragRecog( "modify" ) ) {
-            GetSaveInfo();
-            have.f_modify = 1;
-        } else if( !have.f_frame && PragRecog( "frame" ) ) {
-            CurrInfo->cclass |= GENERATE_STACK_FRAME;
-            have.f_frame = 1;
-        } else {
-            break;
+    if( GetPragAuxAliasInfo() ) {
+        CurrEntry = NULL;
+        if( IS_ID_OR_KEYWORD( CurToken ) ) {
+            SetCurrInfo();
+            NextToken();
+            AuxCopy( CurrInfo, CurrAlias );
+            PragObjNameInfo();
+            have.f_call   = 0;
+            have.f_loadds = 0;
+            have.f_rdosdev = 0;
+            have.f_export = 0;
+            have.f_parm   = 0;
+            have.f_value  = 0;
+            have.f_modify = 0;
+            have.f_frame = 0;
+            have.uses_auto = 0;
+            for( ;; ) {
+                if( !have.f_call && CurToken == T_EQUAL ) {
+                    have.uses_auto = GetByteSeq();
+                    have.f_call = 1;
+                } else if( !have.f_call && PragRecog( "far" ) ) {
+                    CurrInfo->cclass |= FAR_CALL;
+                    have.f_call = 1;
+                } else if( !have.f_call && PragRecog( "near" ) ) {
+                    CurrInfo->cclass &= ~FAR_CALL;
+                    have.f_call = 1;
+                } else if( !have.f_loadds && PragRecog( "loadds" ) ) {
+                    CurrInfo->cclass |= LOAD_DS_ON_ENTRY;
+                    have.f_loadds = 1;
+                } else if( !have.f_rdosdev && PragRecog( "rdosdev" ) ) {
+                    CurrInfo->cclass |= LOAD_RDOSDEV_ON_ENTRY;
+                    have.f_rdosdev = 1;
+                } else if( !have.f_export && PragRecog( "export" ) ) {
+                    CurrInfo->cclass |= DLL_EXPORT;
+                    have.f_export = 1;
+                } else if( !have.f_parm && PragRecog( "parm" ) ) {
+                    GetParmInfo();
+                    have.f_parm = 1;
+                } else if( !have.f_value && PragRecog( "value" ) ) {
+                    GetRetInfo();
+                    have.f_value = 1;
+                } else if( !have.f_value && PragRecog( "aborts" ) ) {
+                    CurrInfo->cclass |= SUICIDAL;
+                    have.f_value = 1;
+                } else if( !have.f_modify && PragRecog( "modify" ) ) {
+                    GetSaveInfo();
+                    have.f_modify = 1;
+                } else if( !have.f_frame && PragRecog( "frame" ) ) {
+                    CurrInfo->cclass |= GENERATE_STACK_FRAME;
+                    have.f_frame = 1;
+                } else {
+                    break;
+                }
+            }
+            if( have.uses_auto ) {
+                AsmSysUsesAuto();
+            }
+            PragEnding( true );
         }
     }
-    if( have.uses_auto ) {
-        AsmSysUsesAuto();
-    }
-    PragEnding( true );
+    PPCTL_DISABLE_MACROS();
 }
 
 typedef enum
@@ -569,42 +573,11 @@ static enum sym_type PtrType( type_flag flags )
 
 #ifdef WCPP_ASM
 
-#define ENTRY_ERROR             0,
-#define ENTRY_BOOL              SYM_INT1,
-#define ENTRY_CHAR              SYM_INT1,
-#define ENTRY_SCHAR             SYM_INT1,
-#define ENTRY_UCHAR             SYM_INT1,
-#define ENTRY_WCHAR             SYM_INT2,
-#define ENTRY_SSHORT            SYM_INT2,
-#define ENTRY_USHORT            SYM_INT2,
-#define ENTRY_SINT              SYM_INT,
-#define ENTRY_UINT              SYM_INT,
-#define ENTRY_SLONG             SYM_INT4,
-#define ENTRY_ULONG             SYM_INT4,
-#define ENTRY_SLONG64           SYM_INT8,
-#define ENTRY_ULONG64           SYM_INT8,
-#define ENTRY_FLOAT             SYM_FLOAT4,
-#define ENTRY_DOUBLE            SYM_FLOAT8,
-#define ENTRY_LONG_DOUBLE       SYM_FLOAT8,
-#define ENTRY_ENUM              0,
-#define ENTRY_POINTER           0,
-#define ENTRY_TYPEDEF           0,
-#define ENTRY_CLASS             0,
-#define ENTRY_BITFIELD          0,
-#define ENTRY_FUNCTION          0,
-#define ENTRY_ARRAY             0,
-#define ENTRY_DOT_DOT_DOT       0,
-#define ENTRY_VOID              SYM_INT1,
-#define ENTRY_MODIFIER          0,
-#define ENTRY_MEMBER_POINTER    0,
-#define ENTRY_GENERIC           0,
-
 static enum sym_type AsmDataType[] = {
-    #include "type_arr.h"
+    #define pick(id,promo,promo_asm,type_text)  promo_asm,
+    #include "_typdefs.h"
+    #undef pick
 };
-#endif
-
-#ifdef WCPP_ASM
 
 static enum sym_type AsmType(
     TYPE type )
@@ -633,6 +606,7 @@ static enum sym_type AsmType(
         return( AsmDataType[type->id] );
     }
 }
+
 #endif
 
 
@@ -1112,7 +1086,6 @@ static int GetByteSeq( void )
 
     VbufInit( &code_buffer );
     AsmSysInit();
-    PPCTL_ENABLE_MACROS();
     NextToken();
     len = 0;
     offset = 0;
@@ -1206,7 +1179,6 @@ static int GetByteSeq( void )
         }
         VbufSetLen( &code_buffer, len );
     }
-    PPCTL_DISABLE_MACROS();
     uses_auto = AsmSysInsertFixups( &code_buffer );
     AsmSysFini();
     VbufFree( &code_buffer );

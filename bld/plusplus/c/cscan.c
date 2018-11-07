@@ -56,10 +56,10 @@
 #define BUFFER_OVERRUN_CHECK    (0x35791113)
 #endif
 
-static  void            nextMacroToken( void );
-static  token_source_fn *tokenSource;
+static void             nextMacroToken( void );
+static token_source_fn  *tokenSource;
 
-static  char            *ReScanPtr;
+static char             *ReScanPtr;
 
 ExtraRptCtr( nextTokenCalls );
 ExtraRptCtr( nextTokenSavedId );
@@ -227,8 +227,8 @@ static bool scanHex( bool expanding )
 {
     int c;
     struct {
-        unsigned too_big : 1;
-        unsigned at_least_one : 1;
+        unsigned too_big        : 1;
+        unsigned at_least_one   : 1;
     } flag;
 
     flag.too_big = false;
@@ -431,7 +431,7 @@ static TOKEN charConst( type_id char_type, bool expanding )
     TOKEN token;
     int value;
     struct {
-        unsigned double_byte_char : 1;
+        unsigned double_byte_char   : 1;
     } flag;
 
     flag.double_byte_char = false;
@@ -778,7 +778,7 @@ static TOKEN doScanString( type_id string_type, bool expanding )
 
 static TOKEN doScanName( int c, bool expanding )
 {
-    MEPTR mentry = NULL;
+    MEPTR   mentry;
 
     SrcFileScanName( c );
     if( expanding || (PPControl & PPCTL_NO_EXPAND) ) {
@@ -788,7 +788,6 @@ static TOKEN doScanName( int c, bool expanding )
     mentry = MacroLookup( Buffer, TokenLen );
     if( mentry == NULL )
         return( KwLookup( TokenLen ) );
-
     prt_char( ' ' );
     if( mentry->macro_defn == 0 ) {
         return( SpecialMacro( mentry ) );

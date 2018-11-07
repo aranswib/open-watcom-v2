@@ -45,70 +45,112 @@ bootutil_proc()
 build_proc()
 {
     if [ "$TRAVIS_BRANCH" = "$OWBRANCH" ]; then
-        if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
-            if [ "$1" = "boot" ]; then
+        case "$OWTRAVISJOB" in
+            "BOOTSTRAP")
                 bootutil_proc
                 if [ $RC -eq 0 ]; then
                     cd $OWSRCDIR
-                    builder boot
+                    if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+                        builder boot
+                    else
+                        builder -q boot
+                    fi
                     RC=$?
                 fi
-            elif [ "$1" = "build" ]; then
+                ;;
+            "BUILD")
                 if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$OWOSXBUILD" != "1" ]; then
                     return 0
                 fi
                 cd $OWSRCDIR
-                builder build
-                RC=$?
-            else
-                RC=0
-            fi
-        else
-            if [ "$1" = "boot" ]; then
-                bootutil_proc
-                if [ $RC -eq 0 ]; then
-                    cd $OWSRCDIR
-                    builder -q boot
+                if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+                    builder build
                     RC=$?
+                else
+                    builder -q build
+                    RC=$?
+                    if [ $RC -eq 0 ]; then
+                        export OWRELROOT=$OWROOT/test
+                        builder -q cprel
+                    fi
                 fi
-            elif [ "$1" = "build" ]; then
+                ;;
+            "BUILD1")
                 if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$OWOSXBUILD" != "1" ]; then
                     return 0
                 fi
                 cd $OWSRCDIR
-                builder -q build
-                RC=$?
-                if [ $RC -eq 0 ]; then
-                    export OWRELROOT=$OWROOT/test
-                    builder -q cprel
+                if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+                    builder build1
+                    RC=$?
+                else
+                    builder -q build1
+                    RC=$?
+                    if [ $RC -eq 0 ]; then
+                        export OWRELROOT=$OWROOT/test
+                        builder -q cprel1
+                    fi
                 fi
-            elif [ "$1" = "docpdf" ]; then
+                if [ $RC -eq 0 ]; then
+                    if [ "$OWTRAVIS_DEBUG" = "1" ]; then
+                        echo "copy build 1 to cache"
+                    fi
+                    cp -Rf $OWSRCDIR/* $OWROOT/build1
+                fi
+                ;;
+            "BUILD2")
+                if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$OWOSXBUILD" != "1" ]; then
+                    return 0
+                fi
+                if [ "$OWTRAVIS_DEBUG" = "1" ]; then
+                    echo "load build 1 from cache"
+                fi
+                cp -Rn $OWROOT/build1/* $OWSRCDIR
+                cd $OWSRCDIR
+                if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+                    builder build2
+                    RC=$?
+                else
+                    builder -q build2
+                    RC=$?
+                    if [ $RC -eq 0 ]; then
+                        export OWRELROOT=$OWROOT/test
+                        builder -q cprel2
+                    fi
+                fi
+                ;;
+            "DOCPDF")
+                if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$OWOSXBUILD" != "1" ]; then
+                    return 0
+                fi
+                if [ "$TRAVIS_EVENT_TYPE" = "pull_request" ]; then
+                    return 0
+                fi
                 cd $OWSRCDIR
                 builder docpdf
                 RC=$?
-            else
-                cd $OWSRCDIR
-                builder -q $1
-                RC=$?
-            fi
-        fi
+                ;;
+            *)
+                return 0
+                ;;
+        esac
     elif [ "$TRAVIS_BRANCH" = "$OWBRANCH_COVERITY" ]; then
         if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then
-            RC=0
+            return 0
         elif [ "$TRAVIS_EVENT_TYPE" = "push" ]; then
-            if [ "$1" = "build" ]; then
+            if [ "$OWTRAVISJOB" = "BUILD" ]; then
                 if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$OWOSXBUILD" != "1" ]; then
                     return 0
                 fi
                 travis/covscan.sh
             else
-                RC=0
+                return 0
             fi
         else
-            RC=0
+            return 0
         fi
     else
-        RC=0
+        return 0
     fi
     cd $OWROOT
     return $RC
