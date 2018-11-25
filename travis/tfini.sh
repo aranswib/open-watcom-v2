@@ -10,14 +10,15 @@
 tfini_proc1()
 {
     rm -f   build/$OWOBJDIR/*
-#    rm -rf  bld/watcom/$OWOBJDIR/*
-    rm -rf  bld/*
+    rm -rf  bld/watcom/$OWOBJDIR/*
+#    rm -rf  bld/*
     rm -rf  test/*
     rm -rf  build1/*
     
     return 0
 }
 
+<<<<<<< HEAD
 ###################################################################
 # 2. update GitHub repository coverity_scan branch by master branch
 #
@@ -68,5 +69,6 @@ tfini_proc2()
     return 0
 }
 
+=======
+>>>>>>> master
 tfini_proc1 $*
-tfini_proc2 $*
