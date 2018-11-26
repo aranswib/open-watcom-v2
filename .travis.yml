@@ -40,11 +40,13 @@ after_success:
  - travis/gitupds.sh
 
 jobs:
+  allow_failures:
+    - os: osx
   include:
     #################################
     - stage: Initialize
       name: "Initialize Travis GitHub repository"
-      if: branch = master AND type = push
+      if: branch = env(OWBRANCH) AND type = push
       os: linux
       cache: false
       script: 
@@ -52,7 +54,7 @@ jobs:
     #################################
     - stage: Bootstrap
       name: "Build minimal set of build tools"
-      if: branch = master
+      if: branch = env(OWBRANCH)
       os: linux
       compiler: gcc
       before_install:
@@ -71,7 +73,7 @@ jobs:
         - travis/build.sh
     - # ...
       name: "Build minimal set of build tools"
-      if: branch = master AND env(OWOSXBUILD) = 1
+      if: branch = env(OWBRANCH) AND env(OWOSXBUILD) = 1
       os: osx
       compiler: clang
       before_install:
@@ -91,7 +93,7 @@ jobs:
     #################################
     - stage: Build
       name: "OW tools build"
-      if: branch = master
+      if: branch = env(OWBRANCH)
       os: linux
       compiler: gcc
       before_install:
@@ -107,10 +109,9 @@ jobs:
         - travis/build.sh
     - # ...
       name: "OW tools OSX build 1"
-      if: branch = master AND env(OWOSXBUILD) = 1
+      if: branch = env(OWBRANCH) AND env(OWOSXBUILD) = 1
       os: osx
       compiler: clang
-      allow_failures: true
       before_install:
         - export OWTOOLS=CLANG
         - export OWTRAVISJOB=BUILD1
@@ -123,10 +124,9 @@ jobs:
     #################################
     - stage: Build2
       name: "OW tools OSX build 2"
-      if: branch = master AND env(OWOSXBUILD) = 1
+      if: branch = env(OWBRANCH) AND env(OWOSXBUILD) = 1
       os: osx
       compiler: clang
-      allow_failures: true
       before_install:
         - export OWTOOLS=CLANG
         - export OWTRAVISJOB=BUILD2
@@ -142,12 +142,12 @@ jobs:
     #################################
     - stage: Tests
       name: "Test wasm assembler"
-      if: branch = master
+      if: branch = env(OWBRANCH)
       os: linux
-      allow_failures: true
       before_install:
         - export OWTOOLS=WATCOM
         - export OWTRAVISJOB=TEST
+        - export OWTRAVISTEST=WASM
         - export OWDOCBUILD=0
         - export OWVERBOSE=0
       install:
@@ -157,15 +157,15 @@ jobs:
         - unset LIB
         - . ./cmnvars.sh
       script: 
-        - travis/test.sh wasm
+        - travis/test.sh
     - # ...
       name: "Test C compiler"
-      if: branch = master
+      if: branch = env(OWBRANCH)
       os: linux
-      allow_failures: true
       before_install:
         - export OWTOOLS=WATCOM
         - export OWTRAVISJOB=TEST
+        - export OWTRAVISTEST=C
         - export OWDOCBUILD=0
         - export OWVERBOSE=0
       install:
@@ -175,15 +175,15 @@ jobs:
         - unset LIB
         - . ./cmnvars.sh
       script: 
-        - travis/test.sh c
+        - travis/test.sh
     - # ...
       name: "Test FORTRAN 77 compiler"
-      if: branch = master
+      if: branch = env(OWBRANCH)
       os: linux
-      allow_failures: true
       before_install:
         - export OWTOOLS=WATCOM
         - export OWTRAVISJOB=TEST
+        - export OWTRAVISTEST=F77
         - export OWDOCBUILD=0
         - export OWVERBOSE=0
       install:
@@ -193,15 +193,15 @@ jobs:
         - unset LIB
         - . ./cmnvars.sh
       script: 
-        - travis/test.sh f77
+        - travis/test.sh
     - # ...
       name: "Test C++ compiler"
-      if: branch = master
+      if: branch = env(OWBRANCH)
       os: linux
-      allow_failures: true
       before_install:
         - export OWTOOLS=WATCOM
         - export OWTRAVISJOB=TEST
+        - export OWTRAVISTEST=CXX
         - export OWDOCBUILD=0
         - export OWVERBOSE=0
       install:
@@ -211,15 +211,15 @@ jobs:
         - unset LIB
         - . ./cmnvars.sh
       script: 
-        - travis/test.sh cpp
+        - travis/test.sh
     - # ...
       name: "Test C run-time library"
-      if: branch = master
+      if: branch = env(OWBRANCH)
       os: linux
-      allow_failures: true
       before_install:
         - export OWTOOLS=WATCOM
         - export OWTRAVISJOB=TEST
+        - export OWTRAVISTEST=CRTL
         - export OWDOCBUILD=0
         - export OWVERBOSE=0
       install:
@@ -229,11 +229,11 @@ jobs:
         - unset LIB
         - . ./cmnvars.sh
       script: 
-        - travis/test.sh crtl
+        - travis/test.sh
     #################################
     - stage: Finalize
       name: "Clean build cache Linux"
-      if: branch = master
+      if: branch = env(OWBRANCH)
       os: linux
       script: 
         # clear cache
@@ -243,7 +243,7 @@ jobs:
         - rm -rf  build1/*
     - # ...
       name: "Clean build cache OSX"
-      if: branch = master AND env(OWOSXBUILD) = 1
+      if: branch = env(OWBRANCH) AND env(OWOSXBUILD) = 1
       os: osx
       script: 
         # clear cache
@@ -255,7 +255,7 @@ jobs:
     #################################
     - stage: InitDocumentation
       name: "Initiate Documentation build by Cron"
-      if: branch = documentation AND type = cron
+      if: branch = env(OWBRANCH_DOCS) AND type = cron
       os: linux
       cache: false
       script: 
@@ -263,7 +263,7 @@ jobs:
     #################################
     - stage: Documentation
       name: "OW Documentation build"
-      if: branch = documentation AND type = push
+      if: branch = env(OWBRANCH_DOCS) AND type = push
       os: linux
       compiler: gcc
       cache: false
@@ -282,15 +282,20 @@ jobs:
     #################################
     - stage: InitCoverity
       name: "Initiate Coverity Scan by Cron"
-      if: branch = coverity_scan AND type = cron
+      if: branch = env(OWBRANCH_COVERITY) AND type = cron
       os: linux
       cache: false
       script: 
         - travis/gitucov.sh
     #################################
     - stage: Coverity
+<<<<<<< HEAD
       name: "Run Coverity Scan processing"
       if: branch = coverity_scan AND type = push
+=======
+      name: "Initiate Coverity Scan"
+      if: branch = env(OWBRANCH_COVERITY) AND type = push
+>>>>>>> master
       os: linux
       compiler: gcc
       cache: false
