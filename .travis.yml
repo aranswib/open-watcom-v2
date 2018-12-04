@@ -339,15 +339,8 @@ jobs:
         - travis/gitucov.sh
     #################################
     - stage: Coverity
-<<<<<<< HEAD
-      name: "Run Coverity Scan processing"
-      if: branch = coverity_scan AND type = push
-      os: linux
-      compiler: gcc
-=======
       name: "Initiate Coverity Scan Linux"
       if: branch = env(OWBRANCH_COVERITY) AND type = push
->>>>>>> master
       cache: false
       before_install:
         # stop unwanted services
