@@ -2,6 +2,7 @@
 *
 *                            Open Watcom Project
 *
+* Copyright (c) 2002-2018 The Open Watcom Contributors. All Rights Reserved.
 *    Portions Copyright (c) 1983-2002 Sybase, Inc. All Rights Reserved.
 *
 *  ========================================================================
@@ -24,32 +25,9 @@
 *
 *  ========================================================================
 *
-* Description:  WHEN YOU FIGURE OUT WHAT THIS FILE DOES, PLEASE
-*               DESCRIBE IT HERE!
+* Description:  Dump instruction scheduling information.
 *
 ****************************************************************************/
 
 
-#include "dmpinc.h"
-
-/* include dump routines */
-
-void (*__DmpRef[])() = {
-        &DumpFPUIns,
-        &Dumpan,
-        &DumpBlk,
-        &DumpConflicts,
-        &DumpCurrLoop,
-        &DumpIns,
-        &DumpOpcodeName,
-        &DumpRegTree,
-        &DumpSc,
-        &DumpGen,
-        &DumpTree,
-        &DumpCurrLoop,
-        &DumpIVList,
-        &DumpInvariants,
-        &DumpOpt,
-        &DumpDataDag,
-        0
-};
+extern void DumpDataDag( void );

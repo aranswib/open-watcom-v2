@@ -40,12 +40,9 @@
 #include "freelist.h"
 #include "inssched.h"
 #include "blktrim.h"
-#include "dmpinc.h"
 #include "dumpio.h"
 #include "dumpins.h"
-
-
-extern data_dag         *DataDag;
+#include "dumpschd.h"
 
 
 static void DumpADataDag( data_dag *dag )
